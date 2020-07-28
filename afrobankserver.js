@@ -26,13 +26,19 @@ db.connect((err) => {
 })
 
 app.post('/Api/v1/register', (req, res) => {
-    const { firstname, lastname, email, phonenumber,  gender } = req.body;
+    const { firstname, lastname, surname, email, phonenumber,  gender } = req.body;
+
+    const accountNumber = Math.floor(Math.random() * 10000000000);
+    const accountBalance = 1000;
     const user = {
         firstname,
+        surname,
         lastname,
         email,
         phonenumber,
-        gender
+        gender,
+        accountNumber,
+        accountBalance
     }
 
     db.query("Insert into customers set ?", user, (err, feedback) => {
@@ -43,16 +49,16 @@ app.post('/Api/v1/register', (req, res) => {
             })
         }
         else {
-            const accountnumber = Math.floor(Math.random() * 10000000000);
+            const newUser = surname + " " + firstname + " " + lastname;
             const message = `
-                <p> Dear <strong> ${firstname} ${lastname}</strong>,</p>
+                <p> Dear <strong> ${newUser.toUpperCase()}</strong>,</p>
                 <p> your <strong>Afrobank</strong> account was created successfully, Thank you for banking with us</p>
                 <p>below is your account details </p>
                 <p>please note that your account number should not be disclosed to anyone.</p>
                 <p> welcome to the <strong>Afrobank</strong> family</p>
 
-                <p>account number: ${accountnumber}</p>
-                <p>account name: ${firstname} ${lastname}</p>
+                <p>account number: ${accountNumber}</p>
+                <p>account name:  <strong> ${newUser.toUpperCase()}</strong></p>
                 <p>account balance: 10000</p>
             `;
             async function main() {
@@ -80,7 +86,8 @@ app.post('/Api/v1/register', (req, res) => {
                 console.log("Message sent: %s", info.messageId);
                 console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
                 res.json({
-                    status: `Message sent: %s ${info.messageId}`
+                    status: `Message sent: %s ${info.messageId}`,
+                    feedback
                 })
             }
             main().catch(console.error);
