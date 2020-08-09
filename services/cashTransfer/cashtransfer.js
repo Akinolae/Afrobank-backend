@@ -61,6 +61,8 @@ module.exports = {
 
                                     const date = new Date();
                                     //  subtract the amount from the sender
+                                    const hours = date.getHours()
+                                    const minutes = date.getMinutes()
                                     const transactionAmt = parseInt(amount);
                                     const newBalance = senderBalance - transactionAmt;
                                     const recievedTransfer = transactionAmt + reciverBalance;
@@ -68,30 +70,31 @@ module.exports = {
 
                                     //  The sender's message.
                                      const senderMsg = `
-                                     <h6 style="text-decoration: underline;"><strong>Afrobank debit alert</strong</h6>
+                                     <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2><br>
                                      <p>We wish to inform you that a debit transaction just occured on your account with us</p>
                                       
-                                      <h6 style="text-decoration: underline;"><strong>Transaction notification</strong</h6>
-                                     Description: CASH-TRANSFER
-                                     Amount     : ${transactionAmt}
-                                     Time       : ${date.getHours} : ${date.getMinutes()}
-                                     Balance    : ${newBalance}
-                                     Recipient  : ${data.accountNumber} ${data.firstname} ${data.lastname} ${data.surname}
+                                    <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
+
+                                     <p>Description: CASH-TRANSFER</p>
+                                     <p>Amount     :<strong> ${transactionAmt} </strong></p>
+                                     <p>Time       :<strong> ${hours} : ${minutes}</strong></p>
+                                     <p>Balance    : <strong>NGN ${newBalance}</strong></p>
+                                     <p>Recipient  : <strong>${data[0].accountNumber} ${data[0].firstname} ${data[0].lastname} ${data[0].surname}</strong></p>
 
 
                                      Thank you for banking with us. 
                                      `;
 
                                      const recipientMsg = `
-                                      <h6 style="text-decoration: underline; color:"red"><strong>Afrobank Credit alert</strong</h6>
+                                      <h2 style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank Credit alert</strong></h2><br>
                                       <p>We wish to inform you that a credit transaction just occured on your account with us</p>
 
-                                      <h6 style="text-decoration: underline;"><strong>Transaction notification</strong</h6>
-                                         Description : CREDIT
-                                         Amount      : ${transactionAmt}
-                                         Time        : ${date.getHours} : ${date.getMinutes()}
-                                         Balance     : ${recievedTransfer}  
-                                         Sender      : ${sender.firstname.toUpperCase()} ${sender.lastname.toUpperCase()} ${sender.surname.toUpperCase()}
+                                      <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
+                                         <p>Description : CREDIT</p>
+                                         <p>Amount      : <strong>${transactionAmt}</strong></p>
+                                         <p>Time        : <strong>${hours} : ${minutes}</strong></p>
+                                         <p>Balance     : <strong>NGN ${recievedTransfer}</strong></p>  
+                                         <p>Sender      : <strong>${sender[0].firstname} ${sender[0].lastname} ${sender[0].surname}</strong></p>
 
                                          Thank you for banking with us. 
                                      `;
@@ -100,7 +103,6 @@ module.exports = {
                                          else {
                                             //  After completing the transaction, both sender and recipient recieve an email
                                             // notification
-                                               
                                              db.query(`Update customers set accountBalance = ${recievedTransfer} where accountNumber = ${data[0].accountNumber}`, (err, resp) => {
                                                  if (err) throw err;
                                                 else {
@@ -122,8 +124,8 @@ module.exports = {
                                                         // send mail with defined transport object
                                                         let info = await transporter.sendMail({
                                                             from: `Afrobank ${gmail.gmailAccount().email}`, // sender address
-                                                            to: sender.email, //reciever address that was gotten from the frontend/client
-                                                            subject: "Debit alert",
+                                                            to: sender[0].email, //reciever address that was gotten from the frontend/client
+                                                            subject: "DEBIT ALERT",
                                                             text: `A debit transaction occured  on your account with us`,
                                                             html: senderMsg,
                                                         });
@@ -149,8 +151,8 @@ module.exports = {
                                                         // send mail with defined transport object
                                                         let info = await transporter.sendMail({
                                                             from: `Afrobank ${gmail.gmailAccount().email}`, // sender address
-                                                            to: data.email, //reciever address that was gotten from the frontend/client
-                                                            subject: "Credit alert",
+                                                            to: data[0].email, //reciever address that was gotten from the frontend/client
+                                                            subject: "CREDIT ALERT",
                                                             text: `A Credit transaction occured  on your account with us`,
                                                             html: recipientMsg,
                                                         });
