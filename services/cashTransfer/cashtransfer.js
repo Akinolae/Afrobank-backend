@@ -70,7 +70,7 @@ module.exports = {
 
                                     //  The sender's message.
                                      const senderMsg = `
-                                     <h1><strong>${sender[0].firstname} ${sender[0].lastname} ${sender[0].surname}</strong></h1>
+                                     <h4>${sender[0].firstname} ${sender[0].lastname} ${sender[0].surname}</h4>
                                      <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2><br>
                                      <p>We wish to inform you that a debit transaction just occured on your account with us</p>
                                       
@@ -87,7 +87,7 @@ module.exports = {
                                      `;
 
                                      const recipientMsg = `
-                                      <h1><strong>Dear ${data[0].firstname} ${data[0].lastname} ${data[0].surname}</strong></h1>
+                                      <h4>Dear ${data[0].firstname} ${data[0].lastname} ${data[0].surname}</h4>
                                       <h2 style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank Credit alert</strong></h2><br>
                                       <p>We wish to inform you that a credit transaction just occured on your account with us</p>
 
