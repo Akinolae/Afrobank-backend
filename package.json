@@ -8,6 +8,7 @@
     "dev": "nodemon afrobankserver.js",
     "start": "nodemon afrobankserver.js"
   },
+
   "author": "Akinola Makinde",
   "license": "ISC",
   "dependencies": {

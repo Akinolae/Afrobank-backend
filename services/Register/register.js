@@ -29,6 +29,7 @@ module.exports = {
               } else {
                   const newUser = `${surname}  " "  ${firstname}  " "  ${lastname}`;
                   const message = `
+               <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
                <p> Dear <strong> ${newUser.toUpperCase()}</strong>,</p>
                <p> your <strong>Afrobank</strong> account was created successfully, Thank you for banking with us</p>
                <p>below is your account details </p>
@@ -45,8 +46,8 @@ module.exports = {
                           port: 587,
                           secure: false, // true for 465, false for other ports
                           auth: {
-                              user: account.gmailAccount().email, // Specific gmail account which can be found in the confi
-                              pass: account.gmailAccount().password, // Specific gmail account which can be found in the co
+                              user: account.email, // Specific gmail account which can be found in the confi
+                              pass: account.password, // Specific gmail account which can be found in the co
                           },
                           tls: {
                               rejectUnauthorized: false,
@@ -54,7 +55,7 @@ module.exports = {
                       });
                       // send mail with defined transport object
                       let info = await transporter.sendMail({
-                          from: `Afrobank ${account.gmailAccount().email}`, // sender address
+                          from: `Afrobank ${account.email}`, // sender address
                           to: email, //reciever address that was gotten from the frontend/client
                           subject: "Account opening",
                           text: `Welcome to Afrobank`,

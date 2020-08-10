@@ -55,7 +55,7 @@ module.exports = {
                                  if (amount > senderBalance) {
                                      res.json({
                                          status: false,
-                                         message: "unable to complete transaction"
+                                         message: "insufficient balance"
                                      })
                                  } else {
 
@@ -73,7 +73,7 @@ module.exports = {
                                      <h4>${sender[0].firstname} ${sender[0].lastname} ${sender[0].surname}</h4>
                                      <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2><br>
                                      <p>We wish to inform you that a debit transaction just occured on your account with us</p>
-                                      
+
                                     <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
 
                                      <p>Description: CASH-TRANSFER</p>
@@ -116,8 +116,8 @@ module.exports = {
                                                             port: 587,
                                                             secure: false, // true for 465, false for other ports
                                                             auth: {
-                                                                user: gmail.gmailAccount().email, // Specific gmail account which can be found in the confi
-                                                                pass: gmail.gmailAccount().password, // Specific gmail account which can be found in the co
+                                                                user: gmail.email, // Specific gmail account which can be found in the confi
+                                                                pass: gmail.password, // Specific gmail account which can be found in the co
                                                             },
                                                             tls: {
                                                                 rejectUnauthorized: false,
@@ -125,7 +125,7 @@ module.exports = {
                                                         });
                                                         // send mail with defined transport object
                                                         let info = await transporter.sendMail({
-                                                            from: `Afrobank ${gmail.gmailAccount().email}`, // sender address
+                                                            from: `Afrobank ${gmail.email}`, // sender address
                                                             to: sender[0].email, //reciever address that was gotten from the frontend/client
                                                             subject: "DEBIT ALERT",
                                                             text: `A debit transaction occured  on your account with us`,
@@ -143,8 +143,8 @@ module.exports = {
                                                             port: 587,
                                                             secure: false, // true for 465, false for other ports
                                                             auth: {
-                                                                user: gmail.gmailAccount().email, // Specific gmail account which can be found in the confi
-                                                                pass: gmail.gmailAccount().password, // Specific gmail account which can be found in the co
+                                                                user: gmail.email, // Specific gmail account which can be found in the confi
+                                                                pass: gmail.password, // Specific gmail account which can be found in the co
                                                             },
                                                             tls: {
                                                                 rejectUnauthorized: false,
@@ -152,7 +152,7 @@ module.exports = {
                                                         });
                                                         // send mail with defined transport object
                                                         let info = await transporter.sendMail({
-                                                            from: `Afrobank ${gmail.gmailAccount().email}`, // sender address
+                                                            from: `Afrobank ${gmail.email}`, // sender address
                                                             to: data[0].email, //reciever address that was gotten from the frontend/client
                                                             subject: "CREDIT ALERT",
                                                             text: `A Credit transaction occured  on your account with us`,
