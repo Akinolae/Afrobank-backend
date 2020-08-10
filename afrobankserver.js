@@ -12,6 +12,7 @@ const userBalance = require("./services/getBalance/getBalance");
 const getUser = require("./services/getUsers/getUsers");
 const localLogin = require("./services/login/localLogin");
 const transactionHistory = require("./services/transactionHistory/getTransactionHistory");
+const pinReset = require("./services/pinreset/pinreset");
 
 const app = express();
 // Initilaize all middlewares
@@ -44,6 +45,9 @@ app.post(`${url}/login`, localLogin.localLogin);
 
 // money transfer;
 app.post(`${url}/transfer`, transaction.transfer);
+
+// Pin reset
+app.post(`${url}/pinreset`, pinReset.pinReset);
 
 // Checks for the available balance of that specific user.
 app.get(`${url}/balance/:id`, userBalance.getAccountBalance);
