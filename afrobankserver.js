@@ -52,6 +52,8 @@ app.post(`${url}/pinreset`, pinReset.pinReset);
 // Checks for the available balance of that specific user.
 app.get(`${url}/balance/:id`, userBalance.getAccountBalance);
 
+// returns the data of a current user
+app.post(`${url}/user`, getUser.getUser);
 // deletes a particular user;
 app.get(`${url}/delete/:id`)
 // returns all users/customers/account

@@ -8,8 +8,18 @@ module.exports = {
              const { sender, recipient, amount, pin } = req.body;
             // Queries the database, checks if the sender exists in the data bases
              db.query("Select * From customers where accountnumber = ?", [sender], (err, sender) => {
-                 if (err) {
-                     console.log(chalk.yellow("an error occured"))
+                //  if (err) {
+                     
+                    // res.json({
+                        // status: false,
+                        // message: err.message
+                    // })
+                //  }
+                 if(isNaN(amount)){
+                     res.json({
+                         status: false,
+                         message: "enter a valid amount"
+                     })
                  }
                  // when sender doesn't exist it sends a response
                  if (sender.length === 0) {
