@@ -8,7 +8,6 @@ module.exports = {
             // Queries the database, checks if the sender exists in the data bases
              db.query("Select * From customers where accountnumber = ?", [sender], (err, sender) => {
                 //  if (err) {
-                     
                     // res.json({
                         // status: false,
                         // message: err.message

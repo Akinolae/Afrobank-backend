@@ -22,12 +22,13 @@ describe("POST@/register", () => {
     const result = await axios.post("http://localhost:4000/Api/v1/register", {
       firstname: "Femi",
       lastname: "Pedro",
-      surname: "David",
-      email: "Femifedro@gmail.com",
+      surname: "Dave",
+      email: "Dave@gmail.com",
       phonenumber: "08034335045",
       gender: "m",
     });
     expect(result.status).toEqual(200);
+    // console.log(result);
   });
 });
 
