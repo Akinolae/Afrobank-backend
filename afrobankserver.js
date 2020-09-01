@@ -4,10 +4,6 @@ const JWT = require("jsonwebtoken");
 const cors = require("cors");
 const passport = require("passport");
 require("./services/login/loginAuth")(passport);
-
-process.env.PORT = 100000;
-
-console.log(process.env.PORT);
 const db = require("./config/database/dbconnect");
 
 const app = express();
