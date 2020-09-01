@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1598952553217" clover="3.2.0">
+  <project timestamp="1598952553217" name="All files">
+    <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0" elements="4" coveredelements="4" complexity="0" loc="4" ncloc="4" packages="1" files="1" classes="1"/>
+    <file name="dbconnect.js" path="C:\Dev\workspaces\AfrobankAPI\config\database\dbconnect.js">
+      <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="5" count="1" type="stmt"/>
+      <line num="12" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>

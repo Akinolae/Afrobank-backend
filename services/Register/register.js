@@ -1,7 +1,7 @@
 
 const db = require("../../config/database/dbconnect");
-const account = require("../../config/nodemailer/mailer");
 const nodemailer = require("nodemailer");
+require("dotenv").config();
 
 module.exports = {
     register: (req, res) => {
@@ -46,8 +46,8 @@ module.exports = {
                           port: 587,
                           secure: false, // true for 465, false for other ports
                           auth: {
-                              user: account.email, // Specific gmail account which can be found in the confi
-                              pass: account.password, // Specific gmail account which can be found in the co
+                              user: process.env.EMAIL, // Specific gmail account which can be found in the confi
+                              pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
                           },
                           tls: {
                               rejectUnauthorized: false,

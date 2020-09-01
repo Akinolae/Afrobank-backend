@@ -9,12 +9,18 @@ module.exports = {
              id,
              (err, data) => {
                  if (err) {
-                     res.json({
+                     res.status(400).json({
                          status: false,
                          message: err,
                      });
-                 } else {
-                     res.json({
+                 }if(!data){
+                     res.status(400).json({
+                         status: false,
+                         message: "User doesn't exist."
+                     })
+                 }
+                  else {
+                     res.status(200).json({
                          status: true,
                          message: data,
                      });

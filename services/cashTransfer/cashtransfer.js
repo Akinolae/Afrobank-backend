@@ -1,10 +1,9 @@
 const db = require("../../config/database/dbconnect");
-const gmail = require("../../config/nodemailer/mailer");
 const chalk = require("chalk")
 const nodemailer = require("nodemailer");
 
 module.exports = {
-   transfer: (req, res) => {
+   transfer: async (req, res) => {
              const { sender, recipient, amount, pin } = req.body;
             // Queries the database, checks if the sender exists in the data bases
              db.query("Select * From customers where accountnumber = ?", [sender], (err, sender) => {
@@ -16,14 +15,14 @@ module.exports = {
                     // })
                 //  }
                  if(isNaN(amount)){
-                     res.json({
+                     res.status(200).json({
                          status: false,
                          message: "enter a valid amount"
                      })
                  }
                  // when sender doesn't exist it sends a response
                  if (sender.length === 0) {
-                     res.json({
+                     res.status(400).json({
                          status: false,
                          message: "invalid account number"
                      })
@@ -39,7 +38,7 @@ module.exports = {
                          }
                          // checks that the recipient also exists and sends an appropriate response
                          if (data.length === 0) {
-                             res.json({
+                             res.status(400).json({
                                  status: false,
                                  message: "recipient account number is invalid"
                              })
@@ -52,7 +51,7 @@ module.exports = {
 
                              // Checks that the sennder has a valid account balance before proceeding to the next transaction.
                              if (senderBalance <= 0) {
-                                 res.json({
+                                 res.status(401).json({
                                      status: false,
                                      message: "your account balance is low"
                                  })
@@ -126,8 +125,8 @@ module.exports = {
                                                             port: 587,
                                                             secure: false, // true for 465, false for other ports
                                                             auth: {
-                                                                user: gmail.email, // Specific gmail account which can be found in the confi
-                                                                pass: gmail.password, // Specific gmail account which can be found in the co
+                                                                user: process.env.EMAIL, // Specific gmail account which can be found in the confi
+                                                                pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
                                                             },
                                                             tls: {
                                                                 rejectUnauthorized: false,
@@ -135,7 +134,7 @@ module.exports = {
                                                         });
                                                         // send mail with defined transport object
                                                         let info = await transporter.sendMail({
-                                                            from: `Afrobank ${gmail.email}`, // sender address
+                                                            from: `Afrobank ${process.env.EMAIL}`, // sender address
                                                             to: sender[0].email, //reciever address that was gotten from the frontend/client
                                                             subject: "DEBIT ALERT",
                                                             text: `A debit transaction occured  on your account with us`,
@@ -153,26 +152,29 @@ module.exports = {
                                                             port: 587,
                                                             secure: false, // true for 465, false for other ports
                                                             auth: {
-                                                                user: gmail.email, // Specific gmail account which can be found in the confi
-                                                                pass: gmail.password, // Specific gmail account which can be found in the co
+                                                                user: process.env.EMAIL, // Specific gmail account which can be found in the confi
+                                                                pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
                                                             },
                                                             tls: {
                                                                 rejectUnauthorized: false,
                                                             },
                                                         });
                                                         // send mail with defined transport object
-                                                        let info = await transporter.sendMail({
-                                                            from: `Afrobank ${gmail.email}`, // sender address
+                                                        let info = await transporter.sendMail(
+                                                          {
+                                                            from: `Afrobank ${process.env.EMAIL}`, // sender address
                                                             to: data[0].email, //reciever address that was gotten from the frontend/client
-                                                            subject: "CREDIT ALERT",
+                                                            subject:
+                                                              "CREDIT ALERT",
                                                             text: `A Credit transaction occured  on your account with us`,
                                                             html: recipientMsg,
-                                                        });
+                                                          }
+                                                        );
                                                         console.log("Message sent: %s", info.messageId);
                                                         console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
                                                     }
                                                     main2().catch(console.error);
-                                                    res.json({
+                                                    res.status(200).json({
                                                      status: true,
                                                      message: message.toUpperCase()
                                                  })

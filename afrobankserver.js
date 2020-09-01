@@ -1,21 +1,18 @@
 const express = require("express");
 const chalk = require('chalk');
 const JWT = require("jsonwebtoken");
+const cors = require("cors");
 const passport = require("passport");
 require("./services/login/loginAuth")(passport);
 
+process.env.PORT = 100000;
 
+console.log(process.env.PORT);
 const db = require("./config/database/dbconnect");
-const transaction = require('./services/cashTransfer/cashtransfer')
-const userReg = require("./services/Register/register");
-const userBalance = require("./services/getBalance/getBalance");
-const getUser = require("./services/getUsers/getUsers");
-const localLogin = require("./services/login/localLogin");
-const transactionHistory = require("./services/transactionHistory/getTransactionHistory");
-const pinReset = require("./services/pinreset/pinreset");
 
 const app = express();
 // Initilaize all middlewares
+app.use(cors());
 app.use(express.json());
 app.use(
   express.urlencoded({
@@ -35,30 +32,6 @@ db.connect((err) => {
     console.log(chalk.yellow("database connected successfully"));
   }
 });
-// intialize the url for the API;
-const url = "/Api/v1";
 
-app.post(`${url}/register`, userReg.register);
-
-// Login user
-app.post(`${url}/login`, localLogin.localLogin);
-
-// money transfer;
-app.post(`${url}/transfer`, transaction.transfer);
-
-// Pin reset
-app.post(`${url}/pinreset`, pinReset.pinReset);
-
-// Checks for the available balance of that specific user.
-app.get(`${url}/balance/:id`, userBalance.getAccountBalance);
-
-// returns the data of a current user
-app.post(`${url}/user`, getUser.getUser);
-// deletes a particular user;
-app.get(`${url}/delete/:id`)
-// returns all users/customers/account
-app.get(`${url}/users`, getUser.getUsers);
-// returns the transaction history of a particular user
-app.get(`${url}/history/:id`, transactionHistory.getTransactionHistory)
-
+app.use("/Api/v1", require("./routes/index"));
 app.listen(4000, () => console.log(chalk.blue.bgBlack.bold("app is running")));
