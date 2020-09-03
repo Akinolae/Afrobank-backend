@@ -1,43 +1,69 @@
-const db = require("../../config/database/dbconnect");
+const {
+    customer
+} = require("../../model/customer");
+const {
+    sequelize
+} = require("../../config/database/dbconnect");
+
+
 module.exports = {
     getUsers: (req, res) => {
-        db.query("select * from customers", (err, data) => {
-            if (err) {
-                res.status(404).json({
-                    message: "Error"
-                });
-            }if(!data){
-                res.status(401).json({
-                    message: "User doesn't exist!"
+        sequelize.sync().then(async () => {
+            await customer.findAll({
+                    raw: true
                 })
-            }
-             else {
-                // const newData = JWT.sign(data[0], "Afrobank");
-                res.json({
-                    data: data,
-                });
-            }
+                .then((resp) => {
+                    if (resp.length === 0) {
+                        res.status(404).json({
+                            success: false,
+                            message: "No users to display"
+                        })
+                    } else {
+                        res.status(200).json({
+                            success: true,
+                            message: resp
+                        })
+                    }
+                })
+                .catch((err) => {
+                    res.status(404).json({
+                        success: false,
+                        message: err
+                    })
+                })
         });
     },
     getUser: (req, res) => {
-            const { accountNumber } = req.body;
-            db.query("SELECT * from customers where accountNumber = ? ", [accountNumber], (err, resp) => {
-                if(err) throw err; 
-                if(resp.length === 0){
-                    res.status(400).json({
-                        status: false,
-                        message: "Invalid account number"
-                    })
+        const {
+            accountNumber
+        } = req.body;
+        sequelize.sync().then(async () => {
+            await customer.findAll({
+                raw: true,
+                where: {
+                    accountNumber: accountNumber
                 }
-                else {
+            }).then((resp) => {
+                if (resp.length === 0) {
+                    res.status(404).json({
+                        success: false,
+                        message: "invalid account details."
+                    })
+                } else {
                     res.status(200).json({
-                        status: true,
+                        success: true,
                         message: resp
                     })
                 }
+            }).catch((err) => {
+                res.status(404).json({
+                    success: false,
+                    message: err
+                })
             })
+        })
     },
-deleteUser: (req, res) => {
-        
+    deleteUser: (req, res) => {
+
     }
 }
