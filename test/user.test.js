@@ -1,13 +1,21 @@
-
-const tests = require("./testRequests");
+'use strict';
+const {
+  customerLogin,
+  customerModel,
+  fetchUser,
+  fetchUsers,
+  getBalance,
+  pinReset,
+  registerCustomer,
+  transfer
+} = require("./testRequests");
 
 // Call all test suites;
-tests.transfer();
-tests.customerLogin();
-tests.customerModel();
-tests.fetchUser();
-tests.getBalance();
-tests.pinReset();
-tests.fetchUsers();
-tests.registerCustomer();
-// tests.invalidLogin();
+transfer();
+customerLogin();
+customerModel();
+fetchUser();
+getBalance();
+pinReset();
+fetchUsers();
+registerCustomer();

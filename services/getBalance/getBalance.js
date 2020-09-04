@@ -1,10 +1,6 @@
-const {
-    sequelize
-} = require("../../config/database/dbconnect");
-const {
-    customer
-} = require("../../model/customer");
-const Customer = require("../index");
+const { sequelize} = require("../../config/database/dbconnect");
+const {customer} = require("../../model/customer");
+const Customer = require("../../controller/index");
 
 module.exports = {
     getAccountBalance: (req, res) => {

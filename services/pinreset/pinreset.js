@@ -4,7 +4,7 @@ const {
 const {
     customer
 } = require("../../model/customer");
-const Customer = require("../index");
+const Customer = require("../../controller/index");
 
 module.exports = {
     pinReset: (req, res) => {
