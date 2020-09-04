@@ -144,8 +144,8 @@ module.exports = {
                                                                         text: `A debit transaction occured  on your account with us`,
                                                                         html: senderMsg,
                                                                     });
-                                                                    console.log(chalk.green("Message sent: %s", info.messageId));
-                                                                    console.log(chalk.blue("Preview URL: %s", nodemailer.getTestMessageUrl(info)));
+                                                                    console.log("Message sent: %s", info.messageId);
+                                                                    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
                                                                 }
                                                                 main().catch(console.error)
                                                                 // This is for the recipient
