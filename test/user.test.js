@@ -1,6 +1,7 @@
 'use strict';
 const tests = require("./testRequests");
 
+// Call all test suites;
 tests.transfer();
 tests.customerLogin();
 tests.customerModel();

@@ -20,28 +20,35 @@ module.exports = {
         if (pin.length !== 4) {
             res.status(401).json({
                 success: false,
-                message: "Pin must be 4 numbers."
+                message: "Pin must be 4 digits."
             })
-        } else {
-            sequelize.sync().then(async () => {
-                customer.update({
-                    pin: pin
-                }, {
-                    where: {
-                        accountNumber: accountNumber
-                    }
-                }).then(() => {
+        }
+        sequelize.sync().then(() => {
+            customer.update({
+                pin: pin
+            }, {
+                where: {
+                    accountNumber: accountNumber
+                }
+            }).then((data) => {
+                if (data[0] === 0) {
+                    res.status(401).json({
+                        success: false,
+                        message: "Invalid user"
+                    })
+                } else {
                     res.status(200).json({
                         success: true,
                         message: "Pin updated successfully."
+
                     })
-                }).catch((err) => {
-                    res.status(401).json({
-                        success: false,
-                        message: "Unable to update pin"
-                    })
+                }
+            }).catch((err) => {
+                res.status(401).json({
+                    success: false,
+                    message: "Unable to update pin"
                 })
             })
-        }
+        })
     }
 }

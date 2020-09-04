@@ -4,8 +4,8 @@ const {customer} = require("../../model/customer");
 module.exports = {
     getAccountBalance: (req, res) => {
          const { id } = req.params;
-        sequelize.sync().then(async () => {
-            await customer.findOne({
+        sequelize.sync().then(() => {
+            customer.findOne({
                 raw: true,
                 where: {
                     accountNumber: id

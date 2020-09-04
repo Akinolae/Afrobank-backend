@@ -9,13 +9,13 @@ module.exports = {
     transfer: async (req, res) => {
         const { sender,recipient,amount,pin} = req.body;
         // Queries the database, checks if the sender exists in the data bases
-        sequelize.sync().then(async () => {
+        sequelize.sync().then(() => {
                 customer.findOne({
                     raw: true,
                     where: {
                         accountNumber: sender
                     }
-                }).then(async (sender) => {
+                }).then((sender) => {
                         if (!sender) {
                             res.status(404).json({
                                 success: false,
@@ -28,7 +28,7 @@ module.exports = {
                                 message: "Invalid pin."
                             })
                         } else {
-                            await customer.findOne({
+                            customer.findOne({
                                 raw: true,
                                 where: {
                                     accountNumber: recipient

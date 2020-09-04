@@ -8,8 +8,8 @@ const {
 
 module.exports = {
     getUsers: (req, res) => {
-        sequelize.sync().then(async () => {
-            await customer.findAll({
+        sequelize.sync().then(() => {
+             customer.findAll({
                     raw: true
                 })
                 .then((resp) => {
@@ -37,8 +37,8 @@ module.exports = {
         const {
             accountNumber
         } = req.body;
-        sequelize.sync().then(async () => {
-            await customer.findAll({
+        sequelize.sync().then(() => {
+             customer.findAll({
                 raw: true,
                 where: {
                     accountNumber: accountNumber
