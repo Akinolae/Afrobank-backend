@@ -36,10 +36,10 @@ const tests = {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Pepsi",
+                    firstname: "Leye",
                     lastname: "Pedro",
                     surname: "Dave",
-                    email: "omoyele@outlook.com",
+                    email: "Ade@outlook.com",
                     phonenumber: "08034335045",
                     gender: "f",
                 });
@@ -47,6 +47,17 @@ const tests = {
             });
         });
     },
+    // invalidLogin: ()=> {
+        //   describe("POST@/login", () => {
+            //   test("Validates that the user that logged in is not the valid user", async () => {
+                //   const result = await axios.post("http://localhost:4000/Api/v1/login", {
+                    //   accountnumber: "211112123",
+                    //   firstname: process.env.FIRSTNAME,
+                //   });
+                //   expect(result.status).not.toBe\\Equal(200);
+            //   });
+        //   });
+    // },
     fetchUsers: () => {
         // get all users
         describe("GET@/users", () => {
@@ -77,7 +88,7 @@ const tests = {
                 const result = await axios.post("http://localhost:4000/Api/v1/transfer", {
                     sender: process.env.ACCOUNTNUMBER,
                     recipient: process.env.RECIPIENT,
-                    amount: 4000,
+                    amount: 500,
                     pin: process.env.PIN
                 });
                 expect(result.status).toBe(200);

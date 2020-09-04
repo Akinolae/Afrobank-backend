@@ -1,4 +1,4 @@
-'use strict';
+
 const tests = require("./testRequests");
 
 // Call all test suites;
@@ -10,3 +10,4 @@ tests.getBalance();
 tests.pinReset();
 tests.fetchUsers();
 tests.registerCustomer();
+// tests.invalidLogin();

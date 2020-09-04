@@ -4,66 +4,16 @@ const {
 const {
     sequelize
 } = require("../../config/database/dbconnect");
+const Customer = require("../index");
+const newUser = new Customer(sequelize, customer);
 
 
 module.exports = {
     getUsers: (req, res) => {
-        sequelize.sync().then(() => {
-             customer.findAll({
-                    raw: true
-                })
-                .then((resp) => {
-                    if (resp.length === 0) {
-                        res.status(404).json({
-                            success: false,
-                            message: "No users to display"
-                        })
-                    } else {
-                        res.status(200).json({
-                            success: true,
-                            message: resp
-                        })
-                    }
-                })
-                .catch((err) => {
-                    res.status(404).json({
-                        success: false,
-                        message: err
-                    })
-                })
-        });
+        newUser.getUsers(res)
     },
     getUser: (req, res) => {
-        const {
-            accountNumber
-        } = req.body;
-        sequelize.sync().then(() => {
-             customer.findAll({
-                raw: true,
-                where: {
-                    accountNumber: accountNumber
-                }
-            }).then((resp) => {
-                if (resp.length === 0) {
-                    res.status(404).json({
-                        success: false,
-                        message: "invalid account details."
-                    })
-                } else {
-                    res.status(200).json({
-                        success: true,
-                        message: resp
-                    })
-                }
-            }).catch((err) => {
-                res.status(404).json({
-                    success: false,
-                    message: err
-                })
-            })
-        })
+        const { accountNumber } = req.body;
+         newUser.getUser(accountNumber, res)
     },
-    deleteUser: (req, res) => {
-
-    }
 }

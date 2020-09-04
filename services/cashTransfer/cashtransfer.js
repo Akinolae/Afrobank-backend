@@ -1,15 +1,14 @@
 // const db = require("../../config/database/dbconnect");
 const { sequelize} = require("../../config/database/dbconnect")
 const {customer} = require("../../model/customer");
-const chalk = require("chalk")
 const nodemailer = require("nodemailer");
 
-
 module.exports = {
-    transfer: async (req, res) => {
+    transfer: (req, res) => {
         const { sender,recipient,amount,pin} = req.body;
         // Queries the database, checks if the sender exists in the data bases
-        sequelize.sync().then(() => {
+        sequelize.sync().
+        then(() => {
                 customer.findOne({
                     raw: true,
                     where: {
