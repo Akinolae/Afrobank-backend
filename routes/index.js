@@ -1,5 +1,4 @@
 const router = require("express").Router();
-
 const {transfer} = require('../services/cashTransfer/cashtransfer')
 const {register} = require("../services/Register/register");
 const {getAccountBalance} = require("../services/getBalance/getBalance");

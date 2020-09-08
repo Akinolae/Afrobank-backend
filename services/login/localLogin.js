@@ -1,7 +1,8 @@
     const {
         customer
     } = require("../../model/customer");
-    const Customer = require("../../controller/index");
+    const Customer = require("../../controllers/index");
+    const nodemailer = require("nodemailer")
     const {
         sequelize
     } = require("../../config/database/dbconnect");
@@ -15,7 +16,7 @@
                 accountnumber,
                 firstname
             } = req.body;
-            const login = new Customer(sequelize, customer)
-            login.userLogin(accountnumber, firstname, res);
+            const userLogin = new Customer(sequelize, customer, nodemailer)
+            userLogin.login(accountnumber, firstname, res);
         }
     }

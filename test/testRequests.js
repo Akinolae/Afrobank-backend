@@ -12,10 +12,9 @@ const tests = {
             test("Validate that a user can update his pin number", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/pinreset", {
                     accountNumber: "7055976824",
-                    pin: "2000"
+                    pin: '2000'
                 })
                 expect(result.status).toBe(200)
-                // console.log(result);
             });
         })
     },

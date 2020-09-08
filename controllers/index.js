@@ -2,12 +2,15 @@
 
 class Customer {
 
-    constructor(_sequelize, _customer) {
+    constructor(_sequelize, _customer, _nodemailer) {
         this.sequelize = _sequelize
         this.customer = _customer
+        this.nodemailer = _nodemailer
     }
     // #1
-   static register(firstname, lastname, surname, email, phonenumber, gender, res) {
+     register(firstname, lastname, surname, email, phonenumber, gender, res) {
+         const mailer = this.nodemailer;
+    
         const accountNumber = Math.floor(Math.random() * 10000000000);
         const accountBalance = 10000;
         const pin = '0000';
@@ -43,7 +46,7 @@ class Customer {
          `;
                     async function main() {
                         // create reusable transporter object using the default SMTP transport
-                        let transporter = nodemailer.createTransport({
+                        let transporter = mailer.createTransport({
                             host: "smtp.gmail.com",
                             port: 587,
                             secure: false, // true for 465, false for other ports
@@ -64,7 +67,7 @@ class Customer {
                             html: message,
                         });
                         console.log("Message sent: %s", info.messageId);
-                        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+                        console.log("Preview URL: %s", mailer.getTestMessageUrl(info));
                     }
                     main().catch(console.error);
                     res.status(200).json({
@@ -84,7 +87,7 @@ class Customer {
 
     // #2
     // returns the account balance of the specified user.
-   static getBalance(id, res) {
+     getBalance(id, res) {
         this.sequelize.sync().then(() => {
             this.customer.findOne({
                 raw: true,
@@ -114,7 +117,7 @@ class Customer {
 
     // #3
     // returns all users in the scope
-  static  getUsers(res) {
+     getUsers(res) {
         this.sequelize.sync().
         then(() => {
             this.customer.findAll({
@@ -143,9 +146,8 @@ class Customer {
     }
 
     // #4
-  static userLogin(accountnumber, firstname, res) {
-        const nodemailer = require("nodemailer");
-
+    login(accountnumber, firstname, res) {
+        const mailer = this.nodemailer;
         var message;
         if (!accountnumber) {
             res.status(400).json({
@@ -174,7 +176,7 @@ class Customer {
                 // send customer a notification.
                 async function main() {
                     // create reusable transporter object using the default SMTP transport
-                    let transporter = nodemailer.createTransport({
+                    let transporter = mailer.createTransport({
                         host: "smtp.gmail.com",
                         port: 587,
                         secure: false, // true for 465, false for other ports
@@ -195,7 +197,7 @@ class Customer {
                         html: message,
                     });
                     console.log("Message sent: %s", info.messageId);
-                    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+                    console.log("Preview URL: %s", mailer.getTestMessageUrl(info));
                 }
                 main().catch(console.error);
                 if (firstname !== resp.firstname) {
@@ -219,9 +221,9 @@ class Customer {
         }
     }
     // #5
-   static getUser(res, accountNumber) {
+     getUser  (res, accountNumber) {
         this.sequelize.sync().then(() => {
-            this.customer.findAll({
+             this.customer.findOne({
                 raw: true,
                 where: {
                     accountNumber: accountNumber
@@ -233,22 +235,23 @@ class Customer {
                         message: "invalid account details."
                     })
                 } else {
+                    console.log(resp)
                     res.status(200).json({
                         success: true,
                         message: resp
                     })
                 }
             }).catch((err) => {
-                res.status(404).json({
+                res.status(400).json({
                     success: false,
-                    message: err
+                    message: "User not recognised."
                 })
             })
         })
     }
 
     // #6
-   static setPin(accountNumber, pin, res) {
+     setPin(accountNumber, pin, res) {
         if (isNaN(pin)) {
             res.status(401).json({
                 success: false,
@@ -261,7 +264,8 @@ class Customer {
                 message: "Pin must be 4 digits."
             })
         }
-        sequelize.sync().then(() => {
+        this.sequelize.sync()
+        .then(() => {
             this.customer.update({
                 pin: pin
             }, {

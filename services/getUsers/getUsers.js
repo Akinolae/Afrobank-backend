@@ -4,16 +4,18 @@ const {
 const {
     sequelize
 } = require("../../config/database/dbconnect");
-const Customer = require("../../controller/index");
+const Customer = require("../../controllers/index");
 const newUser = new Customer(sequelize, customer);
 
 
 module.exports = {
+     getUser: (req, res) => {
+         const {
+             accountNumber
+         } = req.body;
+         newUser.getUser(res, accountNumber)
+     },
     getUsers: (req, res) => {
         newUser.getUsers(res)
-    },
-    getUser: (req, res) => {
-        const { accountNumber } = req.body;
-         newUser.getUser(accountNumber, res)
-    },
+    }
 }
