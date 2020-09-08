@@ -2,10 +2,11 @@
 
 class Customer {
 
-    constructor(_sequelize, _customer, _nodemailer) {
+    constructor(_sequelize, _customer, _nodemailer, _mailGun) {
         this.sequelize = _sequelize
         this.customer = _customer
         this.nodemailer = _nodemailer
+        this.mailGun = _mailGun
     }
     // #1
      register(firstname, lastname, surname, email, phonenumber, gender, res) {
@@ -31,7 +32,7 @@ class Customer {
             this.customer
                 .create(user)
                 .then(() => {
-                    const newUser = `${surname}  " "  ${firstname}  " "  ${lastname}`;
+                    const newUser = `${surname}  ${firstname}   ${lastname}`;
                     // message to be sent to the newly registered user!
                     const message = `
          <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
@@ -40,9 +41,14 @@ class Customer {
          <p>below is your account details </p>
          <p>please note that your account number should not be disclosed to anyone.</p>
          <p> welcome to the <strong>Afrobank</strong> family</p>
-         <p>account number: ${accountNumber}</p>
+         <p>account number: <strong>${accountNumber}</strong></p>
          <p>account name:  <strong> ${newUser.toUpperCase()}</strong></p>
-         <p>account balance: ${accountBalance}</p>
+         <p>account balance:<strong> ${accountBalance}</strong></p>
+         <p>default pin:<strong> ${pin}</strong></p>
+
+         we urge you to change your transaction pin upon login and keep them confidential.<br>
+
+         Thank you for choosing <strong>Afrobank</strong>.
          `;
                     async function main() {
                         // create reusable transporter object using the default SMTP transport
@@ -168,10 +174,11 @@ class Customer {
                 const customerCareLine = '08183430438';
                 message = `
          <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
-         Dear ${resp.firstname} ${resp.lastname} ${resp.surname}
-         A login attempt was made in your account at ${hours}:${minutes}.
-         If this is you kindly ignore, else, contact us at ${customerCareLine}.
-         Thank you for choosing AfroBank.
+         <p>Dear <strong> ${resp.firstname} ${resp.lastname} ${resp.surname} </strong></p>
+         <p>A login attempt was made in your account at <strong>${hours}:${minutes}</strong>.</p>
+         <p>If this is you kindly ignore, else, contact us at <strong>${customerCareLine}</strong>.</p><br>
+
+         <p>Thank you for choosing AfroBank.</p>
         `
                 // send customer a notification.
                 async function main() {

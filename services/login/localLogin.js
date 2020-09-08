@@ -11,7 +11,7 @@
     require("dotenv").config();
 
     module.exports = {
-        localLogin: (req, res) => {
+        localLogin: async (req, res) => {
             const {
                 accountnumber,
                 firstname

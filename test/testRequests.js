@@ -11,7 +11,7 @@ const tests = {
         describe("POST@/resetPin", () => {
             test("Validate that a user can update his pin number", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/pinreset", {
-                    accountNumber: "7055976824",
+                    accountNumber: "4887999104",
                     pin: '2000'
                 })
                 expect(result.status).toBe(200)
@@ -24,7 +24,7 @@ const tests = {
         describe("GET@/user", () => {
             test("should fetch a particular user with status 200", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/user", {
-                    accountNumber: "7055976824",
+                    accountNumber: "4887999104",
                 });
                 expect(result.status).toBe(200);
                 expect(result.data.message).not.toBeNull()
@@ -35,10 +35,10 @@ const tests = {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Leye",
-                    lastname: "Pedro",
-                    surname: "Dave",
-                    email: "Ade@outlook.com",
+                    firstname: "Bolanle",
+                    lastname: "Damilola",
+                    surname: "Stephen",
+                    email: "bolanle22@gmail.com",
                     phonenumber: "08034335045",
                     gender: "f",
                 });
@@ -71,7 +71,7 @@ const tests = {
     getBalance: () => {
         describe("GET@/balance", () => {
             it("Returns the account balance of a single user", async () => {
-                const id = "7055976824";
+                const id = "4887999104";
                 const result = await axios.get(
                     `http://localhost:4000/Api/v1/balance/${id}`
                 );
