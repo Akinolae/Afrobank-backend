@@ -87,10 +87,10 @@ module.exports = {
                                     const message = "transaction completed successfully";
                                     //  The sender's message.
                                     const senderMsg = `
+                            <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2>
                             <h4>${sender.firstname} ${sender.lastname} ${sender.surname}</h4>
-                            <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2><br>
                             <p>We wish to inform you that a debit transaction just occured on your account with us</p>
-                            p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
+                            <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
                             <p>Description: CASH-TRANSFER</p>
                             <p>Amount     :<strong> ${transactionAmt} </strong></p>
                             <p>Time       :<strong> ${hours} : ${minutes}</strong></p>
@@ -100,8 +100,8 @@ module.exports = {
                             `
 
                                     const recipientMsg = `
-                               <h4>Dear ${recipient.firstname} ${recipient.lastname} ${recipient.surname}</h4>
                                <h2 style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank Credit alert</strong></h2><br>
+                                <h4>Dear ${recipient.firstname} ${recipient.lastname} ${recipient.surname}</h4>
                                <p>We wish to inform you that a credit transaction just occured on your account with us</p>
                                <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
                               <p>Description : CREDIT</p>
@@ -148,7 +148,7 @@ module.exports = {
                                                 let info = await transporter.sendMail({
                                                     from: `Afrobank ${process.env.EMAIL}`, // sender address
                                                     to: sender.email, //reciever address that was gotten from the frontend/client
-                                                    subject: "DEBIT ALERT",
+                                                    subject: `AeNS Transaction Alert [Debit:${amount}.00]`,
                                                     text: `A debit transaction occured  on your account with us`,
                                                     html: senderMsg,
                                                 });
@@ -174,7 +174,7 @@ module.exports = {
                                                 let info = await transporter.sendMail({
                                                     from: `Afrobank ${process.env.EMAIL}`, // sender address
                                                     to: recipient.email, //reciever address that was gotten from the frontend/client
-                                                    subject: "CREDIT ALERT",
+                                                    subject: `AeNS Transaction Alert [Credit:${amount}.00]`,
                                                     text: `A Credit transaction occured  on your account with us`,
                                                     html: recipientMsg,
                                                 });

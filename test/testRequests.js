@@ -35,10 +35,10 @@ const tests = {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Bolanle",
+                    firstname: "Esther",
                     lastname: "Damilola",
-                    surname: "Stephen",
-                    email: "bolanle22@gmail.com",
+                    surname: "Nelly",
+                    email: "nelly2@gmail.com",
                     phonenumber: "08034335045",
                     gender: "f",
                 });
