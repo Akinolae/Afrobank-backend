@@ -2,11 +2,10 @@
 
 class Customer {
 
-    constructor(_sequelize, _customer, _nodemailer, _mailGun) {
+    constructor(_sequelize, _customer, _nodemailer) {
         this.sequelize = _sequelize
         this.customer = _customer
         this.nodemailer = _nodemailer
-        this.mailGun = _mailGun
     }
     // #1
      register(firstname, lastname, surname, email, phonenumber, gender, res) {
