@@ -11,7 +11,7 @@ const tests = {
         describe("POST@/resetPin", () => {
             test("Validate that a user can update his pin number", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/pinreset", {
-                    accountNumber: "4887999104",
+                    accountNumber: "5623806202",
                     pin: '2000'
                 })
                 expect(result.status).toBe(200)
@@ -24,7 +24,7 @@ const tests = {
         describe("GET@/user", () => {
             test("should fetch a particular user with status 200", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/user", {
-                    accountNumber: "4887999104",
+                    accountNumber: "5623806202",
                 });
                 expect(result.status).toBe(200);
                 expect(result.data.message).not.toBeNull()
@@ -35,11 +35,11 @@ const tests = {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Esther",
-                    lastname: "Damilola",
-                    surname: "Nelly",
-                    email: "nelly2@gmail.com",
-                    phonenumber: "08034335045",
+                    firstname: "Abimbola",
+                    lastname: "Femi",
+                    surname: "Micheals",
+                    email: "Bimbs22@gmail.com",
+                    phonenumber: "08034335043",
                     gender: "f",
                 });
                 expect(result.status).toBe(200);
