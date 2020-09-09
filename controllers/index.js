@@ -298,8 +298,9 @@ class Customer {
             })
     }
 
-    completeTransfer(res, otp, sender, recipient, amount) {
-        if (!otp || !sender || recipient) {
+    completeTransfer(res, sender, recipient, amount, otp) {
+        console.log(sender)
+        if (!otp || !sender || !recipient) {
             res.status(401).json({
                 success: false,
                 message: "All fields are required."
@@ -308,11 +309,13 @@ class Customer {
             this.sequelize.sync().then(() => {
                 this.customer.findOne({
                     raw: true,
+                }, {
                     where: {
                         accountNumber: sender
                     }
                 })
             }).then((user) => {
+                console.log(user)
                 if (otp !== user.otp) {
                     res.status(401).json({
                         success: false,
@@ -339,7 +342,7 @@ class Customer {
                             const hours = date.getHours();
                             const minutes = date.getMinutes();
                             const transactionAmt = parseInt(amount);
-                            const senderNewBalance =  - transactionAmt;
+                            const senderNewBalance = -transactionAmt;
                             const recievedTransfer = transactionAmt + reciverBalance;
                             const message = "transaction completed successfully";
 
@@ -383,116 +386,116 @@ class Customer {
                                 Avail: ${senderNewBalance};
                                 `;
 
-                                client.messages
-                                    .create({
-                                        from: "+15017122661",
-                                        body: SenderSms,
-                                        to: user.phonenumber,
-                                    })
-                                    .then((message) => console.log(message.sid));
-                                // recipient
-                                client.messages
-                                    .create({
-                                        from: "+12059000622",
-                                        body: reciSms,
-                                        to: newRecipient.phonenumber,
-                                    })
-                                    .then((message) => console.log(message.sid));
+                            client.messages
+                                .create({
+                                    from: "+15017122661",
+                                    body: SenderSms,
+                                    to: user.phonenumber,
+                                })
+                                .then((message) => console.log(message.sid));
+                            // recipient
+                            client.messages
+                                .create({
+                                    from: "+12059000622",
+                                    body: reciSms,
+                                    to: newRecipient.phonenumber,
+                                })
+                                .then((message) => console.log(message.sid));
 
-                                     this.customer.update({
-                                         accountBalance: senderNewBalance,
-                                     }, {
-                                         where: {
-                                             accountNumber: user.accountNumber,
-                                         },
-                                     }).then(() => {
-                                         customer
-                                             .update({
-                                                 accountBalance: recievedTransfer,
-                                             }, {
-                                                 where: {
-                                                     accountNumber: newRecipient.accountNumber,
-                                                 },
-                                             })
-                                             .then(() => {
-                                                 // Send both parties notification upon transaction completion
-                                                 // sender notification
-                                                 async function main() {
-                                                     // create reusable transporter object using the default SMTP transport
-                                                     let transporter = mailer.createTransport({
-                                                         host: "smtp.gmail.com",
-                                                         port: 587,
-                                                         secure: false, // true for 465, false for other ports
-                                                         auth: {
-                                                             user: process.env.EMAIL, // Specific gmail account which can be found in the confi
-                                                             pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
-                                                         },
-                                                         tls: {
-                                                             rejectUnauthorized: false,
-                                                         },
-                                                     });
-                                                     let info = await transporter.sendMail({
-                                                         from: `Afrobank ${process.env.EMAIL}`, // sender address
-                                                         to: user.email, //reciever address that was gotten from the frontend/client
-                                                         subject: `AeNS Transaction Alert [Debit:${amount}.00]`,
-                                                         text: `A debit transaction occured  on your account with us`,
-                                                         html: senderMsg,
-                                                     });
-                                                     console.log("Message sent: %s", info.messageId);
-                                                     console.log(
-                                                         "Preview URL: %s",
-                                                         mailer.getTestMessageUrl(info)
-                                                     );
-                                                 }
-                                                 main().catch(console.error);
-                                                 // This is for the recipient
-                                                 async function main2() {
-                                                     let transporter = mailer.createTransport({
-                                                         host: "smtp.gmail.com",
-                                                         port: 587,
-                                                         secure: false, // true for 465, false for other ports
-                                                         auth: {
-                                                             user: process.env.EMAIL, // Specific gmail account which can be found in the confi
-                                                             pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
-                                                         },
-                                                         tls: {
-                                                             rejectUnauthorized: false,
-                                                         },
-                                                     });
-                                                     // send mail with defined transport object
-                                                     let info = await transporter.sendMail({
-                                                         from: `Afrobank ${process.env.EMAIL}`, // sender address
-                                                         to: newRecipient.email, //reciever address that was gotten from the frontend/client
-                                                         subject: `AeNS Transaction Alert [Credit:${amount}.00]`,
-                                                         text: `A Credit transaction occured  on your account with us`,
-                                                         html: recipientMsg,
-                                                     });
-                                                     console.log("Message sent: %s", info.messageId);
-                                                     console.log(
-                                                         "Preview URL: %s",
-                                                         mailer.getTestMessageUrl(info)
-                                                     );
-                                                 }
-                                                 main2().catch(console.error);
-                                                 res.status(200).json({
-                                                     success: true,
-                                                     message: message.toUpperCase(),
-                                                 });
-                                             })
-                                             .catch((err) => {
-                                                 res.status(400).json({
-                                                     success: false,
-                                                     message: "Unable to complete transaction",
-                                                 });
-                                             });
-                                     });
+                            this.customer.update({
+                                accountBalance: senderNewBalance,
+                            }, {
+                                where: {
+                                    accountNumber: user.accountNumber,
+                                },
+                            }).then(() => {
+                                customer
+                                    .update({
+                                        accountBalance: recievedTransfer,
+                                    }, {
+                                        where: {
+                                            accountNumber: newRecipient.accountNumber,
+                                        },
+                                    })
+                                    .then(() => {
+                                        // Send both parties notification upon transaction completion
+                                        // sender notification
+                                        async function main() {
+                                            // create reusable transporter object using the default SMTP transport
+                                            let transporter = mailer.createTransport({
+                                                host: "smtp.gmail.com",
+                                                port: 587,
+                                                secure: false, // true for 465, false for other ports
+                                                auth: {
+                                                    user: process.env.EMAIL, // Specific gmail account which can be found in the confi
+                                                    pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
+                                                },
+                                                tls: {
+                                                    rejectUnauthorized: false,
+                                                },
+                                            });
+                                            let info = await transporter.sendMail({
+                                                from: `Afrobank ${process.env.EMAIL}`, // sender address
+                                                to: user.email, //reciever address that was gotten from the frontend/client
+                                                subject: `AeNS Transaction Alert [Debit:${amount}.00]`,
+                                                text: `A debit transaction occured  on your account with us`,
+                                                html: senderMsg,
+                                            });
+                                            console.log("Message sent: %s", info.messageId);
+                                            console.log(
+                                                "Preview URL: %s",
+                                                mailer.getTestMessageUrl(info)
+                                            );
+                                        }
+                                        main().catch(console.error);
+                                        // This is for the recipient
+                                        async function main2() {
+                                            let transporter = mailer.createTransport({
+                                                host: "smtp.gmail.com",
+                                                port: 587,
+                                                secure: false, // true for 465, false for other ports
+                                                auth: {
+                                                    user: process.env.EMAIL, // Specific gmail account which can be found in the confi
+                                                    pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
+                                                },
+                                                tls: {
+                                                    rejectUnauthorized: false,
+                                                },
+                                            });
+                                            // send mail with defined transport object
+                                            let info = await transporter.sendMail({
+                                                from: `Afrobank ${process.env.EMAIL}`, // sender address
+                                                to: newRecipient.email, //reciever address that was gotten from the frontend/client
+                                                subject: `AeNS Transaction Alert [Credit:${amount}.00]`,
+                                                text: `A Credit transaction occured  on your account with us`,
+                                                html: recipientMsg,
+                                            });
+                                            console.log("Message sent: %s", info.messageId);
+                                            console.log(
+                                                "Preview URL: %s",
+                                                mailer.getTestMessageUrl(info)
+                                            );
+                                        }
+                                        main2().catch(console.error);
+                                        res.status(200).json({
+                                            success: true,
+                                            message: message.toUpperCase(),
+                                        });
+                                    })
+                                    .catch((err) => {
+                                        res.status(400).json({
+                                            success: false,
+                                            message: "Unable to complete transaction",
+                                        });
+                                    });
+                            });
                         }
                     })
                 }
             }).catch((err) => {
                 res.status(400).json({
                     success: false,
-                    message: "Unable to complete transaction."
+                    message: err
                 })
             })
         }

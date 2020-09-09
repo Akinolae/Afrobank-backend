@@ -129,7 +129,7 @@ module.exports = {
     });
   },
   completeTransfer: (req, res) => {
-      const {otp, sender, recipient, amount } = req.body;
+    const {otp, sender, recipient, amount } = req.body;
     const newCustomer = new Customer(sequelize, customer, nodemailer)
     newCustomer.completeTransfer(res, otp, sender, recipient, amount);
   }
