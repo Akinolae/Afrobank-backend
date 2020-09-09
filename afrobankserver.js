@@ -1,6 +1,11 @@
 const  express = require("express");
 const cors = require("cors");
-
+const {sequelize} = require("./config/database/dbconnect");
+sequelize.authenticate().then(()=> {
+  console.log("connected successfully")
+}).catch((err) => {
+  console.log("Unable to connect to db", err)
+})
 const app = express();
 app.use(cors());
 app.use(express.json());
