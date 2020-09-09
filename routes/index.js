@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const {transfer} = require('../services/cashTransfer/cashtransfer')
+const {transfer, completeTransfer} = require('../services/cashTransfer/cashtransfer')
 const {register} = require("../services/Register/register");
 const {getAccountBalance} = require("../services/getBalance/getBalance");
 const {getUsers, getUser} = require("../services/getUsers/getUsers");
@@ -14,6 +14,7 @@ router.post(`/transfer`, transfer);
 router.post(`/pinreset`, pinReset);
 router.get(`/balance/:id`, getAccountBalance);
 router.post(`/user`, getUser);
+router.post(`/completeTransfer`, completeTransfer);
 router.get(`/delete/:id`);
 router.get(`/users`, getUsers);
 router.get(`/history/:id`, getTransactionHistory);

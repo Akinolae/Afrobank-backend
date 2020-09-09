@@ -3,6 +3,8 @@ const { sequelize } = require("../../config/database/dbconnect");
 const { customer } = require("../../model/customer");
 const nodemailer = require("nodemailer");
 const otpGenerator = require('otp-generator');
+const Customer = require("../../controllers/index");
+
 
 module.exports = {
   transfer: (req, res) => {
@@ -53,7 +55,6 @@ module.exports = {
                     //  the data that is returned is not a number/integer but a string of numbers
                     //  account balance of the sender and the reciever.
                     const senderBalance = parseInt(Sender.accountBalance);
-                    const reciverBalance = parseInt(Recipient.accountBalance);
 
                     //  checks if the sender  has  enough balance to proceed with the transaction
                     if (senderBalance <= 0) {
@@ -127,4 +128,9 @@ module.exports = {
         });
     });
   },
+  completeTransfer: (req, res) => {
+      const {otp, sender, recipient, amount } = req.body;
+    const newCustomer = new Customer(sequelize, customer, nodemailer)
+    newCustomer.completeTransfer(res, otp, sender, recipient, amount);
+  }
 };
