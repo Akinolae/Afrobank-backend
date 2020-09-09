@@ -3,7 +3,6 @@ const { sequelize } = require("../../config/database/dbconnect");
 const { customer } = require("../../model/customer");
 const nodemailer = require("nodemailer");
 const otpGenerator = require('otp-generator');
-const otp = otpGenerator.generate(6, {alphabets: false, digits: true, specialChars: false, upperCase:false})
 
 module.exports = {
   transfer: (req, res) => {
@@ -73,110 +72,53 @@ module.exports = {
                         message: "Insufficient balance.",
                       });
                     } else {
-                        console.log(otp, 'otp')
+                        const otp = otpGenerator.generate(6, {
+                            alphabets: false,
+                            digits: true,
+                            specialChars: false,
+                            upperCase: false
+                        })
+                         async function main() {
+                             // create reusable transporter object using the default SMTP transport
+                             let transporter = nodemailer.createTransport({
+                                 host: "smtp.gmail.com",
+                                 port: 587,
+                                 secure: false, // true for 465, false for other ports
+                                 auth: {
+                                     user: process.env.EMAIL, // Specific gmail account which can be found in the confi
+                                     pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
+                                 },
+                                 tls: {
+                                     rejectUnauthorized: false,
+                                 },
+                             });
+                             let info = await transporter.sendMail({
+                                 from: `Afrobank ${process.env.EMAIL}`, // sender address
+                                 to: Sender.email, //reciever address that was gotten from the frontend/client
+                                 subject: `AeNS Transaction OTP`,
+                                 text: `OTP`,
+                                 html: `Afrobank otp <strong>${otp}</strong>`,
+                             });
+                             console.log("Message sent: %s", info.messageId);
+                             console.log(
+                                 "Preview URL: %s",
+                                 nodemailer.getTestMessageUrl(info)
+                             );
+                         }
+                         main().catch(console.error);
 
-                      // send user an sms
+                         customer.update({
+                             otp: otp
+                         }, {
+                             where: {
+                                 accountNumber: sender
+                             }
+                         })
 
-                    // sender
-                      //  The sender's message.
-                      customer
-                        .update(
-                          {
-                            accountBalance: senderNewBalance,
-                          },
-                          {
-                            where: {
-                              accountNumber: Sender.accountNumber,
-                            },
-                          }
-                        )
-                        .then(() => {
-                          customer
-                            .update(
-                              {
-                                accountBalance: recievedTransfer,
-                              },
-                              {
-                                where: {
-                                  accountNumber: Recipient.accountNumber,
-                                },
-                              }
-                            )
-                            .then(() => {
-                              // Send both parties notification upon transaction completion
-
-                              // sender notification
-                              async function main() {
-                                // create reusable transporter object using the default SMTP transport
-                                let transporter = nodemailer.createTransport({
-                                  host: "smtp.gmail.com",
-                                  port: 587,
-                                  secure: false, // true for 465, false for other ports
-                                  auth: {
-                                    user: process.env.EMAIL, // Specific gmail account which can be found in the confi
-                                    pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
-                                  },
-                                  tls: {
-                                    rejectUnauthorized: false,
-                                  },
-                                });
-
-                                let info = await transporter.sendMail({
-                                  from: `Afrobank ${process.env.EMAIL}`, // sender address
-                                  to: Sender.email, //reciever address that was gotten from the frontend/client
-                                  subject: `AeNS Transaction Alert [Debit:${amount}.00]`,
-                                  text: `A debit transaction occured  on your account with us`,
-                                  html: senderMsg,
-                                });
-                                console.log("Message sent: %s", info.messageId);
-                                console.log(
-                                  "Preview URL: %s",
-                                  nodemailer.getTestMessageUrl(info)
-                                );
-                              }
-                              main().catch(console.error);
-                              // This is for the recipient
-                              async function main2() {
-                                let transporter = nodemailer.createTransport({
-                                  host: "smtp.gmail.com",
-                                  port: 587,
-                                  secure: false, // true for 465, false for other ports
-                                  auth: {
-                                    user: process.env.EMAIL, // Specific gmail account which can be found in the confi
-                                    pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
-                                  },
-                                  tls: {
-                                    rejectUnauthorized: false,
-                                  },
-                                });
-                                // send mail with defined transport object
-                                let info = await transporter.sendMail({
-                                  from: `Afrobank ${process.env.EMAIL}`, // sender address
-                                  to: Recipient.email, //reciever address that was gotten from the frontend/client
-                                  subject: `AeNS Transaction Alert [Credit:${amount}.00]`,
-                                  text: `A Credit transaction occured  on your account with us`,
-                                  html: recipientMsg,
-                                });
-                                console.log("Message sent: %s", info.messageId);
-                                console.log(
-                                  "Preview URL: %s",
-                                  nodemailer.getTestMessageUrl(info)
-                                );
-                              }
-                              main2().catch(console.error);
-
-                              res.status(200).json({
-                                success: true,
-                                message: message.toUpperCase(),
-                              });
-                            })
-                            .catch((err) => {
-                              res.status(400).json({
-                                success: false,
-                                message: "Unable to complete transaction",
-                              });
-                            });
-                        });
+                         res.status(200).json({
+                             success: true,
+                             message: "OTP sent to your email."
+                         })
                     }
                   }
                 }

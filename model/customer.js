@@ -52,6 +52,10 @@ const customer = sequelize.define('customer', {
     createdAt: {
         type: Sequelize.DATE(),
         allowNull: false
+    },
+    otp: {
+        type: Sequelize.STRING(6),
+        allowNull: true
     }
 })
 
