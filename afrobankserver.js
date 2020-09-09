@@ -1,8 +1,5 @@
 const  express = require("express");
 const cors = require("cors");
-const otpGenerator = require('otp-generator');
-const otp = otpGenerator.generate(6, {alphabets: false, digits: true, specialChars: false, upperCase:false})
-console.log(otp, 'otp')
 
 const app = express();
 app.use(cors());

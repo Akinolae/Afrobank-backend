@@ -2,9 +2,8 @@
 const { sequelize } = require("../../config/database/dbconnect");
 const { customer } = require("../../model/customer");
 const nodemailer = require("nodemailer");
-const accountSid = "AC3b93bc77e6d57843b353fd4da64352b2";
-const authToken = "69ea2919499552fdba6a4db36a0e919a";
-const client = require("twilio")(accountSid, authToken);
+const otpGenerator = require('otp-generator');
+const otp = otpGenerator.generate(6, {alphabets: false, digits: true, specialChars: false, upperCase:false})
 
 module.exports = {
   transfer: (req, res) => {
@@ -74,75 +73,12 @@ module.exports = {
                         message: "Insufficient balance.",
                       });
                     } else {
-                      const date = new Date();
-                      //  subtract the amount from the sender
-                      const hours = date.getHours();
-                      const minutes = date.getMinutes();
-                      const transactionAmt = parseInt(amount);
-                      const senderNewBalance = senderBalance - transactionAmt;
-                      const recievedTransfer = transactionAmt + reciverBalance;
-                      const message = "transaction completed successfully";
+                        console.log(otp, 'otp')
 
                       // send user an sms
-                      const SenderSms = `
-                      Acct: ${sender}
-                      Amt: ${amount}
-                      Desc: Transfer to ${recipient}
-                      Avail: ${senderNewBalance};
-                      `;
-
-                      const reciSms = `
-                      Acct: ${recipient}
-                      Amt: ${amount}
-                      Desc: Transfer to ${recipient}
-                      Avail: ${senderNewBalance};
-                      `;
 
                     // sender
-                      client.messages
-                        .create({
-                          from: "+15017122661",
-                          body: SenderSms,
-                          to: Sender.phonenumber,
-                        })
-                        .then((message) => console.log(message.sid));
-
-                    // recipient
-                        client.messages
-                          .create({
-                            from: "+12059000622",
-                            body: reciSms,
-                            to: Recipient.phonenumber,
-                          })
-                          .then((message) => console.log(message.sid));
                       //  The sender's message.
-                      const senderMsg = `
-                            <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2>
-                            <h4>${Sender.firstname} ${Sender.lastname} ${Sender.surname}</h4>
-                            <p>We wish to inform you that a debit transaction just occured on your account with us</p>
-                            <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
-                            <p>Description: CASH-TRANSFER</p>
-                            <p>Amount     :<strong> ${transactionAmt} </strong></p>
-                            <p>Time       :<strong> ${hours} : ${minutes}</strong></p>
-                            <p>Balance    : <strong>NGN ${senderBalance}</strong></p>
-                            <p>Recipient  : <strong>${Recipient.accountNumber} ${Recipient.firstname} ${Recipient.lastname} ${Recipient.surname}</strong></p>
-                            Thank you for banking with <strong> Afrobank </strong>. 
-                            `;
-
-                      const recipientMsg = `
-                               <h2 style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank Credit alert</strong></h2><br>
-                                <h4>Dear ${Recipient.firstname} ${Recipient.lastname} ${Recipient.surname}</h4>
-                               <p>We wish to inform you that a credit transaction just occured on your account with us</p>
-                               <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
-                              <p>Description : CREDIT</p>
-                              <p>Amount      : <strong>${transactionAmt}</strong></p>
-                              <p>Time        : <strong>${hours} : ${minutes}</strong></p>
-                              <p>Balance     : <strong>NGN ${recievedTransfer}</strong></p>  
-                              <p>Sender      : <strong>${Sender.firstname} ${Sender.lastname} ${Sender.surname}</strong></p><br>
-                             
-                              Thank you for banking with <strong> Afrobank </strong>. 
-
-                              `;
                       customer
                         .update(
                           {

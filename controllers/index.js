@@ -1,5 +1,5 @@
-'use srict';
-
+require("dotenv").config();
+const client = require("twilio")(process.env.ACC_SID, process.env.AUTH_TOKEN);
 class Customer {
 
     constructor(_sequelize, _customer, _nodemailer) {
@@ -8,9 +8,9 @@ class Customer {
         this.nodemailer = _nodemailer
     }
     // #1
-     register(firstname, lastname, surname, email, phonenumber, gender, res) {
-         const mailer = this.nodemailer;
-    
+    register(firstname, lastname, surname, email, phonenumber, gender, res) {
+        const mailer = this.nodemailer;
+
         const accountNumber = Math.floor(Math.random() * 10000000000);
         const accountBalance = 10000;
         const pin = '0000';
@@ -92,7 +92,7 @@ class Customer {
 
     // #2
     // returns the account balance of the specified user.
-     getBalance(id, res) {
+    getBalance(id, res) {
         this.sequelize.sync().then(() => {
             this.customer.findOne({
                 raw: true,
@@ -122,7 +122,7 @@ class Customer {
 
     // #3
     // returns all users in the scope
-     getUsers(res) {
+    getUsers(res) {
         this.sequelize.sync().
         then(() => {
             this.customer.findAll({
@@ -227,9 +227,9 @@ class Customer {
         }
     }
     // #5
-     getUser  (res, accountNumber) {
+    getUser(res, accountNumber) {
         this.sequelize.sync().then(() => {
-             this.customer.findOne({
+            this.customer.findOne({
                 raw: true,
                 where: {
                     accountNumber: accountNumber
@@ -241,7 +241,6 @@ class Customer {
                         message: "invalid account details."
                     })
                 } else {
-                    console.log(resp)
                     res.status(200).json({
                         success: true,
                         message: resp
@@ -257,7 +256,7 @@ class Customer {
     }
 
     // #6
-     setPin(accountNumber, pin, res) {
+    setPin(accountNumber, pin, res) {
         if (isNaN(pin)) {
             res.status(401).json({
                 success: false,
@@ -271,32 +270,110 @@ class Customer {
             })
         }
         this.sequelize.sync()
-        .then(() => {
-            this.customer.update({
-                pin: pin
-            }, {
-                where: {
-                    accountNumber: accountNumber
-                }
-            }).then((data) => {
-                if (data[0] === 0) {
+            .then(() => {
+                this.customer.update({
+                    pin: pin
+                }, {
+                    where: {
+                        accountNumber: accountNumber
+                    }
+                }).then((data) => {
+                    if (data[0] === 0) {
+                        res.status(401).json({
+                            success: false,
+                            message: "Invalid user"
+                        })
+                    } else {
+                        res.status(200).json({
+                            success: true,
+                            message: "Pin updated successfully."
+                        })
+                    }
+                }).catch((err) => {
                     res.status(401).json({
                         success: false,
-                        message: "Invalid user"
+                        message: "Unable to update pin"
                     })
-                } else {
-                    res.status(200).json({
-                        success: true,
-                        message: "Pin updated successfully."
-                    })
-                }
-            }).catch((err) => {
-                res.status(401).json({
-                    success: false,
-                    message: "Unable to update pin"
                 })
             })
-        })
+    }
+
+    completeTransfer(otp, res, customer) {
+        if(!otp){
+            res.status(401).json({
+                success: false,
+                message: "Input the otp that was sent to your email address."
+            })
+        }else{
+            this.sequelize
+        }
+        const mailer = this.nodemailer;
+        const date = new Date();
+        //  subtract the amount from the sender
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const transactionAmt = parseInt(amount);
+        const senderNewBalance = senderBalance - transactionAmt;
+        const recievedTransfer = transactionAmt + reciverBalance;
+        const message = "transaction completed successfully";
+
+        const SenderSms = `
+            Acct: ${sender}
+            Amt: ${amount}
+            Desc: Transfer to ${recipient}
+            Avail: ${senderNewBalance};
+            `;
+
+        const reciSms = `
+            Acct: ${recipient}
+            Amt: ${amount}
+            Desc: Transfer to ${recipient}
+            Avail: ${senderNewBalance};
+            `;
+
+        client.messages
+            .create({
+                from: "+15017122661",
+                body: SenderSms,
+                to: Sender.phonenumber,
+            })
+            .then((message) => console.log(message.sid));
+
+        // recipient
+        client.messages
+            .create({
+                from: "+12059000622",
+                body: reciSms,
+                to: Recipient.phonenumber,
+            })
+            .then((message) => console.log(message.sid));
+
+        const senderMsg = `
+      <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2>
+      <h4>${Sender.firstname} ${Sender.lastname} ${Sender.surname}</h4>
+      <p>We wish to inform you that a debit transaction just occured on your account with us</p>
+      <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
+      <p>Description: CASH-TRANSFER</p>
+      <p>Amount     :<strong> ${transactionAmt} </strong></p>
+      <p>Time       :<strong> ${hours} : ${minutes}</strong></p>
+      <p>Balance    : <strong>NGN ${senderBalance}</strong></p>
+      <p>Recipient  : <strong>${Recipient.accountNumber} ${Recipient.firstname} ${Recipient.lastname} ${Recipient.surname}</strong></p>
+      Thank you for banking with <strong> Afrobank </strong>. 
+      `;
+
+        const recipientMsg = `
+          <h2 style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank Credit alert</strong></h2><br>
+           <h4>Dear ${Recipient.firstname} ${Recipient.lastname} ${Recipient.surname}</h4>
+          <p>We wish to inform you that a credit transaction just occured on your account with us</p>
+          <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
+         <p>Description : CREDIT</p>
+         <p>Amount      : <strong>${transactionAmt}</strong></p>
+         <p>Time        : <strong>${hours} : ${minutes}</strong></p>
+         <p>Balance     : <strong>NGN ${recievedTransfer}</strong></p>  
+         <p>Sender      : <strong>${Sender.firstname} ${Sender.lastname} ${Sender.surname}</strong></p><br>
+        
+         Thank you for banking with <strong> Afrobank </strong>. 
+         `;
     }
 }
 

@@ -71,7 +71,7 @@ const tests = {
     getBalance: () => {
         describe("GET@/balance", () => {
             it("Returns the account balance of a single user", async () => {
-                const id = "4887999104";
+                const id = process.env.ACCOUNTNUMBER;
                 const result = await axios.get(
                     `http://localhost:4000/Api/v1/balance/${id}`
                 );
