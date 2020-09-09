@@ -4,9 +4,6 @@ const {
   Sequelize
 } = require("sequelize");
 
-if (process.env.NODE_ENV = 'production') {
-  
-} else {
   const sequelize = new Sequelize(
     process.env.DATABASE,
     process.env.USER,
@@ -20,6 +17,6 @@ if (process.env.NODE_ENV = 'production') {
       }
     }
   );
-}
+
 
 module.exports.sequelize = sequelize;
