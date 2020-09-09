@@ -19,4 +19,4 @@ app.use((req, res) => {
     message: "page not found"
   })
 })
-app.listen(process.env.NODE_ENV || 4000, () => console.log(`app is running`));
+app.listen(process.env.PORT || 4000, () => console.log(`app is running`));
