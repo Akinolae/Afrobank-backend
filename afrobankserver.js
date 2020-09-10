@@ -7,7 +7,6 @@ sequelize.authenticate().then(()=> {
   console.log("Unable to connect to db", err)
 })
 
-process.env.DATABASE_URL;
 const app = express();
 app.use(cors());
 app.use(express.json());

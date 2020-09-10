@@ -36,27 +36,16 @@ const tests = {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
                     firstname: "Akinola",
-                    lastname: "Makinde",
-                    surname: "Emmanuel",
+                    lastname: "Emmanuel",
+                    surname: "Makinde",
                     email: "makindeakinola22@gmail.com",
                     phonenumber: "08106683185",
-                    gender: "f",
+                    gender: "m",
                 });
                 expect(result.status).toBe(200);
             });
         });
     },
-    // invalidLogin: ()=> {
-        //   describe("POST@/login", () => {
-            //   test("Validates that the user that logged in is not the valid user", async () => {
-                //   const result = await axios.post("http://localhost:4000/Api/v1/login", {
-                    //   accountnumber: "211112123",
-                    //   firstname: process.env.FIRSTNAME,
-                //   });
-                //   expect(result.status).not.toBe\\Equal(200);
-            //   });
-        //   });
-    // },
     fetchUsers: () => {
         // get all users
         describe("GET@/users", () => {

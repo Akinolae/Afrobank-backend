@@ -51,11 +51,7 @@ module.exports = {
                       message: "enter a valid amount",
                     });
                   } else {
-                    //  converts each account balance to integers
-                    //  the data that is returned is not a number/integer but a string of numbers
-                    //  account balance of the sender and the reciever.
                     const senderBalance = parseInt(Sender.accountBalance);
-
                     //  checks if the sender  has  enough balance to proceed with the transaction
                     if (senderBalance <= 0) {
                       res.status(401).json({
@@ -79,6 +75,8 @@ module.exports = {
                             specialChars: false,
                             upperCase: false
                         })
+
+                        console.log(otp);
                          async function main() {
                              // create reusable transporter object using the default SMTP transport
                              let transporter = nodemailer.createTransport({
@@ -131,6 +129,7 @@ module.exports = {
   completeTransfer: (req, res) => {
     const {otp, sender, recipient, amount } = req.body;
     const newCustomer = new Customer(sequelize, customer, nodemailer)
-    newCustomer.completeTransfer(res, otp, sender, recipient, amount);
+    newCustomer.completeTransfer(res, sender, recipient, amount, otp );
+    // console.log(newCustomer.completeTransfer(res, sender, recipient, amount, otp ));
   }
 };
