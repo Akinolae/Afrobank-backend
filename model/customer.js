@@ -57,17 +57,24 @@ const customer = sequelize.define('customer', {
         type: Sequelize.STRING(6),
         allowNull: true
     }
-})
-
-const transactionHist = sequelize.define('History', {
+}),
+ transactionHist = sequelize.define('History', {
     transaction_id: {
         type: Sequelize.STRING(12),
         allowNull: false
     },
-    customer_id: {
-        type: Sequelize.STRING(15),
-        allowNull: false,
-    }
+    transactionType: {
+        type: Sequelize.STRING(10),
+        allowNull:false
+    },
+    transactionDate: {
+        type: Sequelize.DATE(),
+        allowNull: false
+    },
+})
+
+transactionHist.belongsTo(customer, {
+    foreignKey: 'accountNumber'
 })
 
 module.exports = {

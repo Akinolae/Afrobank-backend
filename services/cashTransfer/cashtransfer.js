@@ -1,14 +1,23 @@
 // const db = require("../../config/database/dbconnect");
-const { sequelize } = require("../../config/database/dbconnect");
-const { customer } = require("../../model/customer");
-const nodemailer = require("nodemailer");
+const {
+  sequelize
+} = require("../../config/database/dbconnect");
+const {
+  customer
+} = require("../../model/customer");
 const otpGenerator = require('otp-generator');
 const Customer = require("../../controllers/index");
+const newCustomer = new Customer(sequelize, customer);
 
 
 module.exports = {
   transfer: (req, res) => {
-    const { sender, recipient, amount, pin } = req.body;
+    const {
+      sender,
+      recipient,
+      amount,
+      pin
+    } = req.body;
     // Queries the database, checks if the sender exists in the data bases
     sequelize.sync().then(() => {
       customer
@@ -69,55 +78,30 @@ module.exports = {
                         message: "Insufficient balance.",
                       });
                     } else {
-                        const otp = otpGenerator.generate(6, {
-                            alphabets: false,
-                            digits: true,
-                            specialChars: false,
-                            upperCase: false
-                        })
+                      const otp = otpGenerator.generate(6, {
+                        alphabets: false,
+                        digits: true,
+                        specialChars: false,
+                        upperCase: false
+                      })
 
-                        console.log(otp);
-                         async function main() {
-                             // create reusable transporter object using the default SMTP transport
-                             let transporter = nodemailer.createTransport({
-                                 host: "smtp.gmail.com",
-                                 port: 587,
-                                 secure: false, // true for 465, false for other ports
-                                 auth: {
-                                     user: process.env.EMAIL, // Specific gmail account which can be found in the confi
-                                     pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
-                                 },
-                                 tls: {
-                                     rejectUnauthorized: false,
-                                 },
-                             });
-                             let info = await transporter.sendMail({
-                                 from: `Afrobank ${process.env.EMAIL}`, // sender address
-                                 to: Sender.email, //reciever address that was gotten from the frontend/client
-                                 subject: `AeNS Transaction OTP`,
-                                 text: `OTP`,
-                                 html: `Afrobank otp <strong>${otp}</strong>`,
-                             });
-                             console.log("Message sent: %s", info.messageId);
-                             console.log(
-                                 "Preview URL: %s",
-                                 nodemailer.getTestMessageUrl(info)
-                             );
-                         }
-                         main().catch(console.error);
+                      const message = `Afrobank otp <strong>${otp}</strong>`
+                      const subject = `AeNS Transaction OTP`;
+                      const text = `OTP`
+                      newCustomer.sendMail(message, Sender.email, subject, text);
+      
+                      customer.update({
+                        otp: otp
+                      }, {
+                        where: {
+                          accountNumber: sender
+                        }
+                      })
 
-                         customer.update({
-                             otp: otp
-                         }, {
-                             where: {
-                                 accountNumber: sender
-                             }
-                         })
-
-                         res.status(200).json({
-                             success: true,
-                             message: "OTP sent to your email."
-                         })
+                      res.status(200).json({
+                        success: true,
+                        message: "OTP sent to your email. It expires 15 minutes."
+                      })
                     }
                   }
                 }
@@ -125,11 +109,16 @@ module.exports = {
           }
         });
     });
+    newCustomer.updateOtp(sender);
   },
   completeTransfer: (req, res) => {
-    const {otp, sender, recipient, amount } = req.body;
-    const newCustomer = new Customer(sequelize, customer, nodemailer)
-    newCustomer.completeTransfer(res, sender, recipient, amount, otp );
-    // console.log(newCustomer.completeTransfer(res, sender, recipient, amount, otp ));
+    const {
+      otp,
+      sender,
+      recipient,
+      amount
+    } = req.body;
+    const newCustomer = new Customer(sequelize, customer)
+    newCustomer.completeTransfer(res, sender, recipient, amount, otp);
   }
 };
