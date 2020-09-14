@@ -6,7 +6,8 @@ const {
   customer
 } = require("../../model/customer");
 const otpGenerator = require('otp-generator');
-const Customer = require("../../controllers/index");
+const Customer = require("../../controller/index");
+const {response} = require("../../controller/responseHandler");
 const newCustomer = new Customer(sequelize, customer);
 
 
@@ -19,7 +20,6 @@ module.exports = {
       pin
     } = req.body;
     // Queries the database, checks if the sender exists in the data bases
-    sequelize.sync().then(() => {
       customer
         .findOne({
           raw: true,
@@ -29,16 +29,12 @@ module.exports = {
         })
         .then((Sender) => {
           if (!Sender) {
-            res.status(404).json({
-              success: false,
-              message: "Enter a valid account number.",
-            });
+            const msg = "Enter a valid account number."
+            response(msg, false, 400, res);
           }
           if (pin !== Sender.pin) {
-            res.status(401).json({
-              status: false,
-              message: "Invalid pin.",
-            });
+            const msg = "Invalid pin.";
+            response(msg, false, 401, res);
           } else {
             customer
               .findOne({
@@ -49,34 +45,23 @@ module.exports = {
               })
               .then((Recipient) => {
                 if (!Recipient) {
-                  res.status(404).json({
-                    success: false,
-                    message: "Recipient account number is invalid.",
-                  });
+                  const msg = "Recipient account number is invalid.";
+                  response(msg, false, 404, res);
                 } else {
                   if (isNaN(amount)) {
-                    res.status(401).json({
-                      status: false,
-                      message: "enter a valid amount",
-                    });
+                    const msg = "enter a valid amount";
+                    response(msg, false, 401, res);
                   } else {
                     const senderBalance = parseInt(Sender.accountBalance);
-                    //  checks if the sender  has  enough balance to proceed with the transaction
                     if (senderBalance <= 0) {
-                      res.status(401).json({
-                        status: false,
-                        message: "your account balance is low",
-                      });
+                      const msg = "your account balance is low";
+                      response(msg, false, 401, res);
                     } else if (amount <= 0) {
-                      res.status(401).json({
-                        success: false,
-                        message: "Enter a valid amount.",
-                      });
+                      const msg = "Enter a valid amount.";
+                      response(msg, false, 401, res);
                     } else if (amount > senderBalance) {
-                      res.status(401).json({
-                        success: false,
-                        message: "Insufficient balance.",
-                      });
+                      const msg = "Insufficient balance.";
+                      response(msg, false, 401, res);
                     } else {
                       const otp = otpGenerator.generate(6, {
                         alphabets: false,
@@ -89,7 +74,7 @@ module.exports = {
                       const subject = `AeNS Transaction OTP`;
                       const text = `OTP`
                       newCustomer.sendMail(message, Sender.email, subject, text);
-      
+                      console.log(otp);
                       customer.update({
                         otp: otp
                       }, {
@@ -97,18 +82,14 @@ module.exports = {
                           accountNumber: sender
                         }
                       })
-
-                      res.status(200).json({
-                        success: true,
-                        message: "OTP sent to your email. It expires 15 minutes."
-                      })
+                      const msg = "OTP sent to your email. It expires 15 minutes.";
+                      response(msg, true, 200, res);
                     }
                   }
                 }
               });
           }
         });
-    });
     newCustomer.updateOtp(sender);
   },
   completeTransfer: (req, res) => {

@@ -6,6 +6,7 @@ const {getUsers, getUser} = require("../services/getUsers/getUsers");
 const {localLogin} = require("../services/login/localLogin");
 const {getTransactionHistory} = require("../services/transactionHistory/getTransactionHistory");
 const {pinReset} = require("../services/pinreset/pinreset");
+const {deleteCustomer} = require("../services/deleteCustomer/deleteCustomer");
 
 
 router.post(`/register`, register);
@@ -15,7 +16,7 @@ router.post(`/pinreset`, pinReset);
 router.get(`/balance/:id`, getAccountBalance);
 router.post(`/user`, getUser);
 router.post(`/completeTransfer`, completeTransfer);
-router.get(`/delete/:id`);
+router.get(`/delete/:id`, deleteCustomer);
 router.get(`/users`, getUsers);
 router.get(`/history/:id`, getTransactionHistory);
 

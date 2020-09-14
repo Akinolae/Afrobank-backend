@@ -3,7 +3,7 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 const { customer } = require("../../model/customer");
 const { sequelize } = require("../../config/database/dbconnect");
-const Customer = require("../../controllers/index");
+const Customer = require("../../controller/index");
 
 
 module.exports = {

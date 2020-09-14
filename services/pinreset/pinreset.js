@@ -2,7 +2,7 @@ const  {sequelize} = require("../../config/database/dbconnect");
 const {
     customer
 } = require("../../model/customer");
-const Customer = require("../../controllers/index");
+const Customer = require("../../controller/index");
 
 module.exports = {
     pinReset: (req, res) => {

@@ -19,7 +19,7 @@ const customer = sequelize.define('customer', {
         allowNull: false
     },
     pin: {
-        type: Sequelize.STRING(4),
+        type: Sequelize.INTEGER(4),
         allowNull: false
     },
     surname: {
@@ -40,13 +40,13 @@ const customer = sequelize.define('customer', {
         allowNull: false
     },
     accountNumber: {
-        type: Sequelize.STRING(15),
+        type: Sequelize.BIGINT,
         allowNull: false,
         primaryKey: true,
         unique: true
     },
     accountBalance: {
-        type: Sequelize.STRING(100),
+        type: Sequelize.BIGINT,
         allowNull: false
     },
     createdAt: {
@@ -54,11 +54,11 @@ const customer = sequelize.define('customer', {
         allowNull: false
     },
     otp: {
-        type: Sequelize.STRING(6),
+        type: Sequelize.BIGINT,
         allowNull: true
     }
 }),
- transactionHist = sequelize.define('History', {
+ transactionHist = sequelize.define('History',  {
     transaction_id: {
         type: Sequelize.STRING(12),
         allowNull: false

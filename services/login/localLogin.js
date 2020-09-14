@@ -1,7 +1,7 @@
     const {
         customer
     } = require("../../model/customer");
-    const Customer = require("../../controllers/index");
+    const Customer = require("../../controller/index");
     const {
         sequelize
     } = require("../../config/database/dbconnect");

@@ -4,7 +4,10 @@ const axios = require("axios");
 const {
     customer
 } = require("../model/customer")
+const sequelize = require("../config/database/dbconnect");
 require("dotenv").config();
+const Customer = require("../controller/index");
+const newCustomer = new Customer(sequelize, customer);
 
 const tests = {
     pinReset: () => {
@@ -12,7 +15,7 @@ const tests = {
             test("Validate that a user can update his pin number", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/pinreset", {
                     accountNumber: process.env.ACCOUNTNUMBER,
-                    pin: '2000'
+                    pin: process.env.PIN
                 })
                 expect(result.status).toBe(200)
             });
@@ -35,11 +38,11 @@ const tests = {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Olufemi",
-                    lastname: "Demilade",
-                    surname: "Stephen",
-                    email: "olufemiDemi@gmail.com",
-                    phonenumber: "08034334033",
+                    firstname: "Yede",
+                    lastname: "Esu",
+                    surname: "Agbako",
+                    email: "sanaaLathan@gmail.com",
+                    phonenumber: "08106683185",
                     gender: "f",
                 });
                 expect(result.status).toBe(200);

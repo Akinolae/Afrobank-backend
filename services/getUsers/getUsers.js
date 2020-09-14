@@ -4,7 +4,7 @@ const {
 const {
     sequelize
 } = require("../../config/database/dbconnect");
-const Customer = require("../../controllers/index");
+const Customer = require("../../controller/index");
 const newUser = new Customer(sequelize, customer);
 
 
