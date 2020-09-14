@@ -4,10 +4,19 @@ const {
     response
 } = require('./responseHandler');
 
-const {
-    history
-} = require("../model/customer");
+// const {history} = require("../model/customer");
 const nodemailer = require("nodemailer");
+const redisClient = require("../lib/redis");
+
+redisClient.on("error", function (error) {
+  console.error(error);
+});
+
+// Secures connection.
+redisClient.on("connect", () => {
+  console.log("Cache connection established");
+});
+
 
 module.exports = class Customer {
     constructor(_sequelize, _customer) {
@@ -81,12 +90,19 @@ module.exports = class Customer {
                 const respMsg = "Invalid account number.";
                 response(respMsg, false, 404, res)
             } else {
+                
                 const data = resp.accountBalance
-                response(data, true, 200, res)
+                redisClient.setex(id, 3600, data);
+                redisClient.get(id, (err, resp) => {
+                    if(err){
+                        response(err, false, 401, res);
+                    }
+                response(resp, true, 200, res);
+                })
             }
         }).catch((err) => {
             const respMsg = "An error occured."
-            response(respMsg, false, 400, res);
+            response(respMsg, false, 500, res);
         })
     }
 
