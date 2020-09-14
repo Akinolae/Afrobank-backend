@@ -248,7 +248,7 @@ module.exports = class Customer {
                         const recievedTransfer = transactionAmt + reciverBalance;
                         const senderMsg = `
                     <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2>
-                    <h4>${user.firstname} ${user.lastname} ${user.surname}</h4>
+                    <h4>Dear ${user[0].firstname} ${user[0].lastname} ${user[0].surname}</h4>
                     <p>We wish to inform you that a debit transaction just occured on your account with us</p>
                     <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
                     <p>Description: CASH-TRANSFER</p>
@@ -339,7 +339,7 @@ module.exports = class Customer {
                     }
                 })
             })
-        }, 90000);
+        }, 900000);
         return "Done";
     }
     // #9
@@ -379,7 +379,7 @@ module.exports = class Customer {
             console.log("Message sent: %s", info.messageId);
             console.log(
                 "Preview URL: %s",
-                mailer.getTestMessageUrl(info)
+                nodemailer.getTestMessageUrl(info)
             );
         }
         main();
