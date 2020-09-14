@@ -38,11 +38,11 @@ const tests = {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Yede",
-                    lastname: "Esu",
-                    surname: "Agbako",
-                    email: "sanaaLathan@gmail.com",
-                    phonenumber: "08106683185",
+                    firstname: "Yemi",
+                    lastname: "Makinde",
+                    surname: "Ib",
+                    email: "yemi@gmail.com",
+                    phonenumber: "08034335043",
                     gender: "f",
                 });
                 expect(result.status).toBe(200);

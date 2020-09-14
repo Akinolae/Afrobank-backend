@@ -1,5 +1,6 @@
 require("dotenv").config();
 const client = require("twilio")(process.env.ACC_SID, process.env.AUTH_TOKEN);
+const Nexmo = require("nexmo");
 const {
     response
 } = require('./responseHandler');
@@ -323,6 +324,7 @@ module.exports = class Customer {
                                         sendText,
                                         sendMail
                                     } = this;
+                                    console.log(user[0].phonenumber)
                                     sendText(user[0].phonenumber, SenderSms)
                                     sendText(newRecipient.phonenumber, reciSms)
                                     sendMail(senderMsg, user[0].email, senderSubj, text);
@@ -360,12 +362,12 @@ module.exports = class Customer {
     // #9
     sendText(phonenumber, message) {
         client.messages
-            .create({
-                from: "+15017122661",
-                body: message,
-                to: phonenumber,
-            })
-            .then((message) => console.log(message.sid));
+        .create({
+        from: "+15017122661",
+        body: message,
+        to: phonenumber,
+        })
+        .then((message) => console.log(message.sid));
     }
     // #10
     sendMail(message, recipient, subject, text) {
