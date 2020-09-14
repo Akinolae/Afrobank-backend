@@ -356,7 +356,6 @@ module.exports = class Customer {
                 })
             })
         }, 900000);
-        return "Done";
     }
     // #9
     sendText(phonenumber, message) {
