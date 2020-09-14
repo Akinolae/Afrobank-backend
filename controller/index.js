@@ -9,12 +9,12 @@ const nodemailer = require("nodemailer");
 const redisClient = require("../lib/redis");
 
 redisClient.on("error", function (error) {
-  console.error(error);
+    console.error(error);
 });
 
 // Secures connection.
 redisClient.on("connect", () => {
-  console.log("Cache connection established");
+    console.log("Cache connection established");
 });
 
 
@@ -90,14 +90,14 @@ module.exports = class Customer {
                 const respMsg = "Invalid account number.";
                 response(respMsg, false, 404, res)
             } else {
-                
+
                 const data = resp.accountBalance
                 redisClient.setex(id, 3600, data);
                 redisClient.get(id, (err, resp) => {
-                    if(err){
+                    if (err) {
                         response(err, false, 401, res);
                     }
-                response(resp, true, 200, res);
+                    response(resp, true, 200, res);
                 })
             }
         }).catch((err) => {
@@ -151,15 +151,15 @@ module.exports = class Customer {
          <p>Thank you for choosing AfroBank.</p>
         
         `;
-                const text = "Login notification"
-                const subject = "Account Login"
-                this.sendMail(message, resp.email, subject, text);
                 // send customer a notification.
                 if (firstname !== resp.firstname) {
                     const resMsg = "Invalid login parameters";
                     response(resMsg, false, 401, res);
                 } else {
+                    const text = "Login notification"
+                    const subject = "Account Login"
                     const resMsg = "Login successfully";
+                    this.sendMail(message, resp.email, subject, text);
                     response(resMsg, true, 200, res, resp)
                 }
             }).catch((err) => {
