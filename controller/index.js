@@ -1,6 +1,5 @@
 require("dotenv").config();
 const client = require("twilio")(process.env.ACC_SID, process.env.AUTH_TOKEN);
-const Nexmo = require("nexmo");
 const {
     response
 } = require('./responseHandler');
@@ -118,7 +117,14 @@ module.exports = class Customer {
                     const respMsg = "No customer to display";
                     response(respMsg, false, 404, res);
                 } else {
-                    response(resp, true, 200, res);
+                    redisClient.setex("users", 3600, resp);
+                    redisClient.get("users", (err, data) => {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            response(data, true, 200, res);
+                        }
+                    })
                 }
             })
             .catch((err) => {
@@ -181,7 +187,14 @@ module.exports = class Customer {
                 const resMsg = "invalid account details.";
                 response(resMsg, false, 404, res);
             } else {
-                response(resp, true, 200, res);
+                redisClient.setex(accountNumber, 3600, resp);
+                redisClient.get(accountNumber, (err, data) => {
+                    if (err) {
+                        console.log(err);
+                    } else {
+                        response(data, true, 200, res);
+                    }
+                })
             }
         }).catch((err) => {
             const resMsg = "User not recognised.";
@@ -362,12 +375,12 @@ module.exports = class Customer {
     // #9
     sendText(phonenumber, message) {
         client.messages
-        .create({
-        from: "+15017122661",
-        body: message,
-        to: phonenumber,
-        })
-        .then((message) => console.log(message.sid));
+            .create({
+                from: "+15017122661",
+                body: message,
+                to: phonenumber,
+            })
+            .then((message) => console.log(message.sid));
     }
     // #10
     sendMail(message, recipient, subject, text) {
