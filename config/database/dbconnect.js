@@ -3,9 +3,12 @@ require("dotenv").config();
 const {
   Sequelize
 } = require("sequelize");
+const optionsProduction = process.env.DATABASE_URL;
+const optionsDevelopment = process.env.DATABASE
+const sequelizeOptions = process.env.NODE_ENV === 'production' ? optionsProduction : optionsDevelopment
 
   const sequelize = new Sequelize(
-    process.env.DATABASE,
+    sequelizeOptions,
     process.env.USER,
     process.env.PASSWORD, {
       host: process.env.HOST,
