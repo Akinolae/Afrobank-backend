@@ -4,9 +4,9 @@ const {
   Sequelize
 } = require("sequelize");
 const url = require("url");
-const optionsProduction = url.parse('CLEARDB_DATABASE_URL');
+// const optionsProduction = url.parse('process.env.CLEARDB_DATABASE_URL');
 const optionsDevelopment = process.env.DATABASE
-const sequelizeOptions = process.env.NODE_ENV === 'production' ? optionsProduction : optionsDevelopment
+const sequelizeOptions = process.env.NODE_ENV === 'production' ? process.env.CLEARDB_DATABASE_URL : optionsDevelopment
 
   const sequelize = new Sequelize(
     sequelizeOptions,
