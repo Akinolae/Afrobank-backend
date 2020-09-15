@@ -3,7 +3,8 @@ require("dotenv").config();
 const {
   Sequelize
 } = require("sequelize");
-const optionsProduction = process.env.DATABASE_URL;
+const url = require("url");
+const optionsProduction = url.parse('process.env.DATABASE_URL');
 const optionsDevelopment = process.env.DATABASE
 const sequelizeOptions = process.env.NODE_ENV === 'production' ? optionsProduction : optionsDevelopment
 
