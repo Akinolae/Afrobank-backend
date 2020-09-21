@@ -3,11 +3,13 @@ require("dotenv").config();
 const {
   Sequelize
 } = require("sequelize");
-var env = process.env.NODE_ENV || 'development'
+const env = process.env.NODE_ENV || 'development'
+const url = require("url");
 const config = require('./config.json')[env];
+const herokuUrl = url.parse('process.env[config.use_env_variable]');
 let sequelize;
 if(config.use_env_variable){
-   sequelize = new Sequelize(process.env[config.use_env_variable],{dialect: 'mysql'});
+   sequelize = new Sequelize(herokuUrl,{dialect: 'mysql'});
   return sequelize;
 }else{
    sequelize = new Sequelize(config)
