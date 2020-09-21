@@ -10,11 +10,13 @@ const herokuUrl = url.parse('process.env[config.use_env_variable]');
 let sequelize;
 if (config.use_env_variable) {
   sequelize = new Sequelize(herokuUrl, null, null, {
-    dialect: 'mysql'
+    dialect: 'mysql',
   });
   return sequelize;
 } else {
   sequelize = new Sequelize(config)
 }
-
-module.exports = sequelize;
+const db = {};
+db.sequelize = sequelize;
+db.Sequelize = Sequelize
+module.exports = db;
