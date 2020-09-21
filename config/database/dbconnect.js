@@ -17,4 +17,4 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config)
 }
 
-module.exports.sequelize = sequelize;
+module.exports = sequelize;

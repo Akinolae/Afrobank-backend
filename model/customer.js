@@ -1,6 +1,5 @@
-const {
-    sequelize
-} = require("../config/database/dbconnect");
+const  sequelize = require("../config/database/dbconnect");
+console.log(sequelize);
 const Sequelize = require("sequelize");
 
 const customer = sequelize.define('customer', {
