@@ -1,10 +1,11 @@
 const { sequelize} = require("../../config/database/dbconnect");
 const {customer} = require("../../model/customer");
-const Customer = require("../../controller/index");
+const ussdTransaction = require("../../controller/ussd");
 
 module.exports = {
     ussdTransaction: (req, res) => {
         const {sessionId, serviceCode, phoneNumber, text} = req.body;
-        console.log("Afrobank", req.body)
+        const newTransaction = new ussdTransaction();
+        newTransaction.ussdTransaction(text, res);
     }
 }
