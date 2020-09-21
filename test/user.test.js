@@ -7,10 +7,14 @@ const {
   getBalance,
   pinReset,
   registerCustomer,
-  transfer
+  transfer,
+  sendEmail,
+  sendText
 } = require("./testRequests");
 
 // Call all test suites;
+sendEmail();
+sendText();
 transfer();
 customerLogin();
 customerModel();

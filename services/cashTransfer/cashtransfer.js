@@ -1,4 +1,4 @@
-// const db = require("../../config/database/dbconnect");
+
 const {
   sequelize
 } = require("../../config/database/dbconnect");

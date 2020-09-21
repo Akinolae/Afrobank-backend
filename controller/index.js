@@ -1,8 +1,11 @@
 require("dotenv").config();
 const client = require("twilio")(process.env.ACC_SID, process.env.AUTH_TOKEN);
-const { response } = require('./responseHandler');
+const {
+    response
+} = require('./responseHandler');
 const nodemailer = require("nodemailer");
 const redisClient = require("../lib/redis");
+const jwt = require("jsonwebtoken");
 
 redisClient.on("error", function (error) {
     console.error(error);
@@ -70,7 +73,6 @@ module.exports = class Customer {
         });
     }
 
-
     // #2
     // returns the account balance of the specified user.
     getBalance(id, res) {
@@ -102,19 +104,15 @@ module.exports = class Customer {
             })
             .then((resp) => {
                 const respMsg = "No customer to display";
-                redisClient.setex("users", 3600, resp);
-                resp.length === 0 ? response(respMsg, false, 404, res) : redisClient.get("users", (err, data) => {
-                    err ? console.log(err) : response(data, true, 200, res);
-                })
+                resp.length === 0 ? response(respMsg, false, 404, res) : response(resp, true, 200, res)
             })
             .catch((err) => {
-                response(err, false, 404, res);
+                response(err, false, 400, res);
             })
     }
 
     // #4
     login(accountnumber, firstname, res) {
-        console.log(accountnumber)
         const msg = "Account number is required";
         !accountnumber ? response(msg, false, 400, res) :
             this.customer.findOne({
@@ -123,6 +121,8 @@ module.exports = class Customer {
                     accountNumber: accountnumber
                 }
             }).then((resp) => {
+               const token = jwt.sign({ firstname: resp.firstname, acct: resp.accountNumber}, process.env.USER)
+               console.log(token);
                 const date = new Date();
                 const hours = date.getHours()
                 const minutes = date.getMinutes()
@@ -142,27 +142,24 @@ module.exports = class Customer {
                 firstname !== resp.firstname ? response(resMsg, false, 401, res) :
                     // send customer a notification.
                     this.sendMail(message, resp.email, subject, text)
-                response(sucessMsg, true, 200, res, resp)
+                response(sucessMsg, true, 200, res, token, resp)
             }).catch((err) => {
                 const resMsg = "Check credentials.";
                 response(resMsg, false, 401, res);
             })
     }
     // #5
-    getUser(res, accountNumber) {
+     getUser = (res, accountNumber) => {
         this.customer.findOne({
             raw: true,
             where: {
                 accountNumber: accountNumber
             },
-        }, ).then((resp) => {
+        }).then((resp) => {
             const resMsg = "invalid account details.";
-            redisClient.setex(accountNumber, 3600, resp);
-            resp.length === 0 ? response(resMsg, false, 404, res) :
-                redisClient.get(accountNumber, (err, data) => {
-                    err ? console.error(err) : response(data, true, 200, res);
-                })
+            resp.length === 0 ? response(resMsg, false, 404, res) : response(resp, true, 200, res);
         }).catch((err) => {
+            console.log(err)
             const resMsg = "User not recognised.";
             response(resMsg, false, 400, res);
         })
@@ -214,15 +211,16 @@ module.exports = class Customer {
                     }).then((newRecipient) => {
                         const message = "Check credentials.";
                         !newRecipient ? response(message, false, 401, res) : null;
-                            const date = new Date();
-                            const reciverBalance = parseInt(newRecipient.accountBalance);
-                            const senderBalance = parseInt(user[0].accountBalance);
-                            const hours = date.getHours();
-                            const minutes = date.getMinutes();
-                            const transactionAmt = parseInt(amount);
-                            const senderNewBalance = senderBalance - transactionAmt;
-                            const recievedTransfer = transactionAmt + reciverBalance;
-                            const senderMsg = `
+
+                        const date = new Date();
+                        const reciverBalance = parseInt(newRecipient.accountBalance);
+                        const senderBalance = parseInt(user[0].accountBalance);
+                        const hours = date.getHours();
+                        const minutes = date.getMinutes();
+                        const transactionAmt = parseInt(amount);
+                        const senderNewBalance = senderBalance - transactionAmt;
+                        const recievedTransfer = transactionAmt + reciverBalance;
+                        const senderMsg = `
                     <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2>
                     <h4>Dear ${user[0].firstname} ${user[0].lastname} ${user[0].surname}</h4>
                     <p>We wish to inform you that a debit transaction just occured on your account with us</p>
@@ -234,7 +232,7 @@ module.exports = class Customer {
                     <p>Recipient  : <strong>${newRecipient.accountNumber} ${newRecipient.firstname} ${newRecipient.lastname} ${newRecipient.surname}</strong></p>
                     Thank you for banking with <strong> Afrobank </strong>. 
                     `;
-                            const recipientMsg = `
+                        const recipientMsg = `
                       <h2 style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank Credit alert</strong></h2><br>
                        <h4>Dear ${newRecipient.firstname} ${newRecipient.lastname} ${newRecipient.surname}</h4>
                       <p>We wish to inform you that a credit transaction just occured on your account with us</p>
@@ -246,55 +244,55 @@ module.exports = class Customer {
                      <p>Sender      : <strong>${user.firstname} ${user.lastname} ${user.surname}</strong></p><br>
                      Thank you for banking with <strong> Afrobank </strong>. 
                      `;
-                            const SenderSms = `
+                        const SenderSms = `
                     Acct: ${sender}
                     Amt: ${amount}
                     Desc: Transfer to ${recipient}
                     Avail: ${senderNewBalance};
                     `;
-                            const reciSms = `
+                        const reciSms = `
                     Acct: ${recipient}
                     Amt: ${amount}
                     Desc: Transfer to ${recipient}
                     Avail: ${senderNewBalance};
                     `;
-                            this.customer.update({
-                                accountBalance: senderNewBalance,
-                                otp: null
-                            }, {
-                                where: {
-                                    accountNumber: user[0].accountNumber,
-                                },
-                            }).then(() => {
-                                this.customer
-                                    .update({
-                                        accountBalance: recievedTransfer,
-                                    }, {
-                                        where: {
-                                            accountNumber: newRecipient.accountNumber,
-                                        },
-                                    })
-                                    .then(() => {
-                                        const text = "Transaction notification";
-                                        const senderSubj = `AeNS Transaction Alert [DEBIT:${amount}.00]`;
-                                        const reciverSubj = `AeNS Transaction Alert [CREDIT:${amount}.00]`
-                                        // Send both parties notification upon transaction completion
-                                        const {
-                                            sendText,
-                                            sendMail
-                                        } = this;
-                                        sendText(user[0].phonenumber, SenderSms)
-                                        sendText(newRecipient.phonenumber, reciSms)
-                                        sendMail(senderMsg, user[0].email, senderSubj, text);
-                                        sendMail(recipientMsg, newRecipient.email, reciverSubj, text);
+                        this.customer.update({
+                            accountBalance: senderNewBalance,
+                            otp: null
+                        }, {
+                            where: {
+                                accountNumber: user[0].accountNumber,
+                            },
+                        }).then(() => {
+                            this.customer
+                                .update({
+                                    accountBalance: recievedTransfer,
+                                }, {
+                                    where: {
+                                        accountNumber: newRecipient.accountNumber,
+                                    },
+                                })
+                                .then(() => {
+                                    const text = "Transaction notification";
+                                    const senderSubj = `AeNS Transaction Alert [DEBIT:${amount}.00]`;
+                                    const reciverSubj = `AeNS Transaction Alert [CREDIT:${amount}.00]`
+                                    // Send both parties notification upon transaction completion
+                                    const {
+                                        sendText,
+                                        sendMail
+                                    } = this;
+                                    sendText(user[0].phonenumber, SenderSms)
+                                    sendText(newRecipient.phonenumber, reciSms)
+                                    sendMail(senderMsg, user[0].email, senderSubj, text);
+                                    sendMail(recipientMsg, newRecipient.email, reciverSubj, text);
 
-                                        const resMsg = `TRANSACTION COMPLETED SUCCESSFULLY.`;
-                                        response(resMsg, true, 200, res);
-                                    }).catch(() => {
-                                        const resMsg = "Unable to complete transaction";
-                                        response(resMsg, false, 400, res);
-                                    });
-                            })
+                                    const resMsg = `TRANSACTION COMPLETED SUCCESSFULLY.`;
+                                    response(resMsg, true, 200, res);
+                                }).catch(() => {
+                                    const resMsg = "Unable to complete transaction";
+                                    response(resMsg, false, 400, res);
+                                });
+                        })
                     })
             })
     }
@@ -375,7 +373,6 @@ module.exports = class Customer {
 
     // #12
     deleteCustomer(accountNo, res) {
-        console.log(accountNo);
         this.sequelize.sync().then(() => {
             this.customer.destroy({
                 raw: true,
@@ -385,8 +382,8 @@ module.exports = class Customer {
             }).then((resp) => {
                 const msg = "Customer doesn't exist.";
                 const confMsg = "Customer deleted";
-                resp === 0 ? response(msg, false, 400, res) : response(msg, true, 200, res);
-            }).catch((err) => {
+                resp === 0 ? response(msg, false, 400, res) : response(confMsg, true, 200, res);
+            }).catch(() => {
                 const msg = "Unable to delete customer."
                 response(msg, false, 400, res);
             })

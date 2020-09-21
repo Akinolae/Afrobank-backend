@@ -16,6 +16,5 @@
             } = req.body;
             const userLogin = new Customer(sequelize, customer)
             userLogin.login(accountnumber, firstname, res);
-            console.log(accountnumber)
         }
     }

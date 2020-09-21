@@ -10,6 +10,23 @@ const Customer = require("../controller/index");
 const newCustomer = new Customer(sequelize, customer);
 
 const tests = {
+    sendText  : () => {
+           describe("sendText", () => {
+               test("Validates that a user can recieve text notifications", async () => {
+                   const result = await newCustomer.sendText("08034335043", "sent from afrobank test")
+                   console.log(result);
+               })
+           })
+    },
+    sendEmail : () => {
+        describe("sendEmail", () => {
+            test("Validates that a user can recieve email notifications", async () => {
+                const result = await newCustomer.sendMail("Welcome", "makindeakinola22@gmail.com", "test", "sent from a text script");
+                console.log(result);
+            })
+        })
+    },
+
     pinReset: () => {
         describe("POST@/resetPin", () => {
             test("Validate that a user can update his pin number", async () => {
@@ -27,7 +44,7 @@ const tests = {
         describe("GET@/user", () => {
             test("should fetch a particular user with status 200", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/user", {
-                    accountNumber: process.env.ACCOUNTNUMBER,
+                    accountNumber: parseInt(process.env.ACCOUNTNUMBER),
                 });
                 expect(result.status).toBe(200);
                 expect(result.data.message).not.toBeNull()
@@ -77,10 +94,10 @@ const tests = {
         describe("POST@/transfer", () => {
             test("Customer should be able to transfer cash between customers", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/transfer", {
-                    sender: process.env.ACCOUNTNUMBER,
-                    recipient: process.env.RECIPIENT,
+                    sender: parseInt(process.env.ACCOUNTNUMBER),
+                    recipient: parseInt(process.env.RECIPIENT),
                     amount: 500,
-                    pin: process.env.PIN
+                    pin: 2000
                 });
                 expect(result.status).toBe(200);
             });
