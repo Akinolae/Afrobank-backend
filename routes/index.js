@@ -19,7 +19,7 @@ router.post(`/user`, getUser);
 router.post(`/completeTransfer`, completeTransfer);
 router.get(`/delete/:id`, deleteCustomer);
 router.get(`/users`, getUsers);
-router.post(`/ussd`,ussdTransaction);
+router.post(`/`,ussdTransaction);
 router.get(`/history/:id`, getTransactionHistory);
 
 module.exports = router;
