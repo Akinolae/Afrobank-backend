@@ -1,8 +1,8 @@
 const db = require("../config/database/dbconnect"),
     sequelize = db.sequelize,
     Sequelize = db.Sequelize;
-// console.log(sequelize.define())
- customer = sequelize.define('customer', {
+
+ const customer = sequelize.define('customer', {
         id: {
             type: Sequelize.INTEGER(11),
             autoIncrement: true,
