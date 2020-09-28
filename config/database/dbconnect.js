@@ -9,7 +9,8 @@ const config = require('./config.json')[env];
 const herokuUrl = url.parse('process.env[config.use_env_variable]');
 let sequelize;
 if (config.use_env_variable) {
-  sequelize = new Sequelize(herokuUrl, null, null, {
+  sequelize = new Sequelize(herokuUrl,
+    {
     dialect: 'mysql',
      pool: {
        max: 10000,
@@ -17,7 +18,6 @@ if (config.use_env_variable) {
        idle: 10000
      }
   });
-  return sequelize;
 } else {
   sequelize = new Sequelize(config)
 }
