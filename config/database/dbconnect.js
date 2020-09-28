@@ -11,6 +11,11 @@ let sequelize;
 if (config.use_env_variable) {
   sequelize = new Sequelize(herokuUrl, null, null, {
     dialect: 'mysql',
+     pool: {
+       max: 10000,
+       min: 0,
+       idle: 10000
+     }
   });
   return sequelize;
 } else {
