@@ -10,10 +10,7 @@ const herokuUrl = url.parse('process.env[config.use_env_variable]');
 let sequelize;
 if (config.use_env_variable) {
   sequelize = new Sequelize(herokuUrl,
-    null,
-    {
-    dialect: 'mysql',
-  });
+    {dialect: 'mysql'});
 } else {
   sequelize = new Sequelize(config)
 }
