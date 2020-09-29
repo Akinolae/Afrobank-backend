@@ -11,7 +11,6 @@ let sequelize;
 if (config.use_env_variable) {
   sequelize = new Sequelize(herokuUrl, {
     dialect: 'mysql',
-      protocol: 'mysql',
       logging: true //false
   });
 } else {
