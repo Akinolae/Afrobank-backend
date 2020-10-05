@@ -281,8 +281,8 @@ module.exports = class Customer {
                                         sendText,
                                         sendMail
                                     } = this;
-                                    // sendText(user[0].phonenumber, SenderSms)
-                                    // sendText(newRecipient.phonenumber, reciSms)
+                                    sendText(user[0].phonenumber, SenderSms)
+                                    sendText(newRecipient.phonenumber, reciSms)
                                     sendMail(senderMsg, user[0].email, senderSubj, text);
                                     sendMail(recipientMsg, newRecipient.email, reciverSubj, text);
 
@@ -312,15 +312,15 @@ module.exports = class Customer {
         }, 900000);
     }
     // #9
-    // sendText(phonenumber, message) {
-        // client.messages
-            // .create({
-                // from: "+15017122661",
-                // body: message,
-                // to: phonenumber,
-            // })
-            // .then((message) => console.log(message.sid));
-    // }
+    sendText(phonenumber, message) {
+        client.messages
+            .create({
+                from: "+15017122661",
+                body: message,
+                to: phonenumber,
+            })
+            .then((message) => console.log(message.sid));
+    }
     // #10
     sendMail(message, recipient, subject, text) {
         async function main() {
