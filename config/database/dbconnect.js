@@ -1,14 +1,18 @@
 'use strict';
 require("dotenv").config();
+
 const {
   Sequelize
 } = require("sequelize");
-const env = process.env.NODE_ENV || 'development'
+const env = process.env.NODE_ENV;
 const url = require("url");
 const config = require('./config.json')[env];
 // console.log(config);
-const herokuUrl = url.parse('process.env[config.use_env_variable]');
+// console.log(process.env);
+// console.log(config);
+const herokuUrl = url.parse(process.env[config.use_env_variable]);
 console.log(herokuUrl);
+
 let sequelize;
 if (config.use_env_variable) {
   sequelize = new Sequelize(config);

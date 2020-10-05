@@ -1,9 +1,6 @@
 {
     "development": {
-        "username": "Akinola",
-        "password": "Thegreatest1994",
-        "database": "Afrobank",
-        "host": "127.0.0.1",
+        "use_env_variable": "CLEARDB_DATABASE_URL",
         "dialect": "mysql"
     },
     "test": {
