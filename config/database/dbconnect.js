@@ -6,11 +6,11 @@ const {
 } = require("sequelize");
 const env = process.env.NODE_ENV;
 const url = require("url");
-const config = require('./config.json')[env];
+const config = require('../config.json')[env];
 // console.log(config);
 // console.log(process.env);
 // console.log(config);
-const herokuUrl = url.parse(process.env[config.use_env_variable]);
+const herokuUrl = url.parse('process.env[config.use_env_variable]');
 console.log(herokuUrl);
 
 let sequelize;

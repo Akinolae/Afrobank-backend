@@ -2,7 +2,8 @@ const db = require("../config/database/dbconnect"),
     sequelize = db.sequelize,
     Sequelize = db.Sequelize;
 
- const customer = sequelize.define('customer', {
+ const customer = sequelize.define('customer',
+  {
         id: {
             type: Sequelize.INTEGER(11),
             autoIncrement: true,
@@ -56,7 +57,8 @@ const db = require("../config/database/dbconnect"),
             type: Sequelize.BIGINT,
             allowNull: true
         }
-    }),
+    }
+    ),
     transactionHist = sequelize.define('History', {
         transaction_id: {
             type: Sequelize.STRING(12),
