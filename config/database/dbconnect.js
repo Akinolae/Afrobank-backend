@@ -15,7 +15,9 @@ console.log(herokuUrl);
 
 let sequelize;
 if (env) {
-  sequelize = new Sequelize(config);
+  sequelize = new Sequelize(herokuUrl, {
+    dialect: "mysql"
+  });
 } else {
   sequelize = new Sequelize(config)
 }
