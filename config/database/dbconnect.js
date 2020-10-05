@@ -9,7 +9,7 @@ const config = require('./config.json')[env];
 const herokuUrl = url.parse('process.env[config.use_env_variable]');
 let sequelize;
 if (config.use_env_variable) {
-  sequelize = new Sequelize(herokuUrl, {
+  sequelize = new Sequelize(herokuUrl, null, {
     dialect: 'mysql',
       logging: true //false
   });
