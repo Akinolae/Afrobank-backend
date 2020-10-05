@@ -14,7 +14,7 @@ const herokuUrl = url.parse(process.env[config.use_env_variable]);
 console.log(herokuUrl);
 
 let sequelize;
-if (config.use_env_variable) {
+if (env) {
   sequelize = new Sequelize(config);
 } else {
   sequelize = new Sequelize(config)
