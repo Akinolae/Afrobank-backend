@@ -63,25 +63,7 @@ module.exports = {
                       const msg = "Insufficient balance.";
                       response(msg, false, 401, res);
                     } else {
-                      const otp = otpGenerator.generate(6, {
-                        alphabets: false,
-                        digits: true,
-                        specialChars: false,
-                        upperCase: false
-                      })
-
-                      const message = `Afrobank otp <strong>${otp}</strong>`
-                      const subject = `AeNS Transaction OTP`;
-                      const text = `OTP`
-                      newCustomer.sendMail(message, Sender.email, subject, text);
-                      console.log(otp);
-                      customer.update({
-                        otp: otp
-                      }, {
-                        where: {
-                          accountNumber: sender
-                        }
-                      })
+                      newCustomer.sendOtp(Sender);
                       const msg = "OTP sent to your email. It expires 15 minutes.";
                       response(msg, true, 200, res);
                     }

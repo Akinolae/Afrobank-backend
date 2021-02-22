@@ -10,14 +10,6 @@ const Customer = require("../controller/index");
 const newCustomer = new Customer(sequelize, customer);
 
 const tests = {
-    sendText  : () => {
-           describe("sendText", () => {
-               test("Validates that a user can recieve text notifications", async () => {
-                   const result = await newCustomer.sendText("08034335043", "sent from afrobank test")
-                   console.log(result);
-               })
-           })
-    },
     sendEmail : () => {
         describe("sendEmail", () => {
             test("Validates that a user can recieve email notifications", async () => {
@@ -37,19 +29,6 @@ const tests = {
                 expect(result.status).toBe(200)
             });
         })
-    },
-
-    fetchUser: () => {
-        // fetch user.
-        describe("GET@/user", () => {
-            test("should fetch a particular user with status 200", async () => {
-                const result = await axios.post("http://localhost:4000/Api/v1/user", {
-                    accountNumber: parseInt(process.env.ACCOUNTNUMBER),
-                });
-                expect(result.status).toBe(200);
-                expect(result.data.message).not.toBeNull()
-            });
-        });
     },
     registerCustomer: () => {
         describe("POST@/register", () => {
@@ -94,8 +73,8 @@ const tests = {
         describe("POST@/transfer", () => {
             test("Customer should be able to transfer cash between customers", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/transfer", {
-                    sender: parseInt(process.env.ACCOUNTNUMBER),
-                    recipient: parseInt(process.env.RECIPIENT),
+                    sender:process.env.ACCOUNTNUMBER,
+                    recipient: process.env.RECIPIENT,
                     amount: 500,
                     pin: 2000
                 });
@@ -111,6 +90,7 @@ const tests = {
                     firstname: process.env.FIRSTNAME,
                 });
                 expect(result.status).toBe(200);
+                
             });
         });
     },
@@ -120,6 +100,19 @@ const tests = {
                 expect(customer).not.toBeNull();
             });
         });
+    },
+
+    validateAccount: () => {
+        describe("@POST/Validate", () =>{
+            test("Validates that the account number is valid",
+            async () => {
+                const result = await axios.post("http://localhost:4000/Api/v1/validate", {
+                    accountNumber: process.env.ACCOUNTNUMBER
+                })
+                expect(result.status).toBe(200);
+            })
+        }
+        )
     }
 
 }

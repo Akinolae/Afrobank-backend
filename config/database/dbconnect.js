@@ -11,10 +11,10 @@ const config = require('../config.json')[env];
 // console.log(process.env);
 // console.log(config);
 const herokuUrl = url.parse('process.env[config.use_env_variable]');
-console.log(herokuUrl);
+// console.log(herokuUrl);
 
 let sequelize;
-if (env) {
+if (config.use_env_variable) {
   sequelize = new Sequelize(herokuUrl, {
     dialect: "mysql"
   });

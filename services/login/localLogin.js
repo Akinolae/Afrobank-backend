@@ -11,10 +11,10 @@
     module.exports = {
         localLogin: (req, res) => {
             const {
-                accountnumber,
-                firstname
+                accountNumber,
+                firstName
             } = req.body;
             const userLogin = new Customer(sequelize, customer)
-            userLogin.login(accountnumber, firstname, res);
+            userLogin.login(accountNumber, firstName, res);
         }
     }

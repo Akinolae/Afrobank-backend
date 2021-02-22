@@ -1,5 +1,4 @@
 "use strict";
-const nodemailer = require("nodemailer");
 require("dotenv").config();
 const { customer } = require("../../model/customer");
 const { sequelize } = require("../../config/database/dbconnect");

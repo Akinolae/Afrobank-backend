@@ -8,6 +8,7 @@ const {getTransactionHistory} = require("../services/transactionHistory/getTrans
 const {pinReset} = require("../services/pinreset/pinreset");
 const {deleteCustomer} = require("../services/deleteCustomer/deleteCustomer");
 const {ussdTransaction} = require("../services/ussd/ussd");
+const {validateAccount} = require("../services/accountValidation")
 
 
 router.post(`/register`, register);
@@ -21,5 +22,6 @@ router.get(`/delete/:id`, deleteCustomer);
 router.get(`/users`, getUsers);
 router.post(`/`,ussdTransaction);
 router.get(`/history/:id`, getTransactionHistory);
+router.post('/validate', validateAccount)
 
 module.exports = router;

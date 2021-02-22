@@ -1,11 +1,11 @@
 require("dotenv").config();
-// const client = require("twilio")(process.env.ACC_SID, process.env.AUTH_TOKEN);
 const {
     response
 } = require('./responseHandler');
 const nodemailer = require("nodemailer");
 const redisClient = require("../lib/redis");
 const jwt = require("jsonwebtoken");
+const otpGenerator = require('otp-generator')
 
 redisClient.on("error", function (error) {
     console.error(error);
@@ -23,6 +23,7 @@ module.exports = class Customer {
     }
     // #1
     register(firstname, lastname, surname, email, phonenumber, gender, res) {
+        // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const accountNumber = Math.floor(Math.random() * 10000000000);
         const accountBalance = 10000;
         const pin = 1234;
@@ -112,44 +113,44 @@ module.exports = class Customer {
     }
 
     // #4
-    login(accountnumber, firstname, res) {
-        const msg = "Account number is required";
-        !accountnumber ? response(msg, false, 400, res) :
+    login(accountNumber, firstName, res) {
+        const msg = "Account number and firstname is required";
+        !accountNumber || !firstName ? response(msg, false, 400, res) :
             this.customer.findOne({
                 raw: true,
                 where: {
-                    accountNumber: accountnumber
+                    accountNumber: accountNumber
                 }
             }).then((resp) => {
-               const token = jwt.sign({ firstname: resp.firstname, acct: resp.accountNumber}, process.env.USER)
-               console.log(token);
                 const date = new Date();
                 const hours = date.getHours()
                 const minutes = date.getMinutes()
                 const customerCareLine = '08183430438';
                 const message = `
-         <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
-         <p>Dear <strong> ${resp.firstname} ${resp.lastname} ${resp.surname} </strong></p>
-         <p>A login attempt was made in your account at <strong>${hours}:${minutes}</strong>.</p>
-         <p>If this is you kindly ignore, else, contact us at <strong>${customerCareLine}</strong>.</p><br>
+                <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
+                <p>Dear <strong> ${resp.firstname} ${resp.lastname} ${resp.surname} </strong></p>
+                <p>A login attempt was made in your account at <strong>${hours}:${minutes}</strong>.</p>
+                <p>If this is you kindly ignore, else, contact us at <strong>${customerCareLine}</strong>.</p><br>
 
-         <p>Thank you for choosing AfroBank.</p> 
+                <p>Thank you for choosing AfroBank.</p> 
         `;
                 const text = "Login notification"
                 const subject = "Account Login"
                 const sucessMsg = "Login successfully";
                 const resMsg = "Invalid login parameters"
-                firstname !== resp.firstname ? response(resMsg, false, 401, res) :
-                    // send customer a notification.
+                firstName !== resp.firstname ? response(resMsg, false, 401, res) :
+                    response(sucessMsg, true, 200, res, null, resp)
                     this.sendMail(message, resp.email, subject, text)
-                response(sucessMsg, true, 200, res, token, resp)
             }).catch((err) => {
-                const resMsg = "Check credentials.";
-                response(resMsg, false, 401, res);
+                const resMsg = err;
+                if(!err){
+                    throw response(resMsg, false, 401, res);
+                }
+                return null;
             })
     }
     // #5
-     getUser = (res, accountNumber) => {
+     getUser = (accountNumber, res) => {
         this.customer.findOne({
             raw: true,
             where: {
@@ -157,10 +158,12 @@ module.exports = class Customer {
             },
         }).then((resp) => {
             const resMsg = "invalid account details.";
-            resp.length === 0 ? response(resMsg, false, 404, res) : response(resp, true, 200, res);
+                const user = `${resp.firstname} ${resp.lastname} ${resp.surname}`;
+                console.log(resp);
+                resp.length === 0 ? response(resMsg, false, 404, res) : response(user.toUpperCase(), true, 200, res);
         }).catch((err) => {
             console.log(err)
-            const resMsg = "User not recognised.";
+            const resMsg = "account not recognised.";
             response(resMsg, false, 400, res);
         })
     }
@@ -200,9 +203,9 @@ module.exports = class Customer {
                 }
             }).then((user) => {
                 const message = "Unable to complete transaction. Check credentials";
-                const otperr = "Transaction error.";
+                const otpError = "Transaction error.";
                 user.length === 0 ? response(message, false, 400, res) : null;
-                otp !== user[0].otp ? response(otperr, false, 401, res) :
+                otp !== user[0].otp ? response(otpError, false, 401, res) :
                     this.customer.findOne({
                         raw: true,
                         where: {
@@ -281,8 +284,6 @@ module.exports = class Customer {
                                         sendText,
                                         sendMail
                                     } = this;
-                                    // sendText(user[0].phonenumber, SenderSms)
-                                    // sendText(newRecipient.phonenumber, reciSms)
                                     sendMail(senderMsg, user[0].email, senderSubj, text);
                                     sendMail(recipientMsg, newRecipient.email, reciverSubj, text);
 
@@ -389,4 +390,26 @@ module.exports = class Customer {
             })
         })
     }
+
+    // #13
+    sendOtp (sender) {
+        const otp = otpGenerator.generate(6, {
+            alphabets: false,
+            digits: true,
+            specialChars: false,
+            upperCase: false
+          })
+        const message = `Afrobank otp <strong>${otp}</strong>`
+        const subject = `AeNS Transaction OTP`;
+        const text = `OTP`
+        this.sendMail(message, sender.email, subject, text);
+          customer.update({
+            otp: otp
+          }, {
+            where: {
+              accountNumber: sender
+            }
+          })
+    }
+
 }
