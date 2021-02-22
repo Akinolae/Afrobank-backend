@@ -6,6 +6,8 @@ const nodemailer = require("nodemailer");
 const redisClient = require("../lib/redis");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require('otp-generator')
+const statusCode = require('http-status-codes');
+console.log(statusCode)
 
 redisClient.on("error", function (error) {
     console.error(error);
@@ -65,11 +67,11 @@ module.exports = class Customer {
                     const text = "Welcome to Afrobank";
                     const respMsg = "Customer registered successfully"
                     this.sendMail(message, email, subject, text);
-                    response(respMsg, true, 200, res)
+                    response(respMsg, true, statusCode.StatusCodes.OK, res)
                 })
                 .catch((err) => {
                     const respMsg = "Email already exists."
-                    response(respMsg, false, 400, res);
+                    response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
                 });
         });
     }
@@ -86,14 +88,14 @@ module.exports = class Customer {
             const respMsg = "Invalid user."
             const data = resp.accountBalance
             redisClient.setex(id, 3600, data);
-            !resp ? response(respMsg, false, 404, res) :
+            !resp ? response(respMsg, false, statusCode.StatusCodes.NOT_FOUND, res) :
                 redisClient.get(id, (err, resp) => {
-                    err ? response(err, false, 401, res) : response(resp, true, 200, res)
+                    err ? response(err, false, statusCode.StatusCodes.UNAUTHORIZED, res) : response(resp, true, 200, res)
                 })
 
         }).catch((err) => {
             const respMsg = "An error occured."
-            response(respMsg, false, 500, res);
+            response(respMsg, false, statusCode.StatusCodes.SERVICE_UNAVAILABLE, res);
         })
     }
 
