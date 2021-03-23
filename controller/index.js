@@ -7,7 +7,7 @@ const redisClient = require("../lib/redis");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require('otp-generator')
 const statusCode = require('http-status-codes');
-console.log(statusCode)
+const messages = require("./data");
 
 redisClient.on("error", function (error) {
     console.error(error);
@@ -27,8 +27,8 @@ module.exports = class Customer {
     register(firstname, lastname, surname, email, phonenumber, gender, res) {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const accountNumber = Math.floor(Math.random() * 10000000000);
-        const accountBalance = 10000;
-        const pin = 1234;
+        const accountBalance = process.env.DEFAULT_BALANCE;
+        const pin = process.env.DEFAULT_PIN
 
         const user = {
             firstname,
@@ -41,32 +41,21 @@ module.exports = class Customer {
             accountBalance,
             pin
         };
+        if(!firstname || !lastname || !surname || !email || !phonenumber || !gender){
+            var msg = "all fields are required"
+            response(msg, false, statusCode.StatusCodes.UNAUTHORIZED, res)
+        }
         this.sequelize.sync().then(() => {
             this.customer
                 .create(user)
                 .then(() => {
                     const newUser = `${surname}  ${firstname}   ${lastname}`;
                     // message to be sent to the newly registered user!
-                    const message = `
-         <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
-         <p> Dear <strong> ${newUser.toUpperCase()}</strong>,</p>
-         <p> your <strong>Afrobank</strong> account was created successfully, Thank you for banking with us</p>
-         <p>below is your account details </p>
-         <p>please note that your account number should not be disclosed to anyone.</p>
-         <p> welcome to the <strong>Afrobank</strong> family</p>
-         <p>account number: <strong>${accountNumber}</strong></p>
-         <p>account name:  <strong> ${newUser.toUpperCase()}</strong></p>
-         <p>account balance:<strong> ${accountBalance}</strong></p>
-         <p>default pin:<strong> ${pin}</strong></p>
-
-         we urge you to change your transaction pin upon login and keep them confidential.<br>
-
-         Thank you for choosing <strong>Afrobank</strong>.
-         `;
+                    messages.sign_up_message( newUser, pin, accountBalance, accountNumber );
                     const subject = "Account opening ";
                     const text = "Welcome to Afrobank";
                     const respMsg = "Customer registered successfully"
-                    this.sendMail(message, email, subject, text);
+                    this.sendMail(messages.sign_up_message( newUser, pin, accountBalance, accountNumber ), email, subject, text);
                     response(respMsg, true, statusCode.StatusCodes.OK, res)
                 })
                 .catch((err) => {
@@ -128,21 +117,13 @@ module.exports = class Customer {
                 const hours = date.getHours()
                 const minutes = date.getMinutes()
                 const customerCareLine = '08183430438';
-                const message = `
-                <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
-                <p>Dear <strong> ${resp.firstname} ${resp.lastname} ${resp.surname} </strong></p>
-                <p>A login attempt was made in your account at <strong>${hours}:${minutes}</strong>.</p>
-                <p>If this is you kindly ignore, else, contact us at <strong>${customerCareLine}</strong>.</p><br>
-
-                <p>Thank you for choosing AfroBank.</p> 
-        `;
                 const text = "Login notification"
                 const subject = "Account Login"
                 const sucessMsg = "Login successfully";
                 const resMsg = "Invalid login parameters"
                 firstName !== resp.firstname ? response(resMsg, false, 401, res) :
                     response(sucessMsg, true, 200, res, null, resp)
-                    this.sendMail(message, resp.email, subject, text)
+                    this.sendMail(messages.login_notify(resp, hours, minutes, customerCareLine), resp.email, subject, text);
             }).catch((err) => {
                 const resMsg = err;
                 if(!err){
@@ -225,30 +206,6 @@ module.exports = class Customer {
                         const transactionAmt = parseInt(amount);
                         const senderNewBalance = senderBalance - transactionAmt;
                         const recievedTransfer = transactionAmt + reciverBalance;
-                        const senderMsg = `
-                    <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank debit alert</strong></h2>
-                    <h4>Dear ${user[0].firstname} ${user[0].lastname} ${user[0].surname}</h4>
-                    <p>We wish to inform you that a debit transaction just occured on your account with us</p>
-                    <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
-                    <p>Description: CASH-TRANSFER</p>
-                    <p>Amount     :<strong> ${transactionAmt} </strong></p>
-                    <p>Time       :<strong> ${hours} : ${minutes}</strong></p>
-                    <p>Balance    : <strong>NGN ${senderBalance}</strong></p>
-                    <p>Recipient  : <strong>${newRecipient.accountNumber} ${newRecipient.firstname} ${newRecipient.lastname} ${newRecipient.surname}</strong></p>
-                    Thank you for banking with <strong> Afrobank </strong>. 
-                    `;
-                        const recipientMsg = `
-                      <h2 style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong>Afrobank Credit alert</strong></h2><br>
-                       <h4>Dear ${newRecipient.firstname} ${newRecipient.lastname} ${newRecipient.surname}</h4>
-                      <p>We wish to inform you that a credit transaction just occured on your account with us</p>
-                      <p style="text-decoration: underline;"><strong>Transaction notification</strong></p>
-                     <p>Description : CREDIT</p>
-                     <p>Amount      : <strong>${transactionAmt}</strong></p>
-                     <p>Time        : <strong>${hours} : ${minutes}</strong></p>
-                     <p>Balance     : <strong>NGN ${recievedTransfer}</strong></p>  
-                     <p>Sender      : <strong>${user.firstname} ${user.lastname} ${user.surname}</strong></p><br>
-                     Thank you for banking with <strong> Afrobank </strong>. 
-                     `;
                         const SenderSms = `
                     Acct: ${sender}
                     Amt: ${amount}
@@ -286,8 +243,8 @@ module.exports = class Customer {
                                         sendText,
                                         sendMail
                                     } = this;
-                                    sendMail(senderMsg, user[0].email, senderSubj, text);
-                                    sendMail(recipientMsg, newRecipient.email, reciverSubj, text);
+                                    sendMail( messages.sender_transaction_completed_notify(user, transactionAmt, hours, minutes, senderNewBalance, newRecipient), user[0].email, senderSubj, text);
+                                    sendMail( messages.recipient_transaction_completed_notify(newRecipient, transactionAmt, hours, minutes, user, recievedTransfer), newRecipient.email, reciverSubj, text);
 
                                     const resMsg = `TRANSACTION COMPLETED SUCCESSFULLY.`;
                                     response(resMsg, true, 200, res);
