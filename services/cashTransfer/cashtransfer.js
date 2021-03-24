@@ -1,14 +1,8 @@
-
-const {
-  sequelize
-} = require("../../config/database/dbconnect");
-const {
-  customer
-} = require("../../model/customer");
+const customer = require("../../model/customer");
 const otpGenerator = require('otp-generator');
 const Customer = require("../../controller/index");
 const {response} = require("../../controller/responseHandler");
-const newCustomer = new Customer(sequelize, customer);
+const newCustomer = new Customer( customer );
 
 
 module.exports = {

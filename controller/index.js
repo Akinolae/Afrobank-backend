@@ -1,27 +1,21 @@
 require("dotenv").config();
-const {
-    response
-} = require('./responseHandler');
+const { response } = require('./responseHandler');
 const nodemailer = require("nodemailer");
-const jwt = require("jsonwebtoken");
 const otpGenerator = require('otp-generator')
 const statusCode = require('http-status-codes');
 const messages = require("./data");
-const service = require("../lib/balcalc");
+const { calc_account_balance} = require("../lib/balcalc");
+const { generate_account_no } = require('./data');
 
-service.calc_account_balance(1)
-
-// Secures connection.
-
+calc_account_balance();
 module.exports = class Customer {
-    constructor(_sequelize, _customer) {
-        this.sequelize = _sequelize
+    constructor( _customer) {
         this.customer = _customer
     }
     // #1
-    register(firstname, lastname, surname, email, phonenumber, gender, res) {
+  async register(firstname, lastname, surname, email, phonenumber, gender, res) {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
-        const accountNumber = Math.floor(Math.random() * 10000000000);
+        const accountNumber = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
         const pin = process.env.DEFAULT_PIN
 
@@ -40,46 +34,28 @@ module.exports = class Customer {
             var msg = "all fields are required"
             response(msg, false, statusCode.StatusCodes.UNAUTHORIZED, res)
         }
-        this.sequelize.sync().then(() => {
-            this.customer
-                .create(user)
-                .then(() => {
-                    const newUser = `${surname}  ${firstname}   ${lastname}`;
-                    // message to be sent to the newly registered user!
-                    messages.sign_up_message( newUser, pin, accountBalance, accountNumber );
-                    const subject = "Account opening ";
-                    const text = "Welcome to Afrobank";
-                    const respMsg = "Customer registered successfully"
-                    this.sendMail(messages.sign_up_message( newUser, pin, accountBalance, accountNumber ), email, subject, text);
-                    response(respMsg, true, statusCode.StatusCodes.OK, res)
-                })
-                .catch((err) => {
-                    const respMsg = "Email already exists."
-                    response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
-                });
-        });
+        else {
+            try {
+                let user_model = new this.customer(user);
+                await user_model.save();
+                const subject = "Account registration";
+                const text = "Registration";
+                const respMsg = "Registration success";
+                this.sendMail(messages.sign_up_message( firstname, pin, accountBalance, accountNumber ), email, subject, text);
+                response(respMsg, true, statusCode.StatusCodes.OK, res)
+            }
+            catch (err) {
+                const respMsg = "Error"
+                response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
+            }
+        }
     }
 
     // #2
-    // returns the account balance of the specified user.
-    getBalance(id, res) {
-        this.customer.findOne({
-            raw: true,
-            where: {
-                accountNumber: id
-            }
-        }).then((resp) => {
-
-            // we need to have a list of all the current transations by this particular user
-            const respMsg = "Invalid user."
-            const data = resp.accountBalance
-
-            !resp ? response(respMsg, false, statusCode.StatusCodes.NOT_FOUND, res) : response(resp, true, 200, res);
-
-        }).catch((err) => {
-            const respMsg = "An error occured."
-            response(respMsg, false, statusCode.StatusCodes.SERVICE_UNAVAILABLE, res);
-        })
+    // returns the account balance of the specified user. 
+    async getBalance  (accountNumber, res) {
+        console.log(await calc_account_balance(accountNumber));
+        // console.log(response);
     }
 
     // #3

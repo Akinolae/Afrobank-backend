@@ -15,6 +15,7 @@ const mongoose = require("mongoose");
         },
         email: {
             type: String,
+            unique: true
         },
         phonenumber: {
             type: String,
@@ -24,8 +25,6 @@ const mongoose = require("mongoose");
         },
         accountNumber: {
             type: Number,
-            allowNull: false,
-            primaryKey: true,
             unique: true
         },
         accountBalance: {
@@ -41,9 +40,16 @@ const mongoose = require("mongoose");
             allowNull: true
         },
         transactionHist: [
-            {
-                type: String,
-            }
+            { transaction_id: {
+                 type: String,
+             },
+            transaction_type: {
+                    type: String
+             },
+             amount: {
+                 type: Number
+             }
+        }
         ]
     });
     

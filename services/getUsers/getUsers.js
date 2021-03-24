@@ -1,11 +1,6 @@
-const {
-    customer
-} = require("../../model/customer");
-const {
-    sequelize
-} = require("../../config/database/dbconnect");
+const customer = require("../../model/customer");
 const Customer = require("../../controller/index");
-const newUser = new Customer(sequelize, customer);
+const newUser = new Customer(customer);
 
 
 module.exports = {

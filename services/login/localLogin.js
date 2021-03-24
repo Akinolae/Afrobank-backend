@@ -1,12 +1,6 @@
-    const {
-        customer
-    } = require("../../model/customer");
-    const Customer = require("../../controller/index");
-    const {
-        sequelize
-    } = require("../../config/database/dbconnect");
-
-    require("dotenv").config();
+require("dotenv").config();
+const customer = require("../../model/customer");
+const Customer = require("../../controller/index");
 
     module.exports = {
         localLogin: (req, res) => {
