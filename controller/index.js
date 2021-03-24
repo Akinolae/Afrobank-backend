@@ -7,11 +7,10 @@ const jwt = require("jsonwebtoken");
 const otpGenerator = require('otp-generator')
 const statusCode = require('http-status-codes');
 const messages = require("./data");
-const service = require("../lib/balcalc");
+const { calc_account_balance} = require("../lib/balcalc");
+const { generate_account_no } = require('./data');
 
-service.calc_account_balance(1)
-
-// Secures connection.
+calc_account_balance();
 
 module.exports = class Customer {
     constructor(_sequelize, _customer) {
@@ -21,7 +20,7 @@ module.exports = class Customer {
     // #1
     register(firstname, lastname, surname, email, phonenumber, gender, res) {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
-        const accountNumber = Math.floor(Math.random() * 10000000000);
+        const acctNo = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
         const pin = process.env.DEFAULT_PIN
 
@@ -32,7 +31,7 @@ module.exports = class Customer {
             email,
             phonenumber,
             gender,
-            accountNumber,
+            acctNo,
             accountBalance,
             pin
         };

@@ -61,9 +61,14 @@ const recipient_transaction_completed_notify = ({user, amount, hours, minutes, s
    return msg;
 }
 
+const generate_account_no = () => {
+    const acc_no = Math.floor(Math.random() * 10000000000);
+    return acc_no;
+}
 module.exports = {
     sign_up_message,
     login_notify,
     sender_transaction_completed_notify,
-    recipient_transaction_completed_notify
+    recipient_transaction_completed_notify,
+    generate_account_no
 }
