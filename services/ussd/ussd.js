@@ -1,5 +1,5 @@
-const { sequelize} = require("../../config/database/dbconnect");
-const {customer} = require("../../model/customer");
+
+const customer = require("../../model/customer");
 const ussdTransaction = require("../../controller/ussd");
 
 module.exports = {

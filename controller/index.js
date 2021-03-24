@@ -1,9 +1,6 @@
 require("dotenv").config();
-const {
-    response
-} = require('./responseHandler');
+const { response } = require('./responseHandler');
 const nodemailer = require("nodemailer");
-const jwt = require("jsonwebtoken");
 const otpGenerator = require('otp-generator')
 const statusCode = require('http-status-codes');
 const messages = require("./data");
@@ -11,14 +8,12 @@ const { calc_account_balance} = require("../lib/balcalc");
 const { generate_account_no } = require('./data');
 
 calc_account_balance();
-
 module.exports = class Customer {
-    constructor(_sequelize, _customer) {
-        this.sequelize = _sequelize
+    constructor( _customer) {
         this.customer = _customer
     }
     // #1
-    register(firstname, lastname, surname, email, phonenumber, gender, res) {
+  async register(firstname, lastname, surname, email, phonenumber, gender, res) {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const acctNo = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
@@ -35,28 +30,27 @@ module.exports = class Customer {
             accountBalance,
             pin
         };
+        // console.log(user);
         if(!firstname || !lastname || !surname || !email || !phonenumber || !gender){
             var msg = "all fields are required"
             response(msg, false, statusCode.StatusCodes.UNAUTHORIZED, res)
         }
-        this.sequelize.sync().then(() => {
-            this.customer
-                .create(user)
-                .then(() => {
-                    const newUser = `${surname}  ${firstname}   ${lastname}`;
-                    // message to be sent to the newly registered user!
-                    messages.sign_up_message( newUser, pin, accountBalance, accountNumber );
-                    const subject = "Account opening ";
-                    const text = "Welcome to Afrobank";
-                    const respMsg = "Customer registered successfully"
-                    this.sendMail(messages.sign_up_message( newUser, pin, accountBalance, accountNumber ), email, subject, text);
-                    response(respMsg, true, statusCode.StatusCodes.OK, res)
-                })
-                .catch((err) => {
-                    const respMsg = "Email already exists."
-                    response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
-                });
-        });
+        else {
+            try {
+                let user_model = new this.customer(user);
+                await user_model.save();
+                const subject = "Account registration";
+                const text = "Registration";
+                const respMsg = "Registration success";
+                this.sendMail(messages.sign_up_message( firstname, pin, accountBalance, acctNo ), email, subject, text);
+                response(respMsg, true, statusCode.StatusCodes.OK, res)
+            }
+            catch (err) {
+                const respMsg = "Email already exists."
+                console.log(err)
+                response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
+            }
+        }
     }
 
     // #2

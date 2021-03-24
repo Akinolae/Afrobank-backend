@@ -1,7 +1,6 @@
-const { sequelize } = require("../../config/database/dbconnect");
-  const { customer } = require("../../model/customer");
+  const customer = require("../../model/customer");
   const Customer = require("../../controller/index");
-  const newCustomer = new Customer(sequelize, customer);
+  const newCustomer = new Customer(customer);
 
   module.exports = {
     validateAccount: (req, res) => {
