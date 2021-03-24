@@ -3,20 +3,15 @@ const {
     response
 } = require('./responseHandler');
 const nodemailer = require("nodemailer");
-const redisClient = require("../lib/redis");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require('otp-generator')
 const statusCode = require('http-status-codes');
 const messages = require("./data");
+const service = require("../lib/balcalc");
 
-redisClient.on("error", function (error) {
-    console.error(error);
-});
+service.calc_account_balance(1)
+
 // Secures connection.
-redisClient.on("connect", () => {
-    console.log("Cache connection established");
-});
-
 
 module.exports = class Customer {
     constructor(_sequelize, _customer) {
@@ -74,13 +69,12 @@ module.exports = class Customer {
                 accountNumber: id
             }
         }).then((resp) => {
+
+            // we need to have a list of all the current transations by this particular user
             const respMsg = "Invalid user."
             const data = resp.accountBalance
-            redisClient.setex(id, 3600, data);
-            !resp ? response(respMsg, false, statusCode.StatusCodes.NOT_FOUND, res) :
-                redisClient.get(id, (err, resp) => {
-                    err ? response(err, false, statusCode.StatusCodes.UNAUTHORIZED, res) : response(resp, true, 200, res)
-                })
+
+            !resp ? response(respMsg, false, statusCode.StatusCodes.NOT_FOUND, res) : response(resp, true, 200, res);
 
         }).catch((err) => {
             const respMsg = "An error occured."

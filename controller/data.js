@@ -1,3 +1,4 @@
+
 const sign_up_message = (newUser, pin, accountBalance, accountNumber) => {
     const msg =    `
     <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>

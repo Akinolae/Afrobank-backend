@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const {response} = require("./controller/responseHandler");
 require("./config/database/dbconnect");
+const db = require("./config/database/dbconnect");
+db.connect();
 
 const app = express();
 app.use(cors());
