@@ -15,7 +15,7 @@ module.exports = class Customer {
     // #1
   async register(firstname, lastname, surname, email, phonenumber, gender, res) {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
-        const acctNo = generate_account_no();
+        const accountNumber = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
         const pin = process.env.DEFAULT_PIN
 
@@ -26,11 +26,10 @@ module.exports = class Customer {
             email,
             phonenumber,
             gender,
-            acctNo,
+            accountNumber,
             accountBalance,
             pin
         };
-        // console.log(user);
         if(!firstname || !lastname || !surname || !email || !phonenumber || !gender){
             var msg = "all fields are required"
             response(msg, false, statusCode.StatusCodes.UNAUTHORIZED, res)
@@ -42,37 +41,21 @@ module.exports = class Customer {
                 const subject = "Account registration";
                 const text = "Registration";
                 const respMsg = "Registration success";
-                this.sendMail(messages.sign_up_message( firstname, pin, accountBalance, acctNo ), email, subject, text);
+                this.sendMail(messages.sign_up_message( firstname, pin, accountBalance, accountNumber ), email, subject, text);
                 response(respMsg, true, statusCode.StatusCodes.OK, res)
             }
             catch (err) {
-                const respMsg = "Email already exists."
-                console.log(err)
+                const respMsg = "Error"
                 response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
             }
         }
     }
 
     // #2
-    // returns the account balance of the specified user.
-    getBalance(id, res) {
-        this.customer.findOne({
-            raw: true,
-            where: {
-                accountNumber: id
-            }
-        }).then((resp) => {
-
-            // we need to have a list of all the current transations by this particular user
-            const respMsg = "Invalid user."
-            const data = resp.accountBalance
-
-            !resp ? response(respMsg, false, statusCode.StatusCodes.NOT_FOUND, res) : response(resp, true, 200, res);
-
-        }).catch((err) => {
-            const respMsg = "An error occured."
-            response(respMsg, false, statusCode.StatusCodes.SERVICE_UNAVAILABLE, res);
-        })
+    // returns the account balance of the specified user. 
+    async getBalance  (accountNumber, res) {
+        console.log(await calc_account_balance(accountNumber));
+        // console.log(response);
     }
 
     // #3
