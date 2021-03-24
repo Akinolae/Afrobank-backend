@@ -6,6 +6,7 @@ const statusCode = require('http-status-codes');
 const messages = require("./data");
 const { calc_account_balance} = require("../lib/balcalc");
 const { generate_account_no } = require('./data');
+const { user_login, user_reg } = require("../lib/constants");
 
 calc_account_balance();
 module.exports = class Customer {
@@ -31,22 +32,19 @@ module.exports = class Customer {
             pin
         };
         if(!firstname || !lastname || !surname || !email || !phonenumber || !gender){
-            var msg = "all fields are required"
-            response(msg, false, statusCode.StatusCodes.UNAUTHORIZED, res)
+            response(user_reg.field_error, false, statusCode.StatusCodes.UNAUTHORIZED, res)
         }
         else {
             try {
                 let user_model = new this.customer(user);
                 await user_model.save();
-                const subject = "Account registration";
-                const text = "Registration";
-                const respMsg = "Registration success";
-                this.sendMail(messages.sign_up_message( firstname, pin, accountBalance, accountNumber ), email, subject, text);
-                response(respMsg, true, statusCode.StatusCodes.OK, res)
+                this.sendMail(
+                 messages.sign_up_message( firstname, pin, accountBalance, accountNumber ),
+                 email, user_reg.reg_mail_subject, user_reg.reg_mail_text);
+                response(user_reg.resp_msg_registration, true, statusCode.StatusCodes.OK, res)
             }
             catch (err) {
-                const respMsg = "Error"
-                response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
+                response(user_reg.registration_error, false, statusCode.StatusCodes.FORBIDDEN, res);
             }
         }
     }
