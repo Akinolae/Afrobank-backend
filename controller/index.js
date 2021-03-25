@@ -4,11 +4,10 @@ const nodemailer = require("nodemailer");
 const otpGenerator = require('otp-generator')
 const statusCode = require('http-status-codes');
 const messages = require("./data");
-const { calc_account_balance} = require("../lib/balcalc");
+const { calc_account_balance, fetch_single_user } = require("../lib/queries");
 const { generate_account_no } = require('./data');
 const { user_login, user_reg } = require("../lib/constants");
 
-calc_account_balance();
 module.exports = class Customer {
     constructor( _customer) {
         this.customer = _customer
@@ -52,8 +51,8 @@ module.exports = class Customer {
     // #2
     // returns the account balance of the specified user. 
     async getBalance  (accountNumber, res) {
-        console.log(await calc_account_balance(accountNumber));
-        // console.log(response);
+        const response = await calc_account_balance(accountNumber);
+        console.log(response);
     }
 
     // #3
@@ -101,22 +100,10 @@ module.exports = class Customer {
             })
     }
     // #5
-     getUser = (accountNumber, res) => {
-        this.customer.findOne({
-            raw: true,
-            where: {
-                accountNumber: accountNumber
-            },
-        }).then((resp) => {
-            const resMsg = "invalid account details.";
-                const user = `${resp.firstname} ${resp.lastname} ${resp.surname}`;
-                console.log(resp);
-                resp.length === 0 ? response(resMsg, false, 404, res) : response(user.toUpperCase(), true, 200, res);
-        }).catch((err) => {
-            console.log(err)
-            const resMsg = "account not recognised.";
-            response(resMsg, false, 400, res);
-        })
+     getUser =  (accountNumber, res) => {
+        const resp =  fetch_single_user(accountNumber);
+        !resp.status ? response(resp.message, resp.status, 401, res) :
+         response(resp.message, resp.status, 200, res);
     }
 
     // #6
