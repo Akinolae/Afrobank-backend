@@ -8,7 +8,7 @@ module.exports = {
          const {
              accountNumber
          } = req.body;
-         newUser.getUser(res, accountNumber)
+         newUser.getUser( accountNumber , res)
      },
     getUsers: (req, res) => {
         newUser.getUsers(res)

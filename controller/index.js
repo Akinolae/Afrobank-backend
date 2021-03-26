@@ -4,58 +4,57 @@ const nodemailer = require("nodemailer");
 const otpGenerator = require('otp-generator')
 const statusCode = require('http-status-codes');
 const messages = require("./data");
-const { calc_account_balance} = require("../lib/balcalc");
+const { calc_account_balance, fetch_single_user } = require("../lib/queries");
 const { generate_account_no } = require('./data');
+const { user_login, user_reg, authSchema } = require("../lib/constants");
 
-calc_account_balance();
 module.exports = class Customer {
     constructor( _customer) {
         this.customer = _customer
     }
     // #1
-  async register(firstname, lastname, surname, email, phonenumber, gender, res) {
+  async register(firstName, lastName, surName, email, phoneNumber, gender, res) {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const accountNumber = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
         const pin = process.env.DEFAULT_PIN
 
         const user = {
-            firstname,
-            surname,
-            lastname,
+            firstName,
+            surName,
+            lastName,
             email,
-            phonenumber,
+            phoneNumber,
             gender,
             accountNumber,
             accountBalance,
             pin
         };
-        if(!firstname || !lastname || !surname || !email || !phonenumber || !gender){
-            var msg = "all fields are required"
-            response(msg, false, statusCode.StatusCodes.UNAUTHORIZED, res)
-        }
-        else {
-            try {
-                let user_model = new this.customer(user);
-                await user_model.save();
-                const subject = "Account registration";
-                const text = "Registration";
-                const respMsg = "Registration success";
-                this.sendMail(messages.sign_up_message( firstname, pin, accountBalance, accountNumber ), email, subject, text);
-                response(respMsg, true, statusCode.StatusCodes.OK, res)
+       const joi_validate = authSchema.validate({ firstName, surName, lastName, email, phoneNumber, gender, });
+            if(joi_validate.error){
+                response(joi_validate.error.details[0].message, false,  statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
             }
-            catch (err) {
-                const respMsg = "Error"
-                response(respMsg, false, statusCode.StatusCodes.FORBIDDEN, res);
-            }
-        }
+            else {
+                try {
+                    let user_model = new this.customer(user);
+                    await user_model.save();
+                    this.sendMail(
+                    messages.sign_up_message( firstName, pin, accountBalance, accountNumber ),
+                    email, user_reg.reg_mail_subject, user_reg.reg_mail_text);
+                    response(user_reg.resp_msg_registration, true, statusCode.StatusCodes.OK, res)
+                }
+                catch (err) {
+                    response(user_reg.registration_error, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res);
+                    }
+                }
     }
 
     // #2
     // returns the account balance of the specified user. 
     async getBalance  (accountNumber, res) {
-        console.log(await calc_account_balance(accountNumber));
-        // console.log(response);
+       const data = fetch_single_user(accountNumber);
+       data.user_exists ? 
+       response(data.data.amount, true, statusCode.StatusCodes.OK, res) : response(data.data, false, statusCode.StatusCodes.FORBIDDEN, res);
     }
 
     // #3
@@ -103,22 +102,8 @@ module.exports = class Customer {
             })
     }
     // #5
-     getUser = (accountNumber, res) => {
-        this.customer.findOne({
-            raw: true,
-            where: {
-                accountNumber: accountNumber
-            },
-        }).then((resp) => {
-            const resMsg = "invalid account details.";
-                const user = `${resp.firstname} ${resp.lastname} ${resp.surname}`;
-                console.log(resp);
-                resp.length === 0 ? response(resMsg, false, 404, res) : response(user.toUpperCase(), true, 200, res);
-        }).catch((err) => {
-            console.log(err)
-            const resMsg = "account not recognised.";
-            response(resMsg, false, 400, res);
-        })
+     getUser =  (accountNumber, res) => {
+        console.log(fetch_single_user(accountNumber));
     }
 
     // #6
