@@ -52,8 +52,9 @@ module.exports = class Customer {
     // #2
     // returns the account balance of the specified user. 
     async getBalance  (accountNumber, res) {
-        const response = await calc_account_balance(accountNumber);
-        console.log(response);
+       const data = fetch_single_user(accountNumber);
+       data.user_exists ? 
+       response(data.data.amount, true, statusCode.StatusCodes.OK, res) : response(data.data, false, statusCode.StatusCodes.FORBIDDEN, res);
     }
 
     // #3
