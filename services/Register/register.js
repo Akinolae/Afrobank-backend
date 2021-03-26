@@ -6,8 +6,8 @@ const Customer = require("../../controller/index");
 
 module.exports = {
   register:(req, res) => {
-    const { firstname, lastname, surname, email, phonenumber, gender, } = req.body;
+    const { firstName, lastName, surName, email, phoneNumber, gender, } = req.body;
     const newUser = new Customer(customer);
-    newUser.register(firstname, lastname, surname, email, phonenumber, gender, res);
+    newUser.register(firstName, lastName, surName, email, phoneNumber, gender, res);
   },
 };

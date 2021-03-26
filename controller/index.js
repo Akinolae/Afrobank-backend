@@ -6,46 +6,47 @@ const statusCode = require('http-status-codes');
 const messages = require("./data");
 const { calc_account_balance, fetch_single_user } = require("../lib/queries");
 const { generate_account_no } = require('./data');
-const { user_login, user_reg } = require("../lib/constants");
+const { user_login, user_reg, authSchema } = require("../lib/constants");
 
 module.exports = class Customer {
     constructor( _customer) {
         this.customer = _customer
     }
     // #1
-  async register(firstname, lastname, surname, email, phonenumber, gender, res) {
+  async register(firstName, lastName, surName, email, phoneNumber, gender, res) {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const accountNumber = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
         const pin = process.env.DEFAULT_PIN
 
         const user = {
-            firstname,
-            surname,
-            lastname,
+            firstName,
+            surName,
+            lastName,
             email,
-            phonenumber,
+            phoneNumber,
             gender,
             accountNumber,
             accountBalance,
             pin
         };
-        if(!firstname || !lastname || !surname || !email || !phonenumber || !gender){
-            response(user_reg.field_error, false, statusCode.StatusCodes.UNAUTHORIZED, res)
-        }
-        else {
-            try {
-                let user_model = new this.customer(user);
-                await user_model.save();
-                this.sendMail(
-                 messages.sign_up_message( firstname, pin, accountBalance, accountNumber ),
-                 email, user_reg.reg_mail_subject, user_reg.reg_mail_text);
-                response(user_reg.resp_msg_registration, true, statusCode.StatusCodes.OK, res)
+       const joi_validate = authSchema.validate({ firstName, surName, lastName, email, phoneNumber, gender, });
+            if(joi_validate.error){
+                response(joi_validate.error.details[0].message, false,  statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
             }
-            catch (err) {
-                response(user_reg.registration_error, false, statusCode.StatusCodes.FORBIDDEN, res);
-            }
-        }
+            else {
+                try {
+                    let user_model = new this.customer(user);
+                    await user_model.save();
+                    this.sendMail(
+                    messages.sign_up_message( firstName, pin, accountBalance, accountNumber ),
+                    email, user_reg.reg_mail_subject, user_reg.reg_mail_text);
+                    response(user_reg.resp_msg_registration, true, statusCode.StatusCodes.OK, res)
+                }
+                catch (err) {
+                    response(user_reg.registration_error, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res);
+                    }
+                }
     }
 
     // #2
@@ -101,9 +102,7 @@ module.exports = class Customer {
     }
     // #5
      getUser =  (accountNumber, res) => {
-        const resp =  fetch_single_user(accountNumber);
-        !resp.status ? response(resp.message, resp.status, 401, res) :
-         response(resp.message, resp.status, 200, res);
+        console.log(fetch_single_user(accountNumber));
     }
 
     // #6

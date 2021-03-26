@@ -1,35 +1,44 @@
 const mongoose = require("mongoose");
 
  const customer = new mongoose.Schema({
-        firstname: {
+        firstName: {
             type: String,
+            required: true
         },
-        lastname: {
+        lastName: {
             type: String,
+            required: true
+
         },
         pin: {
             type: String,
+            required: true,
         },
-        surname: {
+        surName: {
             type: String,
         },
         email: {
             type: String,
+            required: true,
             unique: true
         },
-        phonenumber: {
-            type: String,
+        phoneNumber: {
+            type: String, 
+            required: true,
         },
         gender: {
             type: String,
+            required: true,
         },
         accountNumber: {
             type: Number,
-            unique: true
+            unique: true,
+            required: true,
         },
         accountBalance: {
             type: Number,
-            allowNull: false
+            allowNull: false,
+          
         },
         createdAt: {
             type: Date,
@@ -38,6 +47,10 @@ const mongoose = require("mongoose");
         otp: {
             type: Number,
             allowNull: true
+        },
+        regDate: {
+            type: Date,
+            default: Date.now
         },
         transactionHist: [
             { transaction_id: {
@@ -53,4 +66,4 @@ const mongoose = require("mongoose");
         ]
     });
     
-    module.exports = Customer = mongoose.model('customer', customer) 
+    module.exports  = mongoose.model('customer', customer) 
