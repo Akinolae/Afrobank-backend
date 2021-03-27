@@ -1,72 +1,51 @@
 const customer = require("../../model/customer");
 const otpGenerator = require('otp-generator');
 const Customer = require("../../controller/index");
-const {response} = require("../../controller/responseHandler");
+const { response } = require("../../controller/responseHandler");
 const newCustomer = new Customer( customer );
+const { fetch_single_user } = require("../../lib/queries");
+const { StatusCodes } = require("http-status-codes");
+const { transferAuthSchema, transferError } = require("../../lib/constants");
+
 
 
 module.exports = {
-  transfer: (req, res) => {
-    const {
-      sender,
-      recipient,
-      amount,
-      pin
-    } = req.body;
-    // Queries the database, checks if the sender exists in the data bases
-      customer
-        .findOne({
-          raw: true,
-          where: {
-            accountNumber: sender,
-          },
-        })
-        .then((Sender) => {
-          if (!Sender) {
-            const msg = "Enter a valid account number."
-            response(msg, false, 400, res);
-          }
-          if (pin !== Sender.pin) {
-            const msg = "Invalid pin.";
-            response(msg, false, 401, res);
-          } else {
-            customer
-              .findOne({
-                raw: true,
-                where: {
-                  accountNumber: recipient,
-                },
-              })
-              .then((Recipient) => {
-                if (!Recipient) {
-                  const msg = "Recipient account number is invalid.";
-                  response(msg, false, 404, res);
+  transfer: async (req, res) => {
+    const { sender, recipient, amount, pin } = req.body;
+    const joi_error = transferAuthSchema.validate({sender, recipient, amount, pin});
+    if(joi_error.error){
+      response(joi_error.error.details[0].message, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+    }
+    else {
+        try{
+              const isSenderValid = await fetch_single_user(sender);
+              const isRecipientValid = await fetch_single_user(recipient);
+
+          if(isRecipientValid.status && isSenderValid.status){
+              if(isSenderValid.message.pin !== pin){
+                  response(transferError.pinError, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
+              }
+              else {
+                if(isSenderValid.message.accountBalance <= 0){
+                  response(transferError.low_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
+                } else if(amount > isSenderValid.message.accountBalance ){
+                  response(transferError.insufficient_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
                 } else {
-                  if (isNaN(amount)) {
-                    const msg = "enter a valid amount";
-                    response(msg, false, 401, res);
-                  } else {
-                    const senderBalance = parseInt(Sender.accountBalance);
-                    if (senderBalance <= 0) {
-                      const msg = "your account balance is low";
-                      response(msg, false, 401, res);
-                    } else if (amount <= 0) {
-                      const msg = "Enter a valid amount.";
-                      response(msg, false, 401, res);
-                    } else if (amount > senderBalance) {
-                      const msg = "Insufficient balance.";
-                      response(msg, false, 401, res);
-                    } else {
-                      newCustomer.sendOtp(Sender);
-                      const msg = "OTP sent to your email. It expires 15 minutes.";
-                      response(msg, true, 200, res);
-                    }
-                  }
+                    newCustomer.sendOtp(sender);
                 }
-              });
+              }
           }
-        });
-    newCustomer.updateOtp(sender);
+          else if(!isRecipientValid.status) {
+            response(`Recipient ${isRecipientValid.message}`, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+          }
+          else if(!isSenderValid.status){
+            response(`Sender ${isSenderValid.message}`, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+            }
+          }
+        catch (error) {
+            response(error, false, StatusCodes.FORBIDDEN, res);
+        }
+   }
   },
   completeTransfer: (req, res) => {
     const {

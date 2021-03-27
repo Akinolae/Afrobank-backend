@@ -320,11 +320,13 @@ module.exports = class Customer {
             specialChars: false,
             upperCase: false
           })
-        const message = `Afrobank otp <strong>${otp}</strong>`
-        const subject = `AeNS Transaction OTP`;
-        const text = `OTP`
-        this.sendMail(message, sender.email, subject, text);
-          customer.update({
+        // const message = `Afrobank otp <strong>${otp}</strong>`
+        // const subject = `AeNS Transaction OTP`;
+        // const text = `OTP`
+        // this.sendMail(message, sender.email, subject, text);
+        // console.log(this.customer)
+
+          this.customer.update({
             otp: otp
           }, {
             where: {
