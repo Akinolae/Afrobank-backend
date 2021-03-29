@@ -73,33 +73,19 @@ module.exports = class Customer {
     }
 
     // #4
-    login(accountNumber, firstName, res) {
-        const msg = "Account number and firstname is required";
-        !accountNumber || !firstName ? response(msg, false, 400, res) :
-            this.customer.findOne({
-                raw: true,
-                where: {
-                    accountNumber: accountNumber
-                }
-            }).then((resp) => {
-                const date = new Date();
-                const hours = date.getHours()
-                const minutes = date.getMinutes()
-                const customerCareLine = '08183430438';
-                const text = "Login notification"
-                const subject = "Account Login"
-                const sucessMsg = "Login successfully";
-                const resMsg = "Invalid login parameters"
-                firstName !== resp.firstname ? response(resMsg, false, 401, res) :
-                    response(sucessMsg, true, 200, res, null, resp)
-                    this.sendMail(messages.login_notify(resp, hours, minutes, customerCareLine), resp.email, subject, text);
-            }).catch((err) => {
-                const resMsg = err;
-                if(!err){
-                    throw response(resMsg, false, 401, res);
-                }
-                return null;
-            })
+   async login(accountNumber, firstName, res) {
+        if( !accountNumber || !firstName ) {
+            response(user_login.credentials, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res) 
+        } else {
+            const data = await fetch_single_user(accountNumber);
+            if(data.message.accountNumber !== accountNumber && data.message.firstName !== firstName){
+                response(user_login.invalid_credentials, false, statusCode.StatusCodes.FORBIDDEN, res);
+            } 
+            else {
+                response(user_login.login_success, true, 200, res, null, data.message)
+                this.sendMail(messages.login_notify(data.message), data.message.email, user_login.email_subject, user_login.email_text);
+            }
+        }
     }
     // #5
      getUser = async (accountNumber, res) => {
@@ -313,26 +299,29 @@ module.exports = class Customer {
     }
 
     // #13
-    sendOtp (sender) {
-        const otp = otpGenerator.generate(6, {
+   async sendOtp (sender) {
+        const otp = otpGenerator.generate(5, {
             alphabets: false,
             digits: true,
             specialChars: false,
             upperCase: false
           })
+          const data = await fetch_single_user(sender);
+          data.status && console.log("E chokeeee");
+        //   console.log(otp); 
         // const message = `Afrobank otp <strong>${otp}</strong>`
         // const subject = `AeNS Transaction OTP`;
         // const text = `OTP`
         // this.sendMail(message, sender.email, subject, text);
         // console.log(this.customer)
 
-          this.customer.update({
-            otp: otp
-          }, {
-            where: {
-              accountNumber: sender
-            }
-          })
+        //   this.customer.update({
+        //     otp: otp
+        //   }, {
+        //     where: {
+        //       accountNumber: sender
+        //     }
+        //   })
     }
 
 }

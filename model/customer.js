@@ -46,7 +46,6 @@ const mongoose = require("mongoose");
         },
         otp: {
             type: Number,
-            default: null
         },
         regDate: {
             type: Date,

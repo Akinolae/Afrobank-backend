@@ -1,13 +1,10 @@
 'use strict';
+require("dotenv").config();
 
 const axios = require("axios");
-const {
-    customer
-} = require("../model/customer")
-const sequelize = require("../config/database/dbconnect");
-require("dotenv").config();
+const { customer } = require("../model/customer")
 const Customer = require("../controller/index");
-const newCustomer = new Customer(sequelize, customer);
+const newCustomer = new Customer(customer);
 
 const tests = {
     sendEmail : () => {
@@ -18,7 +15,17 @@ const tests = {
             })
         })
     },
-
+    singleUser: () => {
+        describe('fetch single user', () => {
+            test("retrieve a single user", async () => {
+                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/user", {
+                    accountNumber: process.env.ACCOUNTNUMBER
+                } )
+                expect(result.status).toBe(200);
+             }
+            )
+        })
+    },
     pinReset: () => {
         describe("POST@/resetPin", () => {
             test("Validate that a user can update his pin number", async () => {
@@ -33,13 +40,13 @@ const tests = {
     registerCustomer: () => {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
-                const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Yemi",
-                    lastname: "Makinde",
-                    surname: "Ib",
-                    email: "yemi@gmail.com",
-                    phonenumber: "08034335043",
-                    gender: "f",
+                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/register", {
+                    firstName: "Yemi",
+                    lastName: "Makinde",
+                    surName: "Ib",
+                    email: process.env.EMAIL_TEST,
+                    phoneNumber: "08034335043",
+                    gender: "female",
                 });
                 expect(result.status).toBe(200);
             });
@@ -76,7 +83,7 @@ const tests = {
                     sender:process.env.ACCOUNTNUMBER,
                     recipient: process.env.RECIPIENT,
                     amount: 500,
-                    pin: 2000
+                    pin: process.env.PIN
                 });
                 expect(result.status).toBe(200);
             });
@@ -86,8 +93,8 @@ const tests = {
         describe("POST@/login", () => {
             test("Validates that the user that logged in is the valid user", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/login", {
-                    accountnumber: process.env.ACCOUNTNUMBER,
-                    firstname: process.env.FIRSTNAME,
+                    accountNumber: process.env.ACCOUNTNUMBER,
+                    firstName: process.env.FIRSTNAME,
                 });
                 expect(result.status).toBe(200);
                 
@@ -106,7 +113,7 @@ const tests = {
         describe("@POST/Validate", () =>{
             test("Validates that the account number is valid",
             async () => {
-                const result = await axios.post("http://localhost:4000/Api/v1/validate", {
+                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/validate", {
                     accountNumber: process.env.ACCOUNTNUMBER
                 })
                 expect(result.status).toBe(200);
