@@ -1,5 +1,8 @@
 {
   "name": "afrobankapi",
+  "jest": {
+    "testEnvironment": "node"
+  },
   "version": "1.0.0",
   "description": "Afro bank Api",
   "main": "afrobankserver.js",

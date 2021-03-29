@@ -1,13 +1,10 @@
 'use strict';
+require("dotenv").config();
 
 const axios = require("axios");
-const {
-    customer
-} = require("../model/customer")
-const sequelize = require("../config/database/dbconnect");
-require("dotenv").config();
+const { customer } = require("../model/customer")
 const Customer = require("../controller/index");
-const newCustomer = new Customer(sequelize, customer);
+const newCustomer = new Customer(customer);
 
 const tests = {
     sendEmail : () => {
@@ -18,7 +15,17 @@ const tests = {
             })
         })
     },
-
+    singleUser: () => {
+        describe('fetch single user', () => {
+            test("retrieve a single user", async () => {
+                const result = await axios.post("http://localhost:4000/Api/v1/user", {
+                    accountNumber: process.env.ACCOUNTNUMBER
+                } )
+                console.log(result.status).toBe(200);
+             }
+            )
+        })
+    },
     pinReset: () => {
         describe("POST@/resetPin", () => {
             test("Validate that a user can update his pin number", async () => {
@@ -34,12 +41,12 @@ const tests = {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/register", {
-                    firstname: "Yemi",
-                    lastname: "Makinde",
-                    surname: "Ib",
+                    firstName: "Yemi",
+                    lastName: "Makinde",
+                    surName: "Ib",
                     email: "yemi@gmail.com",
-                    phonenumber: "08034335043",
-                    gender: "f",
+                    phoneNumber: "08034335043",
+                    gender: "female",
                 });
                 expect(result.status).toBe(200);
             });
@@ -76,7 +83,7 @@ const tests = {
                     sender:process.env.ACCOUNTNUMBER,
                     recipient: process.env.RECIPIENT,
                     amount: 500,
-                    pin: 2000
+                    pin: process.env.PIN
                 });
                 expect(result.status).toBe(200);
             });

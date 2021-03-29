@@ -1,11 +1,10 @@
 const customer = require("../../model/customer");
-const otpGenerator = require('otp-generator');
 const Customer = require("../../controller/index");
 const { response } = require("../../controller/responseHandler");
 const newCustomer = new Customer( customer );
 const { fetch_single_user } = require("../../lib/queries");
 const { StatusCodes } = require("http-status-codes");
-const { transferAuthSchema, transferError } = require("../../lib/constants");
+const { transferAuthSchema, transfer } = require("../../lib/constants");
 
 
 
@@ -23,14 +22,15 @@ module.exports = {
 
           if(isRecipientValid.status && isSenderValid.status){
               if(isSenderValid.message.pin !== pin){
-                  response(transferError.pinError, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
+                  response(transfer.pinError, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
               }
               else {
                 if(isSenderValid.message.accountBalance <= 0){
-                  response(transferError.low_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
+                  response(transfer.low_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
                 } else if(amount > isSenderValid.message.accountBalance ){
-                  response(transferError.insufficient_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
+                  response(transfer.insufficient_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
                 } else {
+                  response(transfer.success_message, true, StatusCodes.OK, res);
                     newCustomer.sendOtp(sender);
                 }
               }
@@ -47,14 +47,10 @@ module.exports = {
         }
    }
   },
+
   completeTransfer: (req, res) => {
-    const {
-      otp,
-      sender,
-      recipient,
-      amount
-    } = req.body;
-    const newCustomer = new Customer(sequelize, customer)
+    const { otp, sender, recipient, amount } = req.body;
+    const newCustomer = new Customer( customer )
     newCustomer.completeTransfer(res, sender, recipient, amount, otp);
   }
 };

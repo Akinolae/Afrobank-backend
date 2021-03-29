@@ -313,26 +313,29 @@ module.exports = class Customer {
     }
 
     // #13
-    sendOtp (sender) {
-        const otp = otpGenerator.generate(6, {
+   async sendOtp (sender) {
+        const otp = otpGenerator.generate(5, {
             alphabets: false,
             digits: true,
             specialChars: false,
             upperCase: false
           })
+          const data = await fetch_single_user(sender);
+          data.status && console.log("E chokeeee");
+        //   console.log(otp); 
         // const message = `Afrobank otp <strong>${otp}</strong>`
         // const subject = `AeNS Transaction OTP`;
         // const text = `OTP`
         // this.sendMail(message, sender.email, subject, text);
         // console.log(this.customer)
 
-          this.customer.update({
-            otp: otp
-          }, {
-            where: {
-              accountNumber: sender
-            }
-          })
+        //   this.customer.update({
+        //     otp: otp
+        //   }, {
+        //     where: {
+        //       accountNumber: sender
+        //     }
+        //   })
     }
 
 }
