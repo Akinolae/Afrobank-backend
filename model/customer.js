@@ -46,7 +46,7 @@ const mongoose = require("mongoose");
         },
         otp: {
             type: Number,
-            allowNull: true
+            default: null
         },
         regDate: {
             type: Date,
@@ -55,12 +55,15 @@ const mongoose = require("mongoose");
         transactionHist: [
             { transaction_id: {
                  type: String,
+                 default: null
              },
             transaction_type: {
-                    type: String
+                    type: String,
+                    default: null
              },
              amount: {
-                 type: Number
+                 type: Number,
+                 default: null
              }
         }
         ]

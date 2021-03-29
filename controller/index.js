@@ -30,16 +30,15 @@ module.exports = class Customer {
             accountBalance,
             pin
         };
-       const joi_validate = authSchema.validate({ firstName, surName, lastName, email, phoneNumber, gender, });
+            const joi_validate = authSchema.validate({ firstName, surName, lastName, email, phoneNumber, gender, });
             if(joi_validate.error){
                 response(joi_validate.error.details[0].message, false,  statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
             }
             else {
                 try {
-                    let user_model = new this.customer(user);
+                    let user_model = await new this.customer(user);
                     await user_model.save();
-                    this.sendMail(
-                    messages.sign_up_message( firstName, pin, accountBalance, accountNumber ),
+                    this.sendMail( messages.sign_up_message( firstName, pin, accountBalance, accountNumber ),
                     email, user_reg.reg_mail_subject, user_reg.reg_mail_text);
                     response(user_reg.resp_msg_registration, true, statusCode.StatusCodes.OK, res)
                 }
@@ -52,9 +51,10 @@ module.exports = class Customer {
     // #2
     // returns the account balance of the specified user. 
     async getBalance  (accountNumber, res) {
-       const data = fetch_single_user(accountNumber);
-       data.user_exists ? 
-       response(data.data.amount, true, statusCode.StatusCodes.OK, res) : response(data.data, false, statusCode.StatusCodes.FORBIDDEN, res);
+       const data = await calc_account_balance(accountNumber);
+        !data.status ?  response(data.message, false, statusCode.StatusCodes.BAD_REQUEST, res):
+          response(data, true, statusCode.StatusCodes.OK, res)
+        
     }
 
     // #3
@@ -102,8 +102,15 @@ module.exports = class Customer {
             })
     }
     // #5
-     getUser =  (accountNumber, res) => {
-        console.log(fetch_single_user(accountNumber));
+     getUser = async (accountNumber, res) => {
+        const user = await fetch_single_user(accountNumber);
+        const user_details = {
+            firstname: user.message.firstName,
+            surname: user.message.surName,
+            lastName: user.message.lastName
+        }
+        user.status ? response(user_details, true, statusCode.StatusCodes.OK, res):
+        response(user.message, false, statusCode.StatusCodes.NOT_FOUND, res)
     }
 
     // #6
@@ -313,11 +320,13 @@ module.exports = class Customer {
             specialChars: false,
             upperCase: false
           })
-        const message = `Afrobank otp <strong>${otp}</strong>`
-        const subject = `AeNS Transaction OTP`;
-        const text = `OTP`
-        this.sendMail(message, sender.email, subject, text);
-          customer.update({
+        // const message = `Afrobank otp <strong>${otp}</strong>`
+        // const subject = `AeNS Transaction OTP`;
+        // const text = `OTP`
+        // this.sendMail(message, sender.email, subject, text);
+        // console.log(this.customer)
+
+          this.customer.update({
             otp: otp
           }, {
             where: {
