@@ -6,7 +6,7 @@ const statusCode = require('http-status-codes');
 const messages = require("./data");
 const { calc_account_balance, fetch_single_user } = require("../lib/queries");
 const { generate_account_no } = require('./data');
-const { user_login, user_reg, authSchema } = require("../lib/constants");
+const { user_login, user_reg, authSchema, otp_messsage } = require("../lib/constants");
 
 module.exports = class Customer {
     constructor( _customer) {
@@ -252,7 +252,6 @@ module.exports = class Customer {
                 text: text,
                 html: message,
             });
-            // console.log("completed");
             console.log("Message sent: %s", info.messageId);
             console.log(
                 "Preview URL: %s",
@@ -306,22 +305,9 @@ module.exports = class Customer {
             specialChars: false,
             upperCase: false
           })
+          const message = `Afrobank otp <strong>${otp}</strong>`
           const data = await fetch_single_user(sender);
-          data.status && console.log("E chokeeee");
-        //   console.log(otp); 
-        // const message = `Afrobank otp <strong>${otp}</strong>`
-        // const subject = `AeNS Transaction OTP`;
-        // const text = `OTP`
-        // this.sendMail(message, sender.email, subject, text);
-        // console.log(this.customer)
-
-        //   this.customer.update({
-        //     otp: otp
-        //   }, {
-        //     where: {
-        //       accountNumber: sender
-        //     }
-        //   })
-    }
-
+          data.status && await this.customer.update({ accountNumber: sender}, {$set: { otp: otp}})
+          this.sendMail(message, data.message.email, otp_messsage.subject, otp_messsage.text);
+   }
 }
