@@ -8,7 +8,7 @@ const Customer = require("../../controller/index");
                 accountNumber,
                 firstName
             } = req.body;
-            const userLogin = new Customer(sequelize, customer)
+            const userLogin = new Customer(customer)
             userLogin.login(accountNumber, firstName, res);
         }
     }

@@ -18,10 +18,10 @@ const tests = {
     singleUser: () => {
         describe('fetch single user', () => {
             test("retrieve a single user", async () => {
-                const result = await axios.post("http://localhost:4000/Api/v1/user", {
+                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/user", {
                     accountNumber: process.env.ACCOUNTNUMBER
                 } )
-                console.log(result.status).toBe(200);
+                expect(result.status).toBe(200);
              }
             )
         })
@@ -40,11 +40,11 @@ const tests = {
     registerCustomer: () => {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
-                const result = await axios.post("http://localhost:4000/Api/v1/register", {
+                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/register", {
                     firstName: "Yemi",
                     lastName: "Makinde",
                     surName: "Ib",
-                    email: "yemi@gmail.com",
+                    email: process.env.EMAIL_TEST,
                     phoneNumber: "08034335043",
                     gender: "female",
                 });
@@ -93,8 +93,8 @@ const tests = {
         describe("POST@/login", () => {
             test("Validates that the user that logged in is the valid user", async () => {
                 const result = await axios.post("http://localhost:4000/Api/v1/login", {
-                    accountnumber: process.env.ACCOUNTNUMBER,
-                    firstname: process.env.FIRSTNAME,
+                    accountNumber: process.env.ACCOUNTNUMBER,
+                    firstName: process.env.FIRSTNAME,
                 });
                 expect(result.status).toBe(200);
                 
@@ -113,7 +113,7 @@ const tests = {
         describe("@POST/Validate", () =>{
             test("Validates that the account number is valid",
             async () => {
-                const result = await axios.post("http://localhost:4000/Api/v1/validate", {
+                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/validate", {
                     accountNumber: process.env.ACCOUNTNUMBER
                 })
                 expect(result.status).toBe(200);

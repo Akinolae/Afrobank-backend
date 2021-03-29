@@ -19,9 +19,15 @@ const sign_up_message = (newUser, pin, accountBalance, accountNumber) => {
     return msg;
 }
 
-const login_notify = (data, hours, minutes, customerCareLine) => {
+const login_notify = (data) => {
+
+        const date = new Date();
+        const hours = date.getHours()
+        const minutes = date.getMinutes()
+        const customerCareLine = '08183430438';
+
     const msg = `  <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
-    <p>Dear <strong> ${data.firstname} ${data.lastname} ${data.surname} </strong></p>
+    <p>Dear <strong> ${data.firstName} ${data.lastName} ${data.surName} </strong></p>
     <p>A login attempt was made in your account at <strong>${hours}:${minutes}</strong>.</p>
     <p>If this is you kindly ignore, else, contact us at <strong>${customerCareLine}</strong>.</p><br>
 
