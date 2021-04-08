@@ -33,7 +33,7 @@ module.exports = {
                     response(transfer.insufficient_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
                   } else {
                     response(transfer.success_message, true, StatusCodes.OK, res);
-                      newCustomer.sendOtp(sender);
+                      newCustomer.sendOtp(isRecipientValid.message);
                   }
                 }
           }
