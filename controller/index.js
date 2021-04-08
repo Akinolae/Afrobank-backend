@@ -111,11 +111,12 @@ module.exports = class Customer {
                     await this.customer.updateOne({'accountNumber': user.message.accountNumber}, {$set: {'pin': pin}})
                     .then(() => {
                         response(pinReset.message, true, statusCode.StatusCodes.OK, res )
-                        this.sendMail(pinReset.message, user.message.email, "Afrobank pin reset", "pin")
+                        this.sendMail(pinReset.emailTemplate(user.message.firstName), user.message.email, "Afrobank pin reset", "pin")
                          }
                     )
                     .catch((err) => {
-                        response(pinReset.error, true, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
+                        // response(pinReset.error, true, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
+                        console.log(err)
                     })
                 }else {
                     console.log(user.status)
@@ -304,7 +305,8 @@ module.exports = class Customer {
 
     // #13
    async sendOtp (payload) {
-       const { accountNumber, email } = payload;
+       const { accountNumber, email, firstName } = payload;
+       console.log(firstName)
        try {
            const otp = otpGenerator.generate(5, {
                alphabets: false,
@@ -312,9 +314,9 @@ module.exports = class Customer {
                specialChars: false,
                upperCase: false
              })
+             this.sendMail(otp_messsage.template(firstName, otp), email, otp_messsage.subject, otp_messsage.text);
              await this.customer.updateOne({ accountNumber: accountNumber}, {$set: {otp: otp}})
-             const message = `Afrobank otp <strong>${otp}</strong>`
-               this.sendMail(message, email, otp_messsage.subject, otp_messsage.text);
+                .then((data) => console.log(data) )
        } catch (err) {
            console.log(err)
        }
