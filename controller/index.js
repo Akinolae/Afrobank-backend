@@ -214,27 +214,10 @@ module.exports = class Customer {
     // #8
     updateOtp(accountNumber) {
         setTimeout(() => {
-            this.sequelize.sync().then(() => {
-                this.customer.update({
-                    otp: null,
-                }, {
-                    where: {
-                        accountNumber: accountNumber
-                    }
-                })
-            })
+                this.customer.updateOne({ accountNumber: accountNumber }, {$set: {otp:null}})
         }, 900000);
     }
-    // #9
-    // sendText(phonenumber, message) {
-        // client.messages
-            // .create({
-                // from: "+15017122661",
-                // body: message,
-                // to: phonenumber,
-            // })
-            // .then((message) => console.log(message.sid));
-    // }
+    
     // #10
     sendMail(message, recipient, subject, text) {
         async function main() {
@@ -316,7 +299,7 @@ module.exports = class Customer {
              })
              this.sendMail(otp_messsage.template(firstName, otp), email, otp_messsage.subject, otp_messsage.text);
              await this.customer.updateOne({ accountNumber: accountNumber}, {$set: {otp: otp}})
-                .then((data) => console.log(data) )
+                .then((data) => console.log(data))
        } catch (err) {
            console.log(err)
        }
