@@ -289,7 +289,6 @@ module.exports = class Customer {
     // #13
    async sendOtp (payload) {
        const { accountNumber, email, firstName } = payload;
-       console.log(firstName)
        try {
            const otp = otpGenerator.generate(5, {
                alphabets: false,
@@ -297,9 +296,10 @@ module.exports = class Customer {
                specialChars: false,
                upperCase: false
              })
-             this.sendMail(otp_messsage.template(firstName, otp), email, otp_messsage.subject, otp_messsage.text);
              await this.customer.updateOne({ accountNumber: accountNumber}, {$set: {otp: otp}})
-                .then((data) => console.log(data))
+                .then(() => 
+                this.sendMail(otp_messsage.template(firstName, otp), email, otp_messsage.subject, otp_messsage.text))
+                .catch((err) => {throw err})
        } catch (err) {
            console.log(err)
        }
