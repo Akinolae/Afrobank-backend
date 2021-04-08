@@ -92,7 +92,7 @@ const tests = {
     customerLogin: () => {
         describe("POST@/login", () => {
             test("Validates that the user that logged in is the valid user", async () => {
-                const result = await axios.post("http://localhost:4000/Api/v1/login", {
+                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/login", {
                     accountNumber: process.env.ACCOUNTNUMBER,
                     firstName: process.env.FIRSTNAME,
                 });

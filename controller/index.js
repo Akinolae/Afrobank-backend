@@ -6,7 +6,7 @@ const statusCode = require('http-status-codes');
 const messages = require("./data");
 const { calc_account_balance, fetch_single_user } = require("../lib/queries");
 const { generate_account_no } = require('./data');
-const { user_login, user_reg, authSchema } = require("../lib/constants");
+const { user_login, user_reg, authSchema, otp_messsage, setPinSchema, pinReset } = require("../lib/constants");
 
 module.exports = class Customer {
     constructor( _customer) {
@@ -100,25 +100,31 @@ module.exports = class Customer {
     }
 
     // #6
-    setPin(accountNumber, pin, res) {
-        const resMsg = "Pin must be numbers.";
-        const pinLength = "Pin must be 4 digits."
-        isNaN(pin) ? response(resMsg, false, 401, res) : null;
-        pin.length !== 4 ? response(pinLength, false, 401, res) :
-            this.customer.update({
-                pin: pin
-            }, {
-                where: {
-                    accountNumber: accountNumber
+    async setPin(accountNumber, pin, res) {
+        const isValidated = setPinSchema.validate({ accountNumber, pin});
+        if(isValidated.error) {
+            response(isValidated.error.message, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res)
+        }else {
+            try {
+                const user = await fetch_single_user(accountNumber);
+                if(user.status){
+                    await this.customer.updateOne({'accountNumber': user.message.accountNumber}, {$set: {'pin': pin}})
+                    .then(() => {
+                        response(pinReset.message, true, statusCode.StatusCodes.OK, res )
+                        this.sendMail(pinReset.emailTemplate(user.message.firstName), user.message.email, "Afrobank pin reset", "pin")
+                         }
+                    )
+                    .catch((err) => {
+                        // response(pinReset.error, true, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
+                        console.log(err)
+                    })
+                }else {
+                    console.log(user.status)
                 }
-            }).then((data) => {
-                const resMsg = "Invalid user";
-                const message = "Pin updated successfully."
-                data[0] === 0 ? response(resMsg, false, 401, res) : response(message, true, 200, res)
-            }).catch(() => {
-                const message = "Unable to update pin";
-                response(message, false, 400, res);
-            })
+            }catch(err) {
+                console.log(err)
+            }
+        }
     }
 
     // #7
@@ -252,7 +258,6 @@ module.exports = class Customer {
                 text: text,
                 html: message,
             });
-            // console.log("completed");
             console.log("Message sent: %s", info.messageId);
             console.log(
                 "Preview URL: %s",
@@ -299,29 +304,21 @@ module.exports = class Customer {
     }
 
     // #13
-   async sendOtp (sender) {
-        const otp = otpGenerator.generate(5, {
-            alphabets: false,
-            digits: true,
-            specialChars: false,
-            upperCase: false
-          })
-          const data = await fetch_single_user(sender);
-          data.status && console.log("E chokeeee");
-        //   console.log(otp); 
-        // const message = `Afrobank otp <strong>${otp}</strong>`
-        // const subject = `AeNS Transaction OTP`;
-        // const text = `OTP`
-        // this.sendMail(message, sender.email, subject, text);
-        // console.log(this.customer)
-
-        //   this.customer.update({
-        //     otp: otp
-        //   }, {
-        //     where: {
-        //       accountNumber: sender
-        //     }
-        //   })
-    }
-
+   async sendOtp (payload) {
+       const { accountNumber, email, firstName } = payload;
+       console.log(firstName)
+       try {
+           const otp = otpGenerator.generate(5, {
+               alphabets: false,
+               digits: true,
+               specialChars: false,
+               upperCase: false
+             })
+             this.sendMail(otp_messsage.template(firstName, otp), email, otp_messsage.subject, otp_messsage.text);
+             await this.customer.updateOne({ accountNumber: accountNumber}, {$set: {otp: otp}})
+                .then((data) => console.log(data) )
+       } catch (err) {
+           console.log(err)
+       }
+   }
 }
