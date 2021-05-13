@@ -6,7 +6,7 @@ const statusCode = require('http-status-codes');
 const messages = require("./data");
 const { calc_account_balance, fetch_single_user } = require("../lib/queries");
 const { generate_account_no } = require('./data');
-const { user_login, user_reg, authSchema, otp_messsage, setPinSchema, pinReset } = require("../lib/constants");
+const { user_login, user_reg, authSchema, otp_messsage, setPinSchema, pinReset, completeTransactionSchema, completeTransfer } = require("../lib/constants");
 
 module.exports = class Customer {
     constructor( _customer) {
@@ -17,7 +17,12 @@ module.exports = class Customer {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const accountNumber = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
-        const pin = process.env.DEFAULT_PIN
+        const pin = otpGenerator.generate(4, {
+            alphabets: false,
+            digits: true,
+            specialChars: false,
+            upperCase: false
+          })
 
         const user = {
             firstName,
@@ -38,7 +43,7 @@ module.exports = class Customer {
                 try {
                     let user_model = await new this.customer(user);
                     await user_model.save();
-                    this.sendMail( messages.sign_up_message( firstName, pin, accountBalance, accountNumber ),
+                    this.sendMail( user_reg.emailTemplate(firstName, pin, accountBalance, accountNumber),
                     email, user_reg.reg_mail_subject, user_reg.reg_mail_text);
                     response(user_reg.resp_msg_registration, true, statusCode.StatusCodes.OK, res)
                 }
@@ -115,7 +120,7 @@ module.exports = class Customer {
                          }
                     )
                     .catch((err) => {
-                        // response(pinReset.error, true, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
+                        response(pinReset.error, true, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res )
                         console.log(err)
                     })
                 }else {
@@ -128,113 +133,69 @@ module.exports = class Customer {
     }
 
     // #7
-    completeTransfer(res, sender, recipient, amount, otp) {
-        const message = "All fields are required.";
-        const msg = "enter a valid amount";
-        !otp || !sender || !recipient || !amount ? response(message, false, 400, res) : null
-        isNaN(amount) ? response(msg, false, 401, res) :
-            this.customer.findAll({
-                raw: true,
-                where: {
-                    accountNumber: sender
+    async completeTransfer(res, sender, recipient, amount, otp) {
+        if(typeof amount === 'string'){
+            response(completeTransfer.invalidAmount, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res);
+        }else {
+            const isValidated = completeTransactionSchema.validate({sender, recipient, amount, otp});
+            if(isValidated.error){
+                response(isValidated.error.message, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res);
+            }else {
+                try {
+                    const senderData = await fetch_single_user(sender);
+                    const recipientData = await fetch_single_user(recipient);
+                    if(recipientData.status && senderData.status){
+                       const isOtpValid = senderData.message.otp === parseInt(otp);
+
+                       if(isOtpValid){
+                           const newRecipientBalance = amount + recipientData.message.accountBalance;
+                           const newSenderBalance = senderData.message.accountBalance - amount;
+                           // updates sender profile accordingly   
+                           this.customer.updateOne({accountNumber: sender}, {$set: {accountBalance: newSenderBalance, otp: null}})
+                            .then(() => {
+                                response(completeTransfer.message(amount, recipientData.message.surName, 
+                                    recipientData.message.firstName, recipientData.message.lastName ), true, statusCode.StatusCodes.OK, res);
+                                    this.sendMail(completeTransfer.senderTemplate(senderData.message.firstName, senderData.message.surName, 
+                                        senderData.message.lastName, recipient, recipientData.message.firstName, recipientData.message.surName,
+                                        recipientData.message.lastName, amount, newSenderBalance
+                                        ),
+                                     senderData.message.email, "Debit", "Debit")
+                            })
+                            .catch ((err) => {
+                                response(completeTransfer.unsuccessful, false, statusCode.StatusCodes.BAD_REQUEST, res);
+                            })
+
+                            // update recipient profile accordingly
+                             this.customer.updateOne({accountNumber: recipient}, {$set: {accountBalance: newRecipientBalance }})
+                            .then(() => {
+                                this.sendMail(completeTransfer.recipientTemplate(recipientData.message.firstName, recipientData.message.lastName, 
+                                    recipientData.message.surName, amount, newRecipientBalance, senderData.message.firstName, senderData.message.lastName,
+                                    senderData.message.surName
+                                    ), recipientData.message.email, "Credit alert", "credit")
+                            })
+                       }else {
+                                response(completeTransfer.invalidOtp, false, statusCode.StatusCodes.FORBIDDEN, res)
+                       }
+                    }
+                    else {
+                        response(completeTransfer.invalidCredentials, false, statusCode.StatusCodes.FORBIDDEN, res)
+                    }
+
+                }catch (err){
+                    throw err;
                 }
-            }).then((user) => {
-                const message = "Unable to complete transaction. Check credentials";
-                const otpError = "Transaction error.";
-                user.length === 0 ? response(message, false, 400, res) : null;
-                otp !== user[0].otp ? response(otpError, false, 401, res) :
-                    this.customer.findOne({
-                        raw: true,
-                        where: {
-                            accountNumber: recipient
-                        }
-                    }).then((newRecipient) => {
-                        const message = "Check credentials.";
-                        !newRecipient ? response(message, false, 401, res) : null;
+            }
 
-                        const date = new Date();
-                        const reciverBalance = parseInt(newRecipient.accountBalance);
-                        const senderBalance = parseInt(user[0].accountBalance);
-                        const hours = date.getHours();
-                        const minutes = date.getMinutes();
-                        const transactionAmt = parseInt(amount);
-                        const senderNewBalance = senderBalance - transactionAmt;
-                        const recievedTransfer = transactionAmt + reciverBalance;
-                        const SenderSms = `
-                    Acct: ${sender}
-                    Amt: ${amount}
-                    Desc: Transfer to ${recipient}
-                    Avail: ${senderNewBalance};
-                    `;
-                        const reciSms = `
-                    Acct: ${recipient}
-                    Amt: ${amount}
-                    Desc: Transfer to ${recipient}
-                    Avail: ${senderNewBalance};
-                    `;
-                        this.customer.update({
-                            accountBalance: senderNewBalance,
-                            otp: null
-                        }, {
-                            where: {
-                                accountNumber: user[0].accountNumber,
-                            },
-                        }).then(() => {
-                            this.customer
-                                .update({
-                                    accountBalance: recievedTransfer,
-                                }, {
-                                    where: {
-                                        accountNumber: newRecipient.accountNumber,
-                                    },
-                                })
-                                .then(() => {
-                                    const text = "Transaction notification";
-                                    const senderSubj = `AeNS Transaction Alert [DEBIT:${amount}.00]`;
-                                    const reciverSubj = `AeNS Transaction Alert [CREDIT:${amount}.00]`
-                                    // Send both parties notification upon transaction completion
-                                    const {
-                                        sendText,
-                                        sendMail
-                                    } = this;
-                                    sendMail( messages.sender_transaction_completed_notify(user, transactionAmt, hours, minutes, senderNewBalance, newRecipient), user[0].email, senderSubj, text);
-                                    sendMail( messages.recipient_transaction_completed_notify(newRecipient, transactionAmt, hours, minutes, user, recievedTransfer), newRecipient.email, reciverSubj, text);
-
-                                    const resMsg = `TRANSACTION COMPLETED SUCCESSFULLY.`;
-                                    response(resMsg, true, 200, res);
-                                }).catch(() => {
-                                    const resMsg = "Unable to complete transaction";
-                                    response(resMsg, false, 400, res);
-                                });
-                        })
-                    })
-            })
+        }
     }
 
     // #8
     updateOtp(accountNumber) {
         setTimeout(() => {
-            this.sequelize.sync().then(() => {
-                this.customer.update({
-                    otp: null,
-                }, {
-                    where: {
-                        accountNumber: accountNumber
-                    }
-                })
-            })
+                this.customer.updateOne({ accountNumber: accountNumber }, {$set: {otp:null}})
         }, 900000);
     }
-    // #9
-    // sendText(phonenumber, message) {
-        // client.messages
-            // .create({
-                // from: "+15017122661",
-                // body: message,
-                // to: phonenumber,
-            // })
-            // .then((message) => console.log(message.sid));
-    // }
+    
     // #10
     sendMail(message, recipient, subject, text) {
         async function main() {
@@ -306,7 +267,6 @@ module.exports = class Customer {
     // #13
    async sendOtp (payload) {
        const { accountNumber, email, firstName } = payload;
-       console.log(firstName)
        try {
            const otp = otpGenerator.generate(5, {
                alphabets: false,
@@ -314,9 +274,13 @@ module.exports = class Customer {
                specialChars: false,
                upperCase: false
              })
-             this.sendMail(otp_messsage.template(firstName, otp), email, otp_messsage.subject, otp_messsage.text);
              await this.customer.updateOne({ accountNumber: accountNumber}, {$set: {otp: otp}})
-                .then((data) => console.log(data) )
+                .then(() => {
+                    this.sendMail(otp_messsage.template(firstName, otp), email, otp_messsage.subject, otp_messsage.text)
+                    this.updateOtp(accountNumber);
+                }
+                )
+                .catch((err) => {throw err})
        } catch (err) {
            console.log(err)
        }

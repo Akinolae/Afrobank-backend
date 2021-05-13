@@ -40,13 +40,13 @@ const tests = {
     registerCustomer: () => {
         describe("POST@/register", () => {
             test("it should register a new user to the platform", async () => {
-                const result = await axios.post("https://afrobank.herokuapp.com/Api/v1/register", {
-                    firstName: "Yemi",
+                const result = await axios.post("http://localhost:4000/Api/v1/transfer", {
+                    firstName: "Adeleye",
                     lastName: "Makinde",
-                    surName: "Ib",
+                    surName: "Pamilerin",
                     email: process.env.EMAIL_TEST,
                     phoneNumber: "08034335043",
-                    gender: "female",
+                    gender: "male",
                 });
                 expect(result.status).toBe(200);
             });
