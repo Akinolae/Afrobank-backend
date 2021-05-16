@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const { response } = require('./responseHandler');
 const nodemailer = require("nodemailer");
 const otpGenerator = require('otp-generator')
@@ -6,9 +7,10 @@ const statusCode = require('http-status-codes');
 const messages = require("./data");
 const { calc_account_balance, fetch_single_user } = require("../lib/queries");
 const { generate_account_no } = require('./data');
+const model = require('../model/customer');
 const { user_login, user_reg, authSchema, otp_messsage, setPinSchema, pinReset, completeTransactionSchema, completeTransfer } = require("../lib/constants");
 
-module.exports = class Customer {
+class Customer {
     constructor( _customer) {
         this.customer = _customer
     }
@@ -134,6 +136,9 @@ module.exports = class Customer {
 
     // #7
     async completeTransfer(res, sender, recipient, amount, otp) {
+        // const name = "Akinola";
+        // const newBuff = new Buffer.alloc(10, name).toString("base64");
+        // console.log(newBuff);
         if(typeof amount === 'string'){
             response(completeTransfer.invalidAmount, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res);
         }else {
@@ -286,3 +291,7 @@ module.exports = class Customer {
        }
    }
 }
+
+const user = new Customer(model);
+
+module.exports = user;
