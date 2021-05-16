@@ -1,7 +1,5 @@
-const customer = require("../../model/customer");
-const Customer = require("../../controller/index");
+const customer = require("../../controller/index");
 const { response } = require("../../controller/responseHandler");
-const newCustomer = new Customer( customer );
 const { fetch_single_user } = require("../../lib/queries");
 const { StatusCodes } = require("http-status-codes");
 const { transferAuthSchema, transfer } = require("../../lib/constants");
@@ -33,7 +31,7 @@ module.exports = {
                     response(transfer.insufficient_balance, false, StatusCodes.UNPROCESSABLE_ENTITY, res);
                   } else {
                     response(transfer.success_message, true, StatusCodes.OK, res);
-                      newCustomer.sendOtp(isSenderValid.message);
+                    customer.sendOtp(isSenderValid.message);
                   }
                 }
           }
@@ -52,7 +50,6 @@ module.exports = {
 
   completeTransfer: (req, res) => {
     const { otp, sender, recipient, amount } = req.body;
-    const newCustomer = new Customer ( customer )
-    newCustomer.completeTransfer(res, sender, recipient, amount, otp);
+    customer.completeTransfer(res, sender, recipient, amount, otp);
   }
 };
