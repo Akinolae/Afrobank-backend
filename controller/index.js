@@ -15,7 +15,7 @@ class Customer {
         this.customer = _customer
     }
     // #1
-  async register(firstName, lastName, surName, email, phoneNumber, gender, res) {
+   register = async (firstName, lastName, surName, email, phoneNumber, gender, res) => {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const accountNumber = generate_account_no();
         const accountBalance = process.env.DEFAULT_BALANCE;
@@ -57,7 +57,7 @@ class Customer {
 
     // #2
     // returns the account balance of the specified user. 
-    async getBalance  (accountNumber, res) {
+     getBalance = async (accountNumber, res) => {
        const data = await calc_account_balance(accountNumber);
         !data.status ?  response(data.message, false, statusCode.StatusCodes.BAD_REQUEST, res):
           response(data, true, statusCode.StatusCodes.OK, res)
@@ -80,7 +80,7 @@ class Customer {
     }
 
     // #4
-   async login(accountNumber, firstName, res) {
+   login = async (accountNumber, firstName, res) => {
         if( !accountNumber || !firstName ) {
             response(user_login.credentials, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res) 
         } else {
@@ -107,7 +107,7 @@ class Customer {
     }
 
     // #6
-    async setPin(accountNumber, pin, res) {
+    setPin = async (accountNumber, pin, res) => {
         const isValidated = setPinSchema.validate({ accountNumber, pin});
         if(isValidated.error) {
             response(isValidated.error.message, false, statusCode.StatusCodes.UNPROCESSABLE_ENTITY, res)
@@ -135,7 +135,7 @@ class Customer {
     }
 
     // #7
-    async completeTransfer(res, sender, recipient, amount, otp) {
+    completeTransfer = async  (res, sender, recipient, amount, otp) => {
         // const name = "Akinola";
         // const newBuff = new Buffer.alloc(10, name).toString("base64");
         // console.log(newBuff);
@@ -195,14 +195,14 @@ class Customer {
     }
 
     // #8
-    updateOtp(accountNumber) {
+    updateOtp = async (accountNumber) => {
         setTimeout(() => {
                 this.customer.updateOne({ accountNumber: accountNumber }, {$set: {otp:null}})
         }, 900000);
     }
     
     // #10
-    sendMail(message, recipient, subject, text) {
+    sendMail = async (message, recipient, subject, text) => {
         async function main() {
             // create reusable transporter object using the default SMTP transport
             let transporter = nodemailer.createTransport({
@@ -233,7 +233,7 @@ class Customer {
         main();
     }
     // #11
-    updateTransactionHistory(type, acctNo, transactionHistory) {
+    updateTransactionHistory = async (type, acctNo, transactionHistory) => {
         this.sequelize.sync().then(() => {
             transactionHistory.update({
                 transactionType: type,
@@ -251,7 +251,7 @@ class Customer {
     }
 
     // #12
-    deleteCustomer(accountNo, res) {
+    deleteCustomer = async (accountNo, res) => {
         this.sequelize.sync().then(() => {
             this.customer.destroy({
                 raw: true,
@@ -270,7 +270,7 @@ class Customer {
     }
 
     // #13
-   async sendOtp (payload) {
+   sendOtp = async  (payload) => {
        const { accountNumber, email, firstName } = payload;
        try {
            const otp = otpGenerator.generate(5, {
