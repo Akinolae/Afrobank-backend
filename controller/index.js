@@ -293,5 +293,6 @@ class Customer {
 }
 
 const user = new Customer(model);
+Object.freeze(user);
 
 module.exports = user;
