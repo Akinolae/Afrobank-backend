@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 const {
   customerLogin,
   customerModel,
@@ -8,9 +8,9 @@ const {
   registerCustomer,
   transfer,
   sendEmail,
-  // sendText, 
+  // sendText,
   singleUser,
-  validateAccount
+  validateAccount,
 } = require("./testRequests");
 
 // Call all test suites;
@@ -23,4 +23,4 @@ getBalance();
 pinReset();
 fetchUsers();
 registerCustomer();
-validateAccount()
+validateAccount();
