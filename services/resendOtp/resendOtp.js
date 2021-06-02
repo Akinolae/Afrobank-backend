@@ -1,8 +1,7 @@
-const customer = require("../../controller/index")
+const customer = require("../../controller/index");
 
 module.exports = {
-    resendOtp: (req, res) => {
-        const { sender } = req.body;
-        
-    }
-}
+  resendOtp: (req, res) => {
+    const { sender } = req.body;
+  },
+};
