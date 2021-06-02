@@ -203,13 +203,12 @@ class Customer {
                 statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
                 res
               );
-              console.log(err);
             });
         } else {
           console.log(user.status);
         }
       } catch (err) {
-        console.log(err);
+        throw err || "Something went wrong";
       }
     }
   };
@@ -336,7 +335,7 @@ class Customer {
             );
           }
         } catch (err) {
-          throw err;
+          throw err || "An error occured";
         }
       }
     }
@@ -395,11 +394,9 @@ class Customer {
             },
           }
         )
-        .then(() => {
-          console.log("success");
-        })
+        .then(() => {})
         .catch((err) => {
-          console.log(err);
+          throw err;
         });
     });
   };
@@ -453,7 +450,7 @@ class Customer {
           throw err;
         });
     } catch (err) {
-      console.log(err);
+      throw err;
     }
   };
 }
