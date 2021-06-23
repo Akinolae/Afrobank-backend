@@ -1,44 +1,45 @@
 {
-  "name": "afrobankapi",
-  "jest": {
-    "testEnvironment": "node"
-  },
-  "version": "1.0.0",
-  "description": "Afro bank Api",
-  "main": "afrobankserver.js",
-  "scripts": {
-    "test": "jest",
-    "dev": "nodemon afrobankserver.js",
-    "start": "node afrobankserver.js"
-  },
-  "author": "Akinola Makinde",
-  "license": "ISC",
-  "dependencies": {
-    "axios": "^0.19.2",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
-    "dotenv": "^8.2.0",
-    "express": "^4.17.1",
-    "http-status-codes": "^2.1.4",
-    "install": "^0.13.0",
-    "jest": "^26.4.2",
-    "joi": "^17.4.0",
-    "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.12.2",
-    "mysql": "^2.18.1",
-    "mysql2": "^2.1.0",
-    "nexmo": "^2.9.1",
-    "nodemailer": "^6.4.10",
-    "nodemon": "^2.0.2",
-    "otp-generator": "^2.0.0",
-    "passport": "^0.4.1",
-    "passport-local": "^1.0.0",
-    "redis": "^3.0.2",
-    "redis-server": "^1.2.2",
-    "sequelize": "^6.3.5",
-    "twilio": "^3.49.1"
-  },
-  "devDependencies": {
-    "sequelize-cli": "^6.2.0"
-  }
+    "name": "afrobankapi",
+    "jest": {
+        "testEnvironment": "node"
+    },
+    "version": "1.0.0",
+    "description": "Afro bank Api",
+    "main": "afrobankserver.js",
+    "scripts": {
+        "test": "jest",
+        "dev": "nodemon afrobankserver.js",
+        "start": "node afrobankserver.js",
+        "cleanup": "rm -rf node_modules/ && npm i && npm run dev"
+    },
+    "author": "Akinola Makinde",
+    "license": "ISC",
+    "dependencies": {
+        "axios": "^0.19.2",
+        "bcryptjs": "^2.4.3",
+        "cors": "^2.8.5",
+        "dotenv": "^8.2.0",
+        "express": "^4.17.1",
+        "http-status-codes": "^2.1.4",
+        "install": "^0.13.0",
+        "jest": "^26.4.2",
+        "joi": "^17.4.0",
+        "jsonwebtoken": "^8.5.1",
+        "mongoose": "^5.12.2",
+        "mysql": "^2.18.1",
+        "mysql2": "^2.1.0",
+        "nexmo": "^2.9.1",
+        "nodemailer": "^6.4.10",
+        "nodemon": "^2.0.2",
+        "otp-generator": "^2.0.0",
+        "passport": "^0.4.1",
+        "passport-local": "^1.0.0",
+        "redis": "^3.0.2",
+        "redis-server": "^1.2.2",
+        "sequelize": "^6.3.5",
+        "twilio": "^3.49.1"
+    },
+    "devDependencies": {
+        "sequelize-cli": "^6.2.0"
+    }
 }
