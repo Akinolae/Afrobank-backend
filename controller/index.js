@@ -17,6 +17,8 @@ const {
     pinReset,
     completeTransactionSchema,
     completeTransfer,
+    transferAuthSchema,
+    transfer,
 } = require('../lib/constants')
 
 class Customer {
@@ -240,142 +242,230 @@ class Customer {
         }
     }
 
-    // #7
-    completeTransfer = async (res, sender, recipient, amount, otp) => {
-        // const name = "Akinola";
-        // const newBuff = new Buffer.alloc(10, name).toString("base64");
-        // console.log(newBuff);
-        if (typeof amount === 'string') {
+    transfer = async (sender, recipient, amount, pin, res) => {
+        const joi_error = transferAuthSchema.validate({
+            sender,
+            recipient,
+            amount,
+            pin,
+        })
+        if (joi_error.error) {
             response(
-                completeTransfer.invalidAmount,
+                joi_error.error.details[0].message,
+                false,
+                statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                res
+            )
+        } else if (sender === recipient) {
+            response(
+                transfer.single_user,
                 false,
                 statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
                 res
             )
         } else {
-            const isValidated = completeTransactionSchema.validate({
-                sender,
-                recipient,
-                amount,
-                otp,
-            })
-            if (isValidated.error) {
-                response(
-                    isValidated.error.message,
-                    false,
-                    statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
-                    res
-                )
-            } else {
-                try {
-                    const senderData = await fetch_single_user(sender)
-                    const recipientData = await fetch_single_user(recipient)
-                    if (recipientData.status && senderData.status) {
-                        const isOtpValid =
-                            senderData.message.otp === parseInt(otp)
+            try {
+                const isSenderValid = await fetch_single_user(sender)
+                const isRecipientValid = await fetch_single_user(recipient)
 
-                        if (isOtpValid) {
-                            const newRecipientBalance =
-                                amount + recipientData.message.accountBalance
-                            const newSenderBalance =
-                                senderData.message.accountBalance - amount
-                            // updates sender profile accordingly
-                            this.customer
-                                .updateOne(
-                                    { accountNumber: sender },
-                                    {
-                                        $set: {
-                                            accountBalance: newSenderBalance,
-                                            otp: null,
-                                        },
-                                    }
-                                )
-                                .then(() => {
-                                    response(
-                                        completeTransfer.message(
-                                            amount,
-                                            recipientData.message.surName,
-                                            recipientData.message.firstName,
-                                            recipientData.message.lastName
-                                        ),
-                                        true,
-                                        statusCode.StatusCodes.OK,
-                                        res
-                                    )
-                                    this.sendMail(
-                                        completeTransfer.senderTemplate(
-                                            senderData.message.firstName,
-                                            senderData.message.surName,
-                                            senderData.message.lastName,
-                                            recipient,
-                                            recipientData.message.firstName,
-                                            recipientData.message.surName,
-                                            recipientData.message.lastName,
-                                            amount,
-                                            newSenderBalance
-                                        ),
-                                        senderData.message.email,
-                                        'Debit',
-                                        'Debit'
-                                    )
-                                })
-                                .catch((err) => {
-                                    response(
-                                        completeTransfer.unsuccessful,
-                                        false,
-                                        statusCode.StatusCodes.BAD_REQUEST,
-                                        res
-                                    )
-                                })
-
-                            // update recipient profile accordingly
-                            this.customer
-                                .updateOne(
-                                    { accountNumber: recipient },
-                                    {
-                                        $set: {
-                                            accountBalance: newRecipientBalance,
-                                        },
-                                    }
-                                )
-                                .then(() => {
-                                    this.sendMail(
-                                        completeTransfer.recipientTemplate(
-                                            recipientData.message.firstName,
-                                            recipientData.message.lastName,
-                                            recipientData.message.surName,
-                                            amount,
-                                            newRecipientBalance,
-                                            senderData.message.firstName,
-                                            senderData.message.lastName,
-                                            senderData.message.surName
-                                        ),
-                                        recipientData.message.email,
-                                        'Credit alert',
-                                        'credit'
-                                    )
-                                })
-                        } else {
+                if (
+                    isRecipientValid.status &&
+                    isSenderValid.status &&
+                    !!isSenderValid.message &&
+                    !!isRecipientValid.message
+                ) {
+                    if (isSenderValid.message.pin !== pin) {
+                        response(
+                            transfer.pinError,
+                            false,
+                            statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                            res
+                        )
+                    } else {
+                        if (isSenderValid.message.accountBalance <= 0) {
                             response(
-                                completeTransfer.invalidOtp,
+                                transfer.low_balance,
                                 false,
-                                statusCode.StatusCodes.FORBIDDEN,
+                                statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                                res
+                            )
+                        } else if (
+                            amount > isSenderValid.message.accountBalance
+                        ) {
+                            response(
+                                transfer.insufficient_balance,
+                                false,
+                                statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                                res
+                            )
+                        } else {
+                            this.completeTransfer(isSenderValid.message)
+                            this.sendOtp(isSenderValid.message)
+                            response(
+                                transfer.success_message,
+                                true,
+                                statusCode.StatusCodes.OK,
                                 res
                             )
                         }
-                    } else {
-                        response(
-                            completeTransfer.invalidCredentials,
-                            false,
-                            statusCode.StatusCodes.FORBIDDEN,
-                            res
-                        )
                     }
-                } catch (err) {
-                    throw err || 'An error occured'
+                } else if (!isRecipientValid.status) {
+                    response(
+                        `Recipient ${isRecipientValid.message}`,
+                        false,
+                        statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                        res
+                    )
+                } else if (!isSenderValid.status) {
+                    response(
+                        `Sender ${isSenderValid.message}`,
+                        false,
+                        statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                        res
+                    )
                 }
+            } catch (error) {
+                throw error || 'An error occured'
             }
         }
+    }
+    // #7
+    completeTransfer = async (payload) => {
+        const { pin } = payload
+        console.log(pin)
+        // const name = "Akinola";
+        // const newBuff = new Buffer.alloc(10, name).toString("base64");
+        // console.log(newBuff);
+        // if (typeof amount === 'string') {
+        //     response(
+        //         completeTransfer.invalidAmount,
+        //         false,
+        //         statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+        //         res
+        //     )
+        // }
+        // else {
+        //     const isValidated = completeTransactionSchema.validate({
+        //         sender,
+        //         recipient,
+        //         amount,
+        //         otp,
+        //     })
+        //     if (isValidated.error) {
+        //         response(
+        //             isValidated.error.message,
+        //             false,
+        //             statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+        //             res
+        //         )
+        //     } else {
+        //         try {
+        //             const senderData = await fetch_single_user(sender)
+        //             const recipientData = await fetch_single_user(recipient)
+        //             if (recipientData.status && senderData.status) {
+        //                 const isOtpValid =
+        //                     senderData.message.otp === parseInt(otp)
+        //                 if (isOtpValid) {
+        //                     const newRecipientBalance =
+        //                         amount + recipientData.message.accountBalance
+        //                     const newSenderBalance =
+        //                         senderData.message.accountBalance - amount
+        //                     // updates sender profile accordingly
+        //                     this.customer
+        //                         .updateOne(
+        //                             { accountNumber: sender },
+        //                             {
+        //                                 $set: {
+        //                                     accountBalance: newSenderBalance,
+        //                                     otp: null,
+        //                                 },
+        //                             }
+        //                         )
+        //                         .then(() => {
+        //                             response(
+        //                                 completeTransfer.message(
+        //                                     amount,
+        //                                     recipientData.message.surName,
+        //                                     recipientData.message.firstName,
+        //                                     recipientData.message.lastName
+        //                                 ),
+        //                                 true,
+        //                                 statusCode.StatusCodes.OK,
+        //                                 res
+        //                             )
+        //                             this.sendMail(
+        //                                 completeTransfer.senderTemplate(
+        //                                     senderData.message.firstName,
+        //                                     senderData.message.surName,
+        //                                     senderData.message.lastName,
+        //                                     recipient,
+        //                                     recipientData.message.firstName,
+        //                                     recipientData.message.surName,
+        //                                     recipientData.message.lastName,
+        //                                     amount,
+        //                                     newSenderBalance
+        //                                 ),
+        //                                 senderData.message.email,
+        //                                 'Debit',
+        //                                 'Debit'
+        //                             )
+        //                         })
+        //                         .catch((err) => {
+        //                             response(
+        //                                 completeTransfer.unsuccessful,
+        //                                 false,
+        //                                 statusCode.StatusCodes.BAD_REQUEST,
+        //                                 res
+        //                             )
+        //                         })
+        //                     // update recipient profile accordingly
+        //                     this.customer
+        //                         .updateOne(
+        //                             { accountNumber: recipient },
+        //                             {
+        //                                 $set: {
+        //                                     accountBalance: newRecipientBalance,
+        //                                 },
+        //                             }
+        //                         )
+        //                         .then(() => {
+        //                             this.sendMail(
+        //                                 completeTransfer.recipientTemplate(
+        //                                     recipientData.message.firstName,
+        //                                     recipientData.message.lastName,
+        //                                     recipientData.message.surName,
+        //                                     amount,
+        //                                     newRecipientBalance,
+        //                                     senderData.message.firstName,
+        //                                     senderData.message.lastName,
+        //                                     senderData.message.surName
+        //                                 ),
+        //                                 recipientData.message.email,
+        //                                 'Credit alert',
+        //                                 'credit'
+        //                             )
+        //                         })
+        //                 } else {
+        //                     response(
+        //                         completeTransfer.invalidOtp,
+        //                         false,
+        //                         statusCode.StatusCodes.FORBIDDEN,
+        //                         res
+        //                     )
+        //                 }
+        //             } else {
+        //                 response(
+        //                     completeTransfer.invalidCredentials,
+        //                     false,
+        //                     statusCode.StatusCodes.FORBIDDEN,
+        //                     res
+        //                 )
+        //             }
+        //         } catch (err) {
+        //             throw err || 'An error occured'
+        //         }
+        //     }
+        // }
     }
 
     // #8
