@@ -26,15 +26,15 @@ class Customer {
         this.customer = _customer
     }
     // #1
-    register = async (
+    register = async ({
         firstName,
         lastName,
         surName,
         email,
         phoneNumber,
         gender,
-        res
-    ) => {
+        res,
+    }) => {
         // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
         const accountNumber = generate_account_no()
         const accountBalance = process.env.DEFAULT_BALANCE
@@ -138,12 +138,12 @@ class Customer {
     // #4
     login = async (accountNumber, firstName, res) => {
         if (!accountNumber || !firstName) {
-            response(
-                user_login.credentials,
-                false,
-                statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
-                res
-            )
+            response({
+                message: user_login.credentials,
+                success: false,
+                code: statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                res: res,
+            })
         } else {
             const data = await fetch_single_user(accountNumber)
             if (
