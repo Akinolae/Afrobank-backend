@@ -2,10 +2,11 @@ require('dotenv').config()
 
 const model = require('../../model/customer')
 const { generate } = require('otp-generator')
-const { sendMail, validatePin } = require('../../utils')
+const { sendMail, isPinValid } = require('../../utils')
+const fetch_single_user = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { fetch_single_user, calc_account_balance } = require('../../lib/queries')
+const { calc_account_balance } = require('../../lib/queries')
 const {
     transfer,
     transferAuthSchema,
@@ -17,7 +18,7 @@ class Transactions {
         this.customer = _customer_
     }
 
-    transfer = async (sender, recipient, amount, pin, res) => {
+    transfer = async (sender, recipient, amount, pin, otp, res) => {
         const joi_error = transferAuthSchema.validate({
             sender,
             recipient,
@@ -49,7 +50,7 @@ class Transactions {
                     !!isSenderValid.message &&
                     !!isRecipientValid.message
                 ) {
-                    if (!validatePin(isSenderValid.message.pin, pin)) {
+                    if (!isPinValid(isSenderValid.message.pin, pin)) {
                         response(
                             transfer.pinError,
                             false,
@@ -75,7 +76,18 @@ class Transactions {
                                 res
                             )
                         } else {
-                            this.completeTransfer(isSenderValid.message)
+                            const transactionData = {
+                                senderAccountNumber:
+                                    isSenderValid.message.accountNumber,
+                                recipientAccountNumber:
+                                    isRecipientValid.message.accountNumber,
+                                recipientName: `${isRecipientValid.message.surName} ${isRecipientValid.message.firstName} ${isRecipientValid.message.lastName}`,
+                                amount,
+                                otp,
+                                type: 'debit',
+                            }
+
+                            this.completeTransfer(transactionData)
                             this.sendOtp(isSenderValid.message)
                             response(
                                 transfer.success_message,
@@ -145,7 +157,16 @@ class Transactions {
     }
 
     completeTransfer = async (payload) => {
-        // const { pin } = payload
+        const {
+            type,
+            senderAccountNumber,
+            recipientAccountNumber,
+            amount,
+            recipientName,
+            otp,
+        } = payload
+        if (type === 'debit') {
+        }
         console.log(payload)
     }
 

@@ -4,15 +4,15 @@ require('dotenv').config()
 const model = require('../../model/customer')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { generate_account_no, login_notify } = require('../data')
 const {
     authSchema,
     user_login,
     setPinSchema,
     pinReset,
 } = require('../../lib/constants')
-const { fetch_single_user } = require('../../lib/queries')
-const { sendMail } = require('../../utils')
+const { user_reg } = require('../../lib/constants')
+const { sendMail, createAccountNumber, createPin } = require('../../utils')
+const { fetch_single_user, login_notify } = require('../../utils/userUtil')
 
 class UserManagement {
     constructor(_customer_) {
@@ -28,15 +28,9 @@ class UserManagement {
         gender,
         res
     ) => {
-        // CREATES VIRTUAL ACCOUNT NUMBERS AND DEFAULT PINS
-        const accountNumber = generate_account_no()
+        const accountNumber = await createAccountNumber(this.customer)
         const accountBalance = process.env.DEFAULT_BALANCE
-        const pin = otpGenerator.generate(4, {
-            alphabets: false,
-            digits: true,
-            specialChars: false,
-            upperCase: false,
-        })
+        const pin = createPin()
 
         const user = {
             firstName,
@@ -87,7 +81,7 @@ class UserManagement {
                 )
             } catch (err) {
                 response(
-                    user_reg.registration_error,
+                    `user with email ${email} already exists`,
                     false,
                     StatusCodes.UNPROCESSABLE_ENTITY,
                     res
