@@ -5,6 +5,7 @@ const dbConfigure = async (uri) => {
         await mongoose.connect(uri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
+            useFindAndModify: false,
         })
         console.log('=== DB connection established ===')
     } catch (error) {

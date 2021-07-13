@@ -1,24 +1,19 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { generate } = require('otp-generator')
 const { sendMail, isPinValid } = require('../../utils')
-const fetch_single_user = require('../../utils/userUtil')
+const { fetch_single_user } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { calc_account_balance } = require('../../lib/queries')
-const {
-    transfer,
-    transferAuthSchema,
-    otp_messsage,
-} = require('../../lib/constants')
+const { calc_account_balance, updateTransaction } = require('../../lib/queries')
+const { transfer, transferAuthSchema } = require('../../lib/constants')
 
 class Transactions {
     constructor(_customer_) {
         this.customer = _customer_
     }
 
-    transfer = async (sender, recipient, amount, pin, otp, res) => {
+    transfer = async (sender, recipient, amount, pin, res) => {
         const joi_error = transferAuthSchema.validate({
             sender,
             recipient,
@@ -83,12 +78,10 @@ class Transactions {
                                     isRecipientValid.message.accountNumber,
                                 recipientName: `${isRecipientValid.message.surName} ${isRecipientValid.message.firstName} ${isRecipientValid.message.lastName}`,
                                 amount,
-                                otp,
                                 type: 'debit',
                             }
 
                             this.completeTransfer(transactionData)
-                            this.sendOtp(isSenderValid.message)
                             response(
                                 transfer.success_message,
                                 true,
@@ -119,41 +112,10 @@ class Transactions {
     }
 
     getBalance = async (accountNumber, res) => {
-        const data = await calc_account_balance(accountNumber)
-        !data.status
-            ? response(data.message, false, StatusCodes.BAD_REQUEST, res)
-            : response(data, true, StatusCodes.OK, res)
-    }
-
-    sendOtp = async (payload) => {
-        const { accountNumber, email, firstName } = payload
-        try {
-            const otp = generate(5, {
-                alphabets: false,
-                digits: true,
-                specialChars: false,
-                upperCase: false,
-            })
-            await this.customer
-                .updateOne(
-                    { accountNumber: accountNumber },
-                    { $set: { otp: otp } }
-                )
-                .then(() => {
-                    sendMail(
-                        otp_messsage.template(firstName, otp),
-                        email,
-                        otp_messsage.subject,
-                        otp_messsage.text
-                    )
-                    this.updateOtp(accountNumber)
-                })
-                .catch((err) => {
-                    throw err
-                })
-        } catch (err) {
-            throw err
-        }
+        calc_account_balance(accountNumber)
+        // !data.status
+        //     ? response(data.message, false, StatusCodes.BAD_REQUEST, res)
+        //     : response(data, true, StatusCodes.OK, res)
     }
 
     completeTransfer = async (payload) => {
@@ -163,41 +125,20 @@ class Transactions {
             recipientAccountNumber,
             amount,
             recipientName,
-            otp,
         } = payload
-        if (type === 'debit') {
-        }
         console.log(payload)
-    }
-
-    updateTransactionHistory = async (type, acctNo, transactionHistory) => {
-        this.sequelize.sync().then(() => {
-            transactionHistory
-                .update(
-                    {
-                        transactionType: type,
-                        accountNumber: 1234,
-                    },
-                    {
-                        where: {
-                            accountNumber: acctNo,
-                        },
-                    }
-                )
-                .then(() => {})
-                .catch((err) => {
-                    throw err
-                })
-        })
-    }
-
-    updateOtp = async (accountNumber) => {
-        setTimeout(() => {
-            this.customer.updateOne(
-                { accountNumber: accountNumber },
-                { $set: { otp: null } }
+        if (type === 'debit') {
+            this.updateTransactionHistory(type, senderAccountNumber, amount)
+            this.updateTransactionHistory(
+                'credit',
+                recipientAccountNumber,
+                amount
             )
-        }, 900000)
+        }
+    }
+
+    updateTransactionHistory = async (type, accountNumber, amount) => {
+        await updateTransaction(this.customer, type, accountNumber, amount)
     }
 }
 

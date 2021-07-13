@@ -13,6 +13,10 @@ const transactionSchema = new mongoose.Schema({
         type: Number,
         default: null,
     },
+    transaction_date: {
+        type: Date,
+        default: Date.now,
+    },
 })
 
 const customer = new mongoose.Schema({
@@ -56,9 +60,6 @@ const customer = new mongoose.Schema({
     createdAt: {
         type: Date,
         allowNull: false,
-    },
-    otp: {
-        type: Number,
     },
     regDate: {
         type: Date,
