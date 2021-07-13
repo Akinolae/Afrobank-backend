@@ -1,7 +1,10 @@
 const sendMail = require('./emailUtils')
-const validatePin = require('./pinUtils')
+const { createPin, isPinValid } = require('./pinUtils')
+const createAccountNumber = require('./accountNumberUtil')
 
 module.exports = {
     sendMail,
-    validatePin,
+    isPinValid,
+    createPin,
+    createAccountNumber,
 }
