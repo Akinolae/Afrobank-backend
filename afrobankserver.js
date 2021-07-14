@@ -1,10 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const { response } = require('./controller/responseHandler')
 require('./config/database/dbconnect')
-const db = require('./config/database/dbconnect')
-db.connect()
-
+const { dbConfigure } = require('./config/database/dbconnect')
+dbConfigure(process.env.DB_CONNECT)
 const app = express()
 app.use(cors())
 app.use(express.json())

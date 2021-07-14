@@ -1,4 +1,4 @@
-const customer = require('../../controller/index')
+const customer = require('../../controller/userManagement')
 
 module.exports = {
     getUser: (req, res) => {

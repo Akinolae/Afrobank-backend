@@ -1,5 +1,4 @@
-const customer = require('../../model/customer')
-const Customer = require('../../controller/index')
+const Customer = require('../../controller/userManagement')
 
 module.exports = {
     pinReset: (req, res) => {
