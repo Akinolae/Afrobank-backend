@@ -1,20 +1,31 @@
 const customer = require('../model/customer')
 const jwt = require('jsonwebtoken')
+const encrypt = require('bcryptjs')
 
-const fetch_single_user = async (accountNumber) => {
+const fetch_single_user = async (email) => {
     try {
         const isAvailable = await customer
-            .findOne({ accountNumber })
+            .findOne({ email })
             .then((data) => data)
             .catch((error) => error)
         if (isAvailable === null || isAvailable === 'undefined') {
-            return { status: false, message: 'Invalid account number' }
+            return {
+                status: false,
+                message: 'invalid email address or password',
+            }
         } else {
             return { status: true, message: isAvailable }
         }
     } catch (err) {
         throw err
     }
+}
+
+const verifyAccountNumber = async (accountNumber) => {
+    try {
+        const isValid = await customer.findOne({ accountNumber })
+        return isValid
+    } catch (error) {}
 }
 
 const login_notify = (data) => {
@@ -36,4 +47,33 @@ const login_notify = (data) => {
 const generateUserAccessToken = (payload) => {
     return jwt.sign(payload, process.env.TOKEN_SECRET)
 }
-module.exports = { fetch_single_user, login_notify, generateUserAccessToken }
+
+const verifyUserAccessToken = (token) => {
+    return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
+        if (err) {
+            throw err
+        } else {
+            return data
+        }
+    })
+}
+
+const hashPassword = async (password) => {
+    const hash = await encrypt.hash(password, 15)
+    return hash
+}
+
+const decryptPassword = async (password1, password2) => {
+    const decrypt = await encrypt.compare(password1, password2)
+    return decrypt
+}
+
+module.exports = {
+    fetch_single_user,
+    login_notify,
+    generateUserAccessToken,
+    verifyUserAccessToken,
+    hashPassword,
+    decryptPassword,
+    verifyAccountNumber,
+}

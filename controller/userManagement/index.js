@@ -16,6 +16,8 @@ const {
     fetch_single_user,
     login_notify,
     generateUserAccessToken,
+    decryptPassword,
+    hashPassword,
 } = require('../../utils/userUtil')
 
 class UserManagement {
@@ -30,11 +32,13 @@ class UserManagement {
         email,
         phoneNumber,
         gender,
+        password,
         res
     ) => {
         const accountNumber = await createAccountNumber(this.customer)
         const accountBalance = process.env.DEFAULT_BALANCE
         const pin = createPin()
+        const hashedPassword = await hashPassword(password)
 
         const user = {
             firstName,
@@ -46,6 +50,7 @@ class UserManagement {
             accountNumber,
             accountBalance,
             pin,
+            password: hashedPassword,
         }
         const joi_validate = authSchema.validate({
             firstName,
@@ -54,6 +59,7 @@ class UserManagement {
             email,
             phoneNumber,
             gender,
+            password,
         })
         if (joi_validate.error) {
             response(
@@ -94,43 +100,54 @@ class UserManagement {
         }
     }
 
-    login = async (accountNumber, firstName, res) => {
-        if (!accountNumber || !firstName) {
-            response({
-                message: user_login.credentials,
-                success: false,
-                code: StatusCodes.UNPROCESSABLE_ENTITY,
-                res: res,
-            })
+    login = async (userEmail, userPassword, res) => {
+        if (!userEmail || !userPassword) {
+            response(
+                user_login.credentials,
+                false,
+                StatusCodes.UNPROCESSABLE_ENTITY,
+                res
+            )
         } else {
-            const data = await fetch_single_user(accountNumber)
-            if (
-                data.message.accountNumber !== accountNumber &&
-                data.message.firstName !== firstName
-            ) {
-                response(
-                    user_login.invalid_credentials,
-                    false,
-                    StatusCodes.FORBIDDEN,
-                    res
+            const data = await fetch_single_user(userEmail)
+
+            if (data.status) {
+                const { password, email } = data.message
+                const decryptPass = await decryptPassword(
+                    userPassword,
+                    password
                 )
-            } else {
-                const userData = {
-                    userId: data.message.id,
-                    firstName: data.message.firstName,
-                    surName: data.message.surName,
-                    lastName: data.message.lastName,
-                    email: data.message.email,
-                    accountNumber: data.message.accountNumber,
+
+                if (email !== userEmail && !decryptPass) {
+                    response(
+                        user_login.invalid_credentials,
+                        false,
+                        StatusCodes.FORBIDDEN,
+                        res
+                    )
+                } else {
+                    const userData = {
+                        userId: data.message.id,
+                        firstName: data.message.firstName,
+                        surName: data.message.surName,
+                        lastName: data.message.lastName,
+                        email: data.message.email,
+                        accountNumber: data.message.accountNumber,
+                    }
+                    const token = generateUserAccessToken({
+                        payload: userData,
+                    })
+
+                    response('', true, 200, res, token, userData)
+                    sendMail(
+                        login_notify(data.message),
+                        userData.email,
+                        user_login.email_subject,
+                        user_login.email_text
+                    )
                 }
-                const token = generateUserAccessToken({ payload: userData })
-                response('', true, 200, res, token, userData)
-                sendMail(
-                    login_notify(data.message),
-                    userData.email,
-                    user_login.email_subject,
-                    user_login.email_text
-                )
+            } else {
+                response(data.message, false, StatusCodes.FORBIDDEN, res)
             }
         }
     }

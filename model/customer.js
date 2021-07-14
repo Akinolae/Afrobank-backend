@@ -57,6 +57,10 @@ const customer = new mongoose.Schema({
         type: Number,
         allowNull: false,
     },
+    password: {
+        type: String,
+        required: true,
+    },
     createdAt: {
         type: Date,
         allowNull: false,

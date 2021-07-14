@@ -137,7 +137,7 @@ class Transactions {
         }
     }
 
-    updateTransactionHistory = async (type, accountNumber, amount) => {
+    updateTransactionHistory = async (type, email, amount) => {
         await updateTransaction(this.customer, type, accountNumber, amount)
     }
 
