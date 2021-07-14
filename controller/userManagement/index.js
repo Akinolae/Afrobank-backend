@@ -12,7 +12,11 @@ const {
 } = require('../../lib/constants')
 const { user_reg } = require('../../lib/constants')
 const { sendMail, createAccountNumber, createPin } = require('../../utils')
-const { fetch_single_user, login_notify } = require('../../utils/userUtil')
+const {
+    fetch_single_user,
+    login_notify,
+    generateUserAccessToken,
+} = require('../../utils/userUtil')
 
 class UserManagement {
     constructor(_customer_) {
@@ -111,17 +115,19 @@ class UserManagement {
                     res
                 )
             } else {
-                response(
-                    user_login.login_success,
-                    true,
-                    200,
-                    res,
-                    null,
-                    data.message
-                )
+                const userData = {
+                    userId: data.message.id,
+                    firstName: data.message.firstName,
+                    surName: data.message.surName,
+                    lastName: data.message.lastName,
+                    email: data.message.email,
+                    accountNumber: data.message.accountNumber,
+                }
+                const token = generateUserAccessToken({ payload: userData })
+                response('', true, 200, res, token, userData)
                 sendMail(
                     login_notify(data.message),
-                    data.message.email,
+                    userData.email,
                     user_login.email_subject,
                     user_login.email_text
                 )

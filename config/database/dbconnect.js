@@ -6,6 +6,7 @@ const dbConfigure = async (uri) => {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             useFindAndModify: false,
+            useCreateIndex: true,
         })
         console.log('=== DB connection established ===')
     } catch (error) {

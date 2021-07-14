@@ -1,4 +1,5 @@
 const customer = require('../model/customer')
+const jwt = require('jsonwebtoken')
 
 const fetch_single_user = async (accountNumber) => {
     try {
@@ -12,7 +13,7 @@ const fetch_single_user = async (accountNumber) => {
             return { status: true, message: isAvailable }
         }
     } catch (err) {
-        console.log(err)
+        throw err
     }
 }
 
@@ -32,4 +33,7 @@ const login_notify = (data) => {
     return msg
 }
 
-module.exports = { fetch_single_user, login_notify }
+const generateUserAccessToken = (payload) => {
+    return jwt.sign(payload, process.env.TOKEN_SECRET)
+}
+module.exports = { fetch_single_user, login_notify, generateUserAccessToken }

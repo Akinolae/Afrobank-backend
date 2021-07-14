@@ -1,7 +1,7 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { sendMail, isPinValid } = require('../../utils')
+const { sendMail, isPinValid, transactionHistory } = require('../../utils')
 const { fetch_single_user } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
@@ -139,6 +139,15 @@ class Transactions {
 
     updateTransactionHistory = async (type, accountNumber, amount) => {
         await updateTransaction(this.customer, type, accountNumber, amount)
+    }
+
+    getTransactionHistory = async (accountNumber, res) => {
+        try {
+            const data = await transactionHistory(accountNumber)
+            response(data, true, StatusCodes.OK, res)
+        } catch (error) {
+            response(error, false, StatusCodes.BAD_REQUEST, res)
+        }
     }
 }
 
