@@ -4,10 +4,7 @@ const encrypt = require('bcryptjs')
 
 const fetch_single_user = async (email) => {
     try {
-        const isAvailable = await customer
-            .findOne({ email })
-            .then((data) => data)
-            .catch((error) => error)
+        const isAvailable = await customer.findOne({ email })
         if (isAvailable === null || isAvailable === 'undefined') {
             return {
                 status: false,
@@ -23,9 +20,15 @@ const fetch_single_user = async (email) => {
 
 const verifyAccountNumber = async (accountNumber) => {
     try {
-        const isValid = await customer.findOne({ accountNumber })
-        return isValid
-    } catch (error) {}
+        const isUserAvailable = await customer.findOne({ accountNumber })
+        if (isUserAvailable === null || isUserAvailable === 'undefined') {
+            return { status: false, message: 'Unable to verify account number' }
+        } else {
+            return { status: true, user: isUserAvailable }
+        }
+    } catch (error) {
+        throw error
+    }
 }
 
 const login_notify = (data) => {

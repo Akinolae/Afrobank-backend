@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const model = require('../../model/customer')
 const { sendMail, isPinValid, transactionHistory } = require('../../utils')
-const { fetch_single_user } = require('../../utils/userUtil')
+const { verifyAccountNumber } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { calc_account_balance, updateTransaction } = require('../../lib/queries')
@@ -36,16 +36,16 @@ class Transactions {
             )
         } else {
             try {
-                const isSenderValid = await fetch_single_user(sender)
-                const isRecipientValid = await fetch_single_user(recipient)
+                const isSenderValid = await verifyAccountNumber(sender)
+                const isRecipientValid = await verifyAccountNumber(recipient)
 
                 if (
                     isRecipientValid.status &&
                     isSenderValid.status &&
-                    !!isSenderValid.message &&
-                    !!isRecipientValid.message
+                    !!isSenderValid.user &&
+                    !!isRecipientValid.user
                 ) {
-                    if (!isPinValid(isSenderValid.message.pin, pin)) {
+                    if (!isPinValid(isSenderValid.user.pin, pin)) {
                         response(
                             transfer.pinError,
                             false,
@@ -53,7 +53,7 @@ class Transactions {
                             res
                         )
                     } else {
-                        if (Number(isSenderValid.message.accountBalance) <= 0) {
+                        if (Number(isSenderValid.user.accountBalance) <= 0) {
                             response(
                                 transfer.low_balance,
                                 false,
@@ -62,7 +62,7 @@ class Transactions {
                             )
                         } else if (
                             Number(amount) >
-                            Number(isSenderValid.message.accountBalance)
+                            Number(isSenderValid.user.accountBalance)
                         ) {
                             response(
                                 transfer.insufficient_balance,
@@ -73,10 +73,10 @@ class Transactions {
                         } else {
                             const transactionData = {
                                 senderAccountNumber:
-                                    isSenderValid.message.accountNumber,
+                                    isSenderValid.user.accountNumber,
                                 recipientAccountNumber:
-                                    isRecipientValid.message.accountNumber,
-                                recipientName: `${isRecipientValid.message.surName} ${isRecipientValid.message.firstName} ${isRecipientValid.message.lastName}`,
+                                    isRecipientValid.user.accountNumber,
+                                recipientName: `${isRecipientValid.user.surName} ${isRecipientValid.user.firstName} ${isRecipientValid.user.lastName}`,
                                 amount,
                                 type: 'debit',
                             }
@@ -137,14 +137,18 @@ class Transactions {
         }
     }
 
-    updateTransactionHistory = async (type, email, amount) => {
+    updateTransactionHistory = async (type, accountNumber, amount) => {
         await updateTransaction(this.customer, type, accountNumber, amount)
     }
 
     getTransactionHistory = async (accountNumber, res) => {
         try {
             const data = await transactionHistory(accountNumber)
-            response(data, true, StatusCodes.OK, res)
+            if (!data.status) {
+                response(data.response, false, StatusCodes.OK, res)
+            } else {
+                response(data.response, true, StatusCodes.BAD_REQUEST, res)
+            }
         } catch (error) {
             response(error, false, StatusCodes.BAD_REQUEST, res)
         }
