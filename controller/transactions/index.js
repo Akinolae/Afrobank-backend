@@ -86,16 +86,16 @@ class Transactions {
                     }
                 } else if (!isRecipientValid.status) {
                     response(
-                        `Recipient ${isRecipientValid.message}`,
+                        `${isRecipientValid.message} for recipient`,
                         false,
-                        StatusCodes.UNPROCESSABLE_ENTITY,
+                        StatusCodes.NOT_FOUND,
                         res
                     )
                 } else if (!isSenderValid.status) {
                     response(
-                        `Sender ${isSenderValid.message}`,
+                        `${isSenderValid.message} for sender`,
                         false,
-                        StatusCodes.UNPROCESSABLE_ENTITY,
+                        StatusCodes.NOT_FOUND,
                         res
                     )
                 }
@@ -158,9 +158,9 @@ class Transactions {
         try {
             const data = await transactionHistory(accountNumber)
             if (!data.status) {
-                response(data.response, false, StatusCodes.OK, res)
+                response(data.response, false, StatusCodes.NOT_FOUND, res)
             } else {
-                response(data.response, true, StatusCodes.BAD_REQUEST, res)
+                response(data.response, true, StatusCodes.OK, res)
             }
         } catch (error) {
             response(error, false, StatusCodes.BAD_REQUEST, res)
