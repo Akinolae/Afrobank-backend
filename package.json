@@ -38,7 +38,8 @@
         "redis": "^3.0.2",
         "redis-server": "^1.2.2",
         "sequelize": "^6.3.5",
-        "twilio": "^3.49.1"
+        "twilio": "^3.49.1",
+        "uuidv4": "^6.2.11"
     },
     "devDependencies": {
         "sequelize-cli": "^6.2.0"

@@ -24,14 +24,14 @@ class Transactions {
             response(
                 joi_error.error.details[0].message,
                 false,
-                statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                StatusCodes.UNPROCESSABLE_ENTITY,
                 res
             )
         } else if (sender === recipient) {
             response(
                 transfer.single_user,
                 false,
-                statusCode.StatusCodes.UNPROCESSABLE_ENTITY,
+                StatusCodes.UNPROCESSABLE_ENTITY,
                 res
             )
         } else {
@@ -81,13 +81,7 @@ class Transactions {
                                 type: 'debit',
                             }
 
-                            this.completeTransfer(transactionData)
-                            response(
-                                transfer.success_message,
-                                true,
-                                StatusCodes.OK,
-                                res
-                            )
+                            this.completeTransfer(transactionData, res)
                         }
                     }
                 } else if (!isRecipientValid.status) {
@@ -113,12 +107,9 @@ class Transactions {
 
     getBalance = async (accountNumber, res) => {
         calc_account_balance(accountNumber)
-        // !data.status
-        //     ? response(data.message, false, StatusCodes.BAD_REQUEST, res)
-        //     : response(data, true, StatusCodes.OK, res)
     }
 
-    completeTransfer = async (payload) => {
+    completeTransfer = async (payload, res) => {
         const {
             type,
             senderAccountNumber,
@@ -126,19 +117,41 @@ class Transactions {
             amount,
             recipientName,
         } = payload
-        console.log(payload)
-        if (type === 'debit') {
-            this.updateTransactionHistory(type, senderAccountNumber, amount)
-            this.updateTransactionHistory(
-                'credit',
-                recipientAccountNumber,
-                amount
-            )
+
+        try {
+            if (type === 'debit') {
+                const senderResp = await this.updateTransactionHistory(
+                    type,
+                    senderAccountNumber,
+                    amount
+                )
+                const recipientResp = await this.updateTransactionHistory(
+                    'credit',
+                    recipientAccountNumber,
+                    amount
+                )
+                if (!!senderResp && !!recipientResp) {
+                    response(
+                        transfer.success_message(recipientName, amount),
+                        true,
+                        StatusCodes.OK,
+                        res
+                    )
+                }
+            }
+        } catch (error) {
+            const errResp = error
+            response(errResp, false, StatusCodes.BAD_REQUEST, res)
         }
     }
 
     updateTransactionHistory = async (type, accountNumber, amount) => {
-        await updateTransaction(this.customer, type, accountNumber, amount)
+        return await updateTransaction(
+            this.customer,
+            type,
+            accountNumber,
+            amount
+        )
     }
 
     getTransactionHistory = async (accountNumber, res) => {
