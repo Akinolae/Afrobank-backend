@@ -11,6 +11,7 @@ const {
     pinReset,
 } = require('../../lib/constants')
 const { user_reg } = require('../../lib/constants')
+const { setNewPin } = require('../../lib/queries')
 const { sendMail, createAccountNumber, createPin } = require('../../utils')
 const {
     fetch_single_user,
@@ -18,7 +19,9 @@ const {
     generateUserAccessToken,
     decryptPassword,
     hashPassword,
+    verifyAccountNumber,
 } = require('../../utils/userUtil')
+const { replaceOne } = require('../../model/customer')
 
 class UserManagement {
     constructor(_customer_) {
@@ -181,28 +184,7 @@ class UserManagement {
     }
 
     // #12
-    deleteCustomer = async (accountNo, res) => {
-        this.sequelize.sync().then(() => {
-            this.customer
-                .destroy({
-                    raw: true,
-                    where: {
-                        accountNumber: accountNo,
-                    },
-                })
-                .then((resp) => {
-                    const msg = "Customer doesn't exist."
-                    const confMsg = 'Customer deleted'
-                    resp === 0
-                        ? response(msg, false, 400, res)
-                        : response(confMsg, true, 200, res)
-                })
-                .catch(() => {
-                    const msg = 'Unable to delete customer.'
-                    response(msg, false, 400, res)
-                })
-        })
-    }
+    deleteCustomer = async (accountNo, res) => {}
 
     setPin = async (accountNumber, pin, res) => {
         const isValidated = setPinSchema.validate({ accountNumber, pin })
@@ -214,41 +196,10 @@ class UserManagement {
                 res
             )
         } else {
-            try {
-                const user = await fetch_single_user(accountNumber)
-                if (user.status) {
-                    await this.customer
-                        .updateOne(
-                            { accountNumber: user.message.accountNumber },
-                            { $set: { pin: pin } }
-                        )
-                        .then(() => {
-                            response(
-                                pinReset.message,
-                                true,
-                                StatusCodes.OK,
-                                res
-                            )
-                            sendMail(
-                                pinReset.emailTemplate(user.message.firstName),
-                                user.message.email,
-                                'Afrobank pin reset',
-                                'pin'
-                            )
-                        })
-                        .catch((err) => {
-                            response(
-                                pinReset.error,
-                                true,
-                                StatusCodes.UNPROCESSABLE_ENTITY,
-                                res
-                            )
-                        })
-                } else {
-                    console.log(user.status)
-                }
-            } catch (err) {
-                throw err || 'Something went wrong'
+            const response = await setNewPin(this.customer, accountNumber, pin)
+
+            if (response.status) {
+                console.log(response)
             }
         }
     }
