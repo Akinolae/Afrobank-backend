@@ -1,5 +1,24 @@
 const mongoose = require('mongoose')
 
+const transactionSchema = new mongoose.Schema({
+    transaction_id: {
+        type: String,
+        default: null,
+    },
+    transaction_type: {
+        type: String,
+        default: null,
+    },
+    amount: {
+        type: Number,
+        default: null,
+    },
+    transaction_date: {
+        type: Date,
+        default: Date.now,
+    },
+})
+
 const customer = new mongoose.Schema({
     firstName: {
         type: String,
@@ -38,33 +57,19 @@ const customer = new mongoose.Schema({
         type: Number,
         allowNull: false,
     },
+    password: {
+        type: String,
+        required: true,
+    },
     createdAt: {
         type: Date,
         allowNull: false,
-    },
-    otp: {
-        type: Number,
     },
     regDate: {
         type: Date,
         default: Date.now,
     },
-    transactionHist: [
-        {
-            transaction_id: {
-                type: String,
-                default: null,
-            },
-            transaction_type: {
-                type: String,
-                default: null,
-            },
-            amount: {
-                type: Number,
-                default: null,
-            },
-        },
-    ],
+    transactions: [transactionSchema],
 })
 
 module.exports = mongoose.model('customer', customer)
