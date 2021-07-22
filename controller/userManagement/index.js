@@ -24,7 +24,6 @@ const {
     generateUserAccessToken,
     decryptPassword,
     hashPassword,
-    verifyAccountNumber,
 } = require('../../utils/userUtil')
 
 class UserManagement {
@@ -68,7 +67,7 @@ class UserManagement {
             gender,
             password,
         })
-        if (joi_validate.error) {
+        if (!!joi_validate.error) {
             response(
                 joi_validate.error.details[0].message,
                 false,
@@ -160,22 +159,6 @@ class UserManagement {
         }
     }
 
-    getUsers = async (res) => {
-        this.customer
-            .findAll({
-                raw: true,
-            })
-            .then((resp) => {
-                const respMsg = 'No customer to display'
-                resp.length === 0
-                    ? response(respMsg, false, 404, res)
-                    : response(resp, true, 200, res)
-            })
-            .catch((err) => {
-                response(err, false, 400, res)
-            })
-    }
-
     getUser = async (accountNumber, res) => {
         const user = await fetch_single_user(accountNumber)
         const user_details = {
@@ -189,7 +172,6 @@ class UserManagement {
     }
 
     // #12
-    deleteCustomer = async (accountNo, res) => {}
 
     setPin = async (accountNumber, pin, res) => {
         const isValidated = setPinSchema.validate({ accountNumber, pin })
