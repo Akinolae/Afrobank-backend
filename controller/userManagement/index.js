@@ -26,7 +26,6 @@ const {
     hashPassword,
     verifyAccountNumber,
 } = require('../../utils/userUtil')
-const { replaceOne } = require('../../model/customer')
 
 class UserManagement {
     constructor(_customer_) {
@@ -194,7 +193,7 @@ class UserManagement {
 
     setPin = async (accountNumber, pin, res) => {
         const isValidated = setPinSchema.validate({ accountNumber, pin })
-        if (isValidated.error) {
+        if (!!isValidated.error) {
             response(
                 isValidated.error.message,
                 false,
@@ -202,10 +201,11 @@ class UserManagement {
                 res
             )
         } else {
-            const response = await setNewPin(this.customer, accountNumber, pin)
-
-            if (response.status) {
-                console.log(response)
+            try {
+                await setNewPin(this.customer, accountNumber, pin)
+                response(pinReset.message, true, StatusCodes.OK, res)
+            } catch (e) {
+                response(e.message, false, StatusCodes.BAD_REQUEST, res)
             }
         }
     }
