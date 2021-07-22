@@ -53,11 +53,9 @@ const generateUserAccessToken = (payload) => {
 
 const verifyUserAccessToken = (token) => {
     return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
-        if (err) {
-            throw err
-        } else {
-            return data
-        }
+        if (err) throw err
+        else return data
+        
     })
 }
 

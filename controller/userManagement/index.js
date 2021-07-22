@@ -12,7 +12,12 @@ const {
 } = require('../../lib/constants')
 const { user_reg } = require('../../lib/constants')
 const { setNewPin } = require('../../lib/queries')
-const { sendMail, createAccountNumber, createPin } = require('../../utils')
+const {
+    sendMail,
+    createAccountNumber,
+    createPin,
+    logError,
+} = require('../../utils')
 const {
     fetch_single_user,
     login_notify,
@@ -111,6 +116,7 @@ class UserManagement {
                 StatusCodes.UNPROCESSABLE_ENTITY,
                 res
             )
+            logError('login.txt', user_login.credentials)
         } else {
             const data = await fetch_single_user(userEmail)
 
@@ -125,7 +131,7 @@ class UserManagement {
                     response(
                         user_login.invalid_credentials,
                         false,
-                        StatusCodes.FORBIDDEN,
+                        StatusCodes.BAD_REQUEST,
                         res
                     )
                 } else {
