@@ -1,8 +1,8 @@
-const customer = require("../../controller/index");
+const customer = require('../../controller/userManagement')
 
 module.exports = {
-  deleteCustomer: (req, res) => {
-    const { id } = req.params;
-    customer.deleteCustomer(id, res);
-  },
-};
+    deleteCustomer: (req, res) => {
+        const { id } = req.params
+        customer.deleteCustomer(id, res)
+    },
+}

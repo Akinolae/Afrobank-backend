@@ -1,18 +1,26 @@
 'use strict'
 require('dotenv').config()
-const customer = require('../../controller/index')
+const user = require('../../controller/userManagement')
 
 module.exports = {
     register: (req, res) => {
-        const { firstName, lastName, surName, email, phoneNumber, gender } =
-            req.body
-        customer.register(
+        const {
             firstName,
             lastName,
             surName,
             email,
             phoneNumber,
             gender,
+            password,
+        } = req.body
+        user.register(
+            firstName,
+            lastName,
+            surName,
+            email,
+            phoneNumber,
+            gender,
+            password,
             res
         )
     },
