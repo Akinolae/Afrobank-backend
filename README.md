@@ -1,3 +1,4 @@
+
 # Afrobank naija
 
 AfrobankAPI is the backend that powers the afrobank app
@@ -12,3 +13,4 @@ You get a virtual account when you register, after registering you can use the a
 
 
 [AFROBANK](https://afrobank.herokuapp.com/Api/v1 "Afrobanl")
+
