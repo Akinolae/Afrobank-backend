@@ -1,11 +1,16 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { sendMail, isPinValid, transactionHistory } = require('../../utils')
+const {
+    sendMail,
+    isPinValid,
+    transactionHistory,
+    logError,
+} = require('../../utils')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { calc_account_balance, updateTransaction } = require('../../lib/queries')
+const { updateTransaction, updateBalance } = require('../../lib/queries')
 const { transfer, transferAuthSchema } = require('../../lib/constants')
 
 class Transactions {
@@ -80,33 +85,33 @@ class Transactions {
                                 amount,
                                 type: 'debit',
                             }
-
                             this.completeTransfer(transactionData, res)
                         }
                     }
                 } else if (!isRecipientValid.status) {
                     response(
-                        `${isRecipientValid.message} for recipient`,
+                        `${isRecipientValid.message} of recipient`,
                         false,
                         StatusCodes.NOT_FOUND,
                         res
                     )
                 } else if (!isSenderValid.status) {
                     response(
-                        `${isSenderValid.message} for sender`,
+                        `${isSenderValid.message} of sender`,
                         false,
                         StatusCodes.NOT_FOUND,
                         res
                     )
                 }
             } catch (error) {
+                logError('/logs/transfer.txt', error)
                 throw error || 'An error occured'
             }
         }
     }
 
     getBalance = async (accountNumber, res) => {
-        calc_account_balance(accountNumber)
+        await updateBalance(accountNumber)
     }
 
     completeTransfer = async (payload, res) => {
@@ -141,6 +146,7 @@ class Transactions {
             }
         } catch (error) {
             const errResp = error
+            logError('/logs/completeTransfer.txt', error)
             response(errResp, false, StatusCodes.BAD_REQUEST, res)
         }
     }
@@ -163,6 +169,7 @@ class Transactions {
                 response(data.response, true, StatusCodes.OK, res)
             }
         } catch (error) {
+            logError('/logs/getTransactionHistory.txt', error)
             response(error, false, StatusCodes.BAD_REQUEST, res)
         }
     }
