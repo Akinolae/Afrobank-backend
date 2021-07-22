@@ -6,6 +6,9 @@
     "version": "1.0.0",
     "description": "Afro bank Api",
     "main": "afrobankserver.js",
+    "engines": {
+        "node": "14.15.5"
+    },
     "scripts": {
         "test": "jest",
         "dev": "nodemon afrobankserver.js",
