@@ -125,7 +125,7 @@ class UserManagement {
                     password
                 )
 
-                if (email !== userEmail && !decryptPass) {
+                if (email !== userEmail || !decryptPass) {
                     response(
                         user_login.invalid_credentials,
                         false,
