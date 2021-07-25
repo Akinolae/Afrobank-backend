@@ -26,17 +26,14 @@ const createRedisConnection = () => {
 }
 
 const redisSet = (key, payload) => {
-    createRedisConnection().set(
-        key,
-        JSON.stringify(payload),
-        (err, response) => {
-            if (err) {
-                console.error(err)
-            } else {
-                return response
-            }
+    const data = typeof payload === 'object' ? JSON.stringify(payload) : payload
+    createRedisConnection().set(key, data, (err, response) => {
+        if (err) {
+            console.error(err)
+        } else {
+            return response
         }
-    )
+    })
 }
 
 const keyExists = (key) => {
