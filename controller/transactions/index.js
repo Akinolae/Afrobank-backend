@@ -12,6 +12,7 @@ const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../lib/queries')
 const { transfer, transferAuthSchema } = require('../../lib/constants')
+const { redisSet, redisGet } = require('../../utils/redisUtil')
 
 class Transactions {
     constructor(_customer_) {
@@ -159,9 +160,12 @@ class Transactions {
     getTransactionHistory = async (accountNumber, res) => {
         try {
             const data = await transactionHistory(accountNumber)
-            if (!data.status)
+
+            if (!data.status) {
                 response(data.response, false, StatusCodes.NOT_FOUND, res)
-            else response(data.response, true, StatusCodes.OK, res)
+            } else {
+                response(data.response, true, StatusCodes.OK, res)
+            }
         } catch (error) {
             logError('/logs/getTransactionHistory.txt', error)
             response(error, false, StatusCodes.BAD_REQUEST, res)

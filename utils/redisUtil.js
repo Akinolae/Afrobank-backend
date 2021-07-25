@@ -1,20 +1,66 @@
 const redis = require('redis')
 const url = require('url')
-// const RDB = url.parse(process.env.REDISCLOUD_URL);
-// const sequelizeOptions = process.env.NODE_ENV === 'production' ? RDB : 6379;
-// const redisClient = redis.createClient(sequelizeOptions);
-let redisClient
 
-if (process.env.NODE_ENV === 'development') {
-    if (process.env.REDISCLOUD_URL) {
-        const redisURL = url.parse(process.env.REDISCLOUD_URL)
-        redisClient = redis.createClient(redisURL.port, redisURL.hostname, {
-            no_ready_check: true,
-        })
-    } else {
-        redisClient = redis.createClient()
+const createRedisConnection = () => {
+    let redisClient
+
+    try {
+        if (process.env.NODE_ENV === 'development') {
+            if (process.env.REDISCLOUD_URL) {
+                const redisURL = url.parse(process.env.REDISCLOUD_URL)
+                redisClient = redis.createClient(
+                    redisURL.port,
+                    redisURL.hostname,
+                    {
+                        no_ready_check: true,
+                    }
+                )
+            } else {
+                redisClient = redis.createClient()
+            }
+        }
+    } catch (error) {
+        throw error
     }
+    return redisClient
 }
 
-// Catches any error encountered while caching data.
-module.exports = redisClient
+const redisSet = (key, payload) => {
+    createRedisConnection().set(
+        key,
+        JSON.stringify(payload),
+        (err, response) => {
+            if (err) {
+                console.error(err)
+            } else {
+                return response
+            }
+        }
+    )
+}
+
+const keyExists = (key) => {
+    createRedisConnection().exists(key, (err, res) => {
+        if (err) {
+            throw err
+        } else {
+            if (res === 1) {
+                console.log('exists')
+            } else {
+                console.log('it doesnt exist')
+            }
+        }
+    })
+}
+const redisGet = (key) => {
+    keyExists(key)
+    createRedisConnection().get(key, (err, reply) => {
+        if (err) {
+            throw err
+        } else {
+            console.log(reply)
+        }
+    })
+}
+
+module.exports = { createRedisConnection, redisGet, redisSet }

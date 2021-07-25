@@ -4,7 +4,7 @@ const cors = require('cors')
 const { response } = require('./controller/responseHandler')
 require('./config/database/dbconnect')
 const { dbConfigure } = require('./config/database/dbconnect')
-dbConfigure(process.env.DB_CONNECT)
+
 const app = express()
 app.use(cors())
 app.use(express.json())
@@ -14,4 +14,6 @@ app.use((req, res) => {
     const msg = 'page not found'
     response(msg, 'error', 400, res)
 })
+
+dbConfigure(process.env.DB_CONNECT)
 app.listen(process.env.PORT || 4000, () => console.log(`app is running`))
