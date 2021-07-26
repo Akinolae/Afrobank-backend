@@ -191,6 +191,8 @@ class UserManagement {
             }
         }
     }
+
+    changePassword = async (user, password, res) => {}
 }
 
 const user = new UserManagement(model)
