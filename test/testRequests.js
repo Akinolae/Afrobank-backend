@@ -6,6 +6,10 @@ const { customer } = require('../model/customer')
 const Customer = require('../controller/index')
 const newCustomer = new Customer(customer)
 
+const API_GATEWAY = axios.create({
+    baseURL: process.env.AXIOS,
+})
+
 const tests = {
     sendEmail: () => {
         describe('sendEmail', () => {
@@ -23,12 +27,9 @@ const tests = {
     singleUser: () => {
         describe('fetch single user', () => {
             test('retrieve a single user', async () => {
-                const result = await axios.post(
-                    'https://afrobank.herokuapp.com/Api/v1/user',
-                    {
-                        accountNumber: process.env.ACCOUNTNUMBER,
-                    }
-                )
+                const result = await API_GATEWAY.post('/user', {
+                    accountNumber: process.env.ACCOUNTNUMBER,
+                })
                 expect(result.status).toBe(200)
             })
         })
@@ -36,13 +37,10 @@ const tests = {
     pinReset: () => {
         describe('POST@/resetPin', () => {
             test('Validate that a user can update his pin number', async () => {
-                const result = await axios.post(
-                    'http://localhost:4000/Api/v1/pinreset',
-                    {
-                        accountNumber: process.env.ACCOUNTNUMBER,
-                        pin: process.env.PIN,
-                    }
-                )
+                const result = await axios.post('/pinreset', {
+                    accountNumber: process.env.ACCOUNTNUMBER,
+                    pin: process.env.PIN,
+                })
                 expect(result.status).toBe(200)
             })
         })
@@ -50,17 +48,14 @@ const tests = {
     registerCustomer: () => {
         describe('POST@/register', () => {
             test('it should register a new user to the platform', async () => {
-                const result = await axios.post(
-                    'http://localhost:4000/Api/v1/transfer',
-                    {
-                        firstName: 'Adeleye',
-                        lastName: 'Makinde',
-                        surName: 'Pamilerin',
-                        email: process.env.EMAIL_TEST,
-                        phoneNumber: '08034335043',
-                        gender: 'male',
-                    }
-                )
+                const result = await axios.post('/transfer', {
+                    firstName: 'Adeleye',
+                    lastName: 'Makinde',
+                    surName: 'Pamilerin',
+                    email: process.env.EMAIL_TEST,
+                    phoneNumber: '08034335043',
+                    gender: 'male',
+                })
                 expect(result.status).toBe(200)
             })
         })
@@ -69,9 +64,7 @@ const tests = {
         // get all users
         describe('GET@/users', () => {
             test('It should return all the users on the platform', async () => {
-                const result = await axios.get(
-                    'http://localhost:4000/Api/v1/users'
-                )
+                const result = await axios.get('/users')
                 expect(result.status).toBe(200)
             })
         })
@@ -81,9 +74,7 @@ const tests = {
         describe('GET@/balance', () => {
             it('Returns the account balance of a single user', async () => {
                 const id = process.env.ACCOUNTNUMBER
-                const result = await axios.get(
-                    `http://localhost:4000/Api/v1/balance/${id}`
-                )
+                const result = await axios.get(`/balance/${id}`)
                 expect(result.status).toBe(200)
                 expect(result.data.message).not.toBeNull()
             })
@@ -92,15 +83,12 @@ const tests = {
     transfer: () => {
         describe('POST@/transfer', () => {
             test('Customer should be able to transfer cash between customers', async () => {
-                const result = await axios.post(
-                    'http://localhost:4000/Api/v1/transfer',
-                    {
-                        sender: process.env.ACCOUNTNUMBER,
-                        recipient: process.env.RECIPIENT,
-                        amount: 500,
-                        pin: process.env.PIN,
-                    }
-                )
+                const result = await axios.post('/transfer', {
+                    sender: process.env.ACCOUNTNUMBER,
+                    recipient: process.env.RECIPIENT,
+                    amount: 500,
+                    pin: process.env.PIN,
+                })
                 expect(result.status).toBe(200)
             })
         })
@@ -108,13 +96,10 @@ const tests = {
     customerLogin: () => {
         describe('POST@/login', () => {
             test('Validates that the user that logged in is the valid user', async () => {
-                const result = await axios.post(
-                    'https://afrobank.herokuapp.com/Api/v1/login',
-                    {
-                        accountNumber: process.env.ACCOUNTNUMBER,
-                        firstName: process.env.FIRSTNAME,
-                    }
-                )
+                const result = await axios.post('/login', {
+                    accountNumber: process.env.ACCOUNTNUMBER,
+                    firstName: process.env.FIRSTNAME,
+                })
                 expect(result.status).toBe(200)
             })
         })
@@ -130,12 +115,9 @@ const tests = {
     validateAccount: () => {
         describe('@POST/Validate', () => {
             test('Validates that the account number is valid', async () => {
-                const result = await axios.post(
-                    'https://afrobank.herokuapp.com/Api/v1/validate',
-                    {
-                        accountNumber: process.env.ACCOUNTNUMBER,
-                    }
-                )
+                const result = await axios.post('/validate', {
+                    accountNumber: process.env.ACCOUNTNUMBER,
+                })
                 expect(result.status).toBe(200)
             })
         })
