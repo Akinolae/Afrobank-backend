@@ -1,20 +1,20 @@
 {
-    "development": {
-        "username": "Akinola",
-        "password": "Thegreatest1994",
-        "database": "Afrobank",
-        "host": "127.0.0.1",
-        "dialect": "mysql"
-    },
-    "test": {
-        "username": null,
-        "password": null,
-        "database": "task_test",
-        "host": "127.0.0.1",
-        "dialect": "mysql"
-    },
-    "production": {
-         "use_env_variable": "CLEARDB_DATABASE_URL",
-         "dialect": "mysql"
-    }
+  "development": {
+    "username": "Akinola",
+    "password": "Thegreatest1994",
+    "database": "Afrobank",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": null,
+    "password": null,
+    "database": "task_test",
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+  "production": {
+    "use_env_variable": "CLEARDB_DATABASE_URL",
+    "dialect": "mysql"
+  }
 }

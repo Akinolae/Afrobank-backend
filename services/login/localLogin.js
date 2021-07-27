@@ -1,14 +1,8 @@
-require("dotenv").config();
-const customer = require("../../model/customer");
-const Customer = require("../../controller/index");
-
-    module.exports = {
-        localLogin: (req, res) => {
-            const {
-                accountNumber,
-                firstName
-            } = req.body;
-            const userLogin = new Customer(customer)
-            userLogin.login(accountNumber, firstName, res);
-        }
-    }
+require('dotenv').config()
+const user = require('../../controller/userManagement')
+module.exports = {
+    localLogin: (req, res) => {
+        const { email, password } = req.body
+        user.login(email, password, res)
+    },
+}

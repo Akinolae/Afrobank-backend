@@ -4,7 +4,7 @@ module.exports = {
             success: success,
             message: message,
             token: token,
-            data: data
+            data: data,
         })
-    }
+    },
 }

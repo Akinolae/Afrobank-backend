@@ -1,16 +1,8 @@
-const customer = require("../../model/customer");
-const Customer = require("../../controller/index");
-const newUser = new Customer(customer);
-
+const customer = require('../../controller/userManagement')
 
 module.exports = {
-     getUser: (req, res) => {
-         const {
-             accountNumber
-         } = req.body;
-         newUser.getUser( accountNumber , res)
-     },
-    getUsers: (req, res) => {
-        newUser.getUsers(res)
-    }
+    getUser: (req, res) => {
+        const { accountNumber } = req.body
+        customer.getUser(accountNumber, res)
+    },
 }
