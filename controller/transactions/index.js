@@ -1,12 +1,8 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const {
-    sendMail,
-    isPinValid,
-    transactionHistory,
-    logError,
-} = require('../../utils')
+const { sendMail, isPinValid, logError } = require('../../utils')
+const { transactionHistory } = require('../../utils/transactionsUtil')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
