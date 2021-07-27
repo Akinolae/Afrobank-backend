@@ -23,6 +23,24 @@ const transactionHistory = async (accountNumber) => {
     }
 }
 
+const updateBalance = async (customer, type, accountNumber, amount) => {
+    const data = await verifyAccountNumber(accountNumber)
+    let currentBalance = 0
+    try {
+        if (type === 'credit') {
+            currentBalance = data.user.accountBalance + amount
+        } else {
+            currentBalance = data.user.accountBalance - amount
+        }
+        await customer.findOneAndUpdate(
+            { accountNumber },
+            { $set: { accountBalance: currentBalance } }
+        )
+    } catch (e) {
+        throw e
+    }
+}
+
 const calc_account_balance = async (accountNumber) => {
     let transactions, getAllCredits, getAllDebits, sumCreditTotal, sumDebitTotal
     try {
@@ -38,4 +56,4 @@ const calc_account_balance = async (accountNumber) => {
         throw error
     }
 }
-module.exports = { transactionHistory, calc_account_balance }
+module.exports = { transactionHistory, calc_account_balance, updateBalance }
