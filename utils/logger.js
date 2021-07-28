@@ -6,9 +6,7 @@ const logError = (path, content) => {
             if (err) throw err
             else return resp
         })
-    } else {
-        return
-    }
+    } else return
 }
 
 module.exports = {

@@ -13,11 +13,8 @@ const sumAmount = (transactions) => {
 const transactionHistory = async (accountNumber) => {
     try {
         const data = await verifyAccountNumber(accountNumber)
-        if (!data.status) {
-            return { status: false, response: data.message }
-        } else {
-            return { status: true, response: data.user.transactions }
-        }
+        if (!data.status) return { status: false, response: data.message }
+        else return { status: true, response: data.user.transactions }
     } catch (error) {
         throw error
     }
@@ -29,9 +26,7 @@ const updateBalance = async (customer, type, accountNumber, amount) => {
     try {
         if (type === 'credit') {
             currentBalance = data.user.accountBalance + amount
-        } else {
-            currentBalance = data.user.accountBalance - amount
-        }
+        } else currentBalance = data.user.accountBalance - amount
         await customer.findOneAndUpdate(
             { accountNumber },
             { $set: { accountBalance: currentBalance } }
