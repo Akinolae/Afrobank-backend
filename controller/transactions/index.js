@@ -1,7 +1,12 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { sendMail, isPinValid, logError } = require('../../utils')
+const {
+    sendMail,
+    isPinValid,
+    logError,
+    calc_account_balance,
+} = require('../../utils')
 const { transactionHistory } = require('../../utils/transactionsUtil')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
@@ -165,6 +170,19 @@ class Transactions {
         } catch (error) {
             logError('/logs/getTransactionHistory.txt', error)
             response(error, false, StatusCodes.BAD_REQUEST, res)
+        }
+    }
+
+    getBalance = async (accountNumber, res) => {
+        try {
+            const data = await verifyAccountNumber(accountNumber)
+            if (data.status) {
+                response(data.user.accountBalance, true, StatusCodes.OK, res)
+            } else {
+                response(data.message, false, StatusCodes.NOT_FOUND, res)
+            }
+        } catch (error) {
+            response(error, false, StatusCodes.BAD_REQUEST)
         }
     }
 }
