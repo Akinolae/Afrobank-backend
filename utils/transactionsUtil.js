@@ -25,8 +25,8 @@ const updateBalance = async (customer, type, accountNumber, amount) => {
     let currentBalance = 0
     try {
         if (type === 'credit') {
-            currentBalance = data.user.accountBalance + amount
-        } else currentBalance = data.user.accountBalance - amount
+            currentBalance = +data.user.accountBalance + +amount
+        } else currentBalance = +data.user.accountBalance - +amount
         await customer.findOneAndUpdate(
             { accountNumber },
             { $set: { accountBalance: currentBalance } }
