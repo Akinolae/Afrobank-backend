@@ -70,6 +70,13 @@ class Transactions {
                                 StatusCodes.UNPROCESSABLE_ENTITY,
                                 res
                             )
+                        } else if (+amount < 100) {
+                            response(
+                                transfer.low_amount_error,
+                                false,
+                                StatusCodes.UNPROCESSABLE_ENTITY,
+                                res
+                            )
                         } else if (
                             +amount > +isSenderValid.user.accountBalance
                         ) {
@@ -89,8 +96,8 @@ class Transactions {
                                 amount,
                                 type: 'debit',
                             }
-                            const notifyRecipient = `${isSenderValid.user.surName} ${isSenderValid.user.firstName} ${isSenderValid.user.lastName} just sent you ${transactionData.amount}`
-                            const notifySender = `you just sent ${transactionData.amount} to ${transactionData.recipientName}`
+                            const notifyRecipient = `${isSenderValid.user.surName} ${isSenderValid.user.firstName} ${isSenderValid.user.lastName} just sent you ₦${transactionData.amount}`
+                            const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
                             await customer.createPushNotification(
                                 isSenderValid.user.accountNumber,
                                 notifySender
