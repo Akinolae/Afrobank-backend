@@ -11,7 +11,7 @@ const {
     pinReset,
 } = require('../../lib/constants')
 const { user_reg } = require('../../lib/constants')
-const { setNewPin } = require('../../lib/queries')
+const { setNewPin, updateNotification } = require('../../lib/queries')
 const {
     sendMail,
     createAccountNumber,
@@ -94,6 +94,10 @@ class UserManagement {
                     true,
                     StatusCodes.OK,
                     res
+                )
+                await this.createPushNotification(
+                    accountNumber,
+                    user_reg.welcome_text
                 )
             } catch (err) {
                 response(
@@ -192,6 +196,9 @@ class UserManagement {
         }
     }
 
+    createPushNotification = async (accountNumber, message) => {
+        await updateNotification(this.customer, accountNumber, message)
+    }
     changePassword = async (user, password, res) => {}
 }
 

@@ -19,6 +19,17 @@ const transactionSchema = new mongoose.Schema({
     },
 })
 
+const notificationSchema = new mongoose.Schema({
+    notification_text: {
+        type: String,
+        required: true,
+    },
+    notification_date: {
+        type: Date,
+        default: Date.now,
+    },
+})
+
 const customer = new mongoose.Schema({
     firstName: {
         type: String,
@@ -70,6 +81,7 @@ const customer = new mongoose.Schema({
         default: Date.now,
     },
     transactions: [transactionSchema],
+    notifications: [notificationSchema],
 })
 
 module.exports = mongoose.model('customer', customer)
