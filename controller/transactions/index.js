@@ -56,16 +56,22 @@ class Transactions {
                             res
                         )
                     } else {
-                        if (Number(isSenderValid.user.accountBalance) <= 0) {
+                        if (+isSenderValid.user.accountBalance <= 0) {
                             response(
                                 transfer.low_balance,
                                 false,
                                 StatusCodes.UNPROCESSABLE_ENTITY,
                                 res
                             )
+                        } else if (+amount <= 0) {
+                            response(
+                                transfer.invalid_amount,
+                                false,
+                                StatusCodes.UNPROCESSABLE_ENTITY,
+                                res
+                            )
                         } else if (
-                            Number(amount) >
-                            Number(isSenderValid.user.accountBalance)
+                            +amount > +isSenderValid.user.accountBalance
                         ) {
                             response(
                                 transfer.insufficient_balance,
