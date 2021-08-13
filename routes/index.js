@@ -10,9 +10,13 @@ const {
 const { pinReset } = require('../services/pinreset/pinreset')
 const { validateAccount } = require('../services/accountValidation')
 const { changePassword } = require('../services/changePassword/changePassword')
+const {
+    deleteNotification,
+} = require('../services/deleteNotification/deleteNotification')
 
 router.get(`/balance/:id`, getAccountBalance)
 router.get(`/history/:id`, getTransactionHistory)
+router.delete(`/deleteNotification/:index`, deleteNotification)
 router.post(`/changePassword`, changePassword)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)

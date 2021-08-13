@@ -11,7 +11,11 @@ const {
     pinReset,
 } = require('../../lib/constants')
 const { user_reg } = require('../../lib/constants')
-const { setNewPin, updateNotification } = require('../../lib/queries')
+const {
+    setNewPin,
+    updateNotification,
+    deleteNotification,
+} = require('../../lib/queries')
 const {
     sendMail,
     createAccountNumber,
@@ -198,6 +202,10 @@ class UserManagement {
 
     createPushNotification = async (accountNumber, message) => {
         await updateNotification(this.customer, accountNumber, message)
+    }
+
+    deleteNotification = async (data) => {
+        await deleteNotification(this.customer, 8101050210, data)
     }
     changePassword = async (user, password, res) => {}
 }
