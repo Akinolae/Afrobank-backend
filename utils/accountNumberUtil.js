@@ -10,11 +10,8 @@ const createAccountNumber = async () => {
         const accountNumber = generate_account_no()
         const isAccountNumberExists = await fetch_single_user(accountNumber)
 
-        if (!isAccountNumberExists.status) {
-            return accountNumber
-        } else {
-            return
-        }
+        if (!isAccountNumberExists.status) return accountNumber
+        else return
     } catch (error) {
         throw error
     }

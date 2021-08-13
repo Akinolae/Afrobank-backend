@@ -12,5 +12,6 @@ You get a virtual account when you register, after registering you can use the a
 
 
 
-[AFROBANK](https://afrobank.herokuapp.com/Api/v1 "Afrobanl")
+[AFROBANK](https://afrobank.herokuapp.com/Api/v1 "Afrobank")
+[DOCUMENTATION](https://documenter.getpostman.com/view/7403618/TzshHR6x "Postman")
 

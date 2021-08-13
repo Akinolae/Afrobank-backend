@@ -1,7 +1,7 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { sendMail, isPinValid, logError } = require('../../utils')
+const { sendMail, isPinValid, calc_account_balance } = require('../../utils')
 const { transactionHistory } = require('../../utils/transactionsUtil')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
@@ -9,6 +9,7 @@ const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../lib/queries')
 const { transfer, transferAuthSchema } = require('../../lib/constants')
 const { redisSet, redisGet } = require('../../utils/redisUtil')
+const customer = require('../userManagement/index')
 
 class Transactions {
     constructor(_customer_) {
@@ -55,16 +56,29 @@ class Transactions {
                             res
                         )
                     } else {
-                        if (Number(isSenderValid.user.accountBalance) <= 0) {
+                        if (+isSenderValid.user.accountBalance <= 0) {
                             response(
                                 transfer.low_balance,
                                 false,
                                 StatusCodes.UNPROCESSABLE_ENTITY,
                                 res
                             )
+                        } else if (+amount <= 0) {
+                            response(
+                                transfer.invalid_amount,
+                                false,
+                                StatusCodes.UNPROCESSABLE_ENTITY,
+                                res
+                            )
+                        } else if (+amount < 100) {
+                            response(
+                                transfer.low_amount_error,
+                                false,
+                                StatusCodes.UNPROCESSABLE_ENTITY,
+                                res
+                            )
                         } else if (
-                            Number(amount) >
-                            Number(isSenderValid.user.accountBalance)
+                            +amount > +isSenderValid.user.accountBalance
                         ) {
                             response(
                                 transfer.insufficient_balance,
@@ -82,6 +96,16 @@ class Transactions {
                                 amount,
                                 type: 'debit',
                             }
+                            const notifyRecipient = `${isSenderValid.user.surName} ${isSenderValid.user.firstName} ${isSenderValid.user.lastName} just sent you ₦${transactionData.amount}`
+                            const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
+                            await customer.createPushNotification(
+                                isSenderValid.user.accountNumber,
+                                notifySender
+                            )
+                            await customer.createPushNotification(
+                                isRecipientValid.user.accountNumber,
+                                notifyRecipient
+                            )
                             this.completeTransfer(transactionData, res)
                         }
                     }
@@ -138,8 +162,6 @@ class Transactions {
                 }
             }
         } catch (error) {
-            const errResp = error
-            logError('completeTransfer.txt', error)
             response(errResp, false, StatusCodes.BAD_REQUEST, res)
         }
     }
@@ -165,6 +187,19 @@ class Transactions {
         } catch (error) {
             logError('/logs/getTransactionHistory.txt', error)
             response(error, false, StatusCodes.BAD_REQUEST, res)
+        }
+    }
+
+    getBalance = async (accountNumber, res) => {
+        try {
+            const data = await verifyAccountNumber(accountNumber)
+            if (data.status) {
+                response(data.user.accountBalance, true, StatusCodes.OK, res)
+            } else {
+                response(data.message, false, StatusCodes.NOT_FOUND, res)
+            }
+        } catch (error) {
+            response(error, false, StatusCodes.BAD_REQUEST)
         }
     }
 }
