@@ -205,7 +205,7 @@ class UserManagement {
     }
 
     deleteNotification = async (data) => {
-        await deleteNotification(this.customer, 8101050210, data)
+        // await deleteNotification(this.customer, 8101050210, data)
     }
     changePassword = async (user, password, res) => {}
 }
