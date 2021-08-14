@@ -12,10 +12,12 @@ const { validateAccount } = require('../services/accountValidation')
 const { changePassword } = require('../services/changePassword/changePassword')
 const {
     deleteNotification,
-} = require('../services/deleteNotification/deleteNotification')
+    fetchAllNotifications,
+} = require('../services/notifications')
 
 router.get(`/balance/:id`, getAccountBalance)
 router.get(`/history/:id`, getTransactionHistory)
+router.get('/notifications/:id', fetchAllNotifications)
 router.delete(`/deleteNotification/:index`, deleteNotification)
 router.post(`/changePassword`, changePassword)
 router.post(`/pinreset`, pinReset)

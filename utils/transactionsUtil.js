@@ -20,6 +20,16 @@ const transactionHistory = async (accountNumber) => {
     }
 }
 
+const fetchAllNotifications = async (accountNumber) => {
+    try {
+        const data = await verifyAccountNumber(accountNumber)
+        if (!data.status) return { status: false, response: data.message }
+        else return { status: true, response: data.user.notifications }
+    } catch (error) {
+        throw error
+    }
+}
+
 const updateBalance = async (customer, type, accountNumber, amount) => {
     const data = await verifyAccountNumber(accountNumber)
     let currentBalance = 0
@@ -51,4 +61,9 @@ const calc_account_balance = async (accountNumber) => {
         throw error
     }
 }
-module.exports = { transactionHistory, calc_account_balance, updateBalance }
+module.exports = {
+    transactionHistory,
+    calc_account_balance,
+    updateBalance,
+    fetchAllNotifications,
+}

@@ -5,6 +5,7 @@ const {
     transactionHistory,
     calc_account_balance,
     updateBalance,
+    fetchAllNotifications,
 } = require('./transactionsUtil')
 const { logError } = require('./logger')
 
@@ -17,4 +18,5 @@ module.exports = {
     logError,
     calc_account_balance,
     updateBalance,
+    fetchAllNotifications,
 }

@@ -5,4 +5,8 @@ module.exports = {
         const { index } = req.params
         customer.deleteNotification(index)
     },
+    fetchAllNotifications: (req, res) => {
+        const { id } = req.params
+        customer.getNotifications(id, res)
+    },
 }
