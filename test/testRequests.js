@@ -31,40 +31,6 @@ const API_GATEWAY = axios.create({
 })
 
 const tests = {
-    // sendEmail: () => {
-    //     describe('sendEmail', () => {
-    //         test('Validates that a user can recieve email notifications', async () => {
-    //             const result = await newCustomer.(
-    //                 'Welcome',
-    //                 'makindeakinola22@gmail.com',
-    //                 'test',
-    //                 'sent from a text script'
-    //             )
-    //             console.log(result)
-    //         })
-    //     })
-    // },
-    // singleUser: () => {
-    //     describe('fetch single user', () => {
-    //         test('retrieve a single user', async () => {
-    //             const result = await API_GATEWAY.post('/user', {
-    //                 accountNumber: process.env.ACCOUNTNUMBER,
-    //             })
-    //             expect(result.status).toBe(200)
-    //         })
-    //     })
-    // },
-    // pinReset: () => {
-    //     describe('POST@/resetPin', () => {
-    //         test('Validate that a user can update his pin number', async () => {
-    //             const result = await axios.post('/pinreset', {
-    //                 accountNumber: process.env.ACCOUNTNUMBER,
-    //                 pin: process.env.PIN,
-    //             })
-    //             expect(result.status).toBe(200)
-    //         })
-    //     })
-    // },
     registerCustomer: () => {
         describe('POST@/register', () => {
             test('it should register a new user to the platform', async () => {
