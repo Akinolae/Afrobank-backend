@@ -1,4 +1,4 @@
-const sendMail = require('./emailUtils')
+const { sendMail, generateRandomEmail } = require('./emailUtils')
 const { createPin, isPinValid } = require('./pinUtils')
 const createAccountNumber = require('./accountNumberUtil')
 const {
@@ -19,4 +19,5 @@ module.exports = {
     calc_account_balance,
     updateBalance,
     fetchAllNotifications,
+    generateRandomEmail,
 }

@@ -2,25 +2,22 @@
 const {
     customerLogin,
     customerModel,
-    fetchUsers,
     getBalance,
-    pinReset,
     registerCustomer,
     transfer,
-    sendEmail,
-    // sendText,
-    singleUser,
     validateAccount,
+    connectDb,
+    // failCustomerLogin,
+    // shouldNotRegisterExistingUser,
 } = require('./testRequests')
 
 // Call all test suites;
-sendEmail()
-singleUser()
+// failCustomerLogin()
 transfer()
 customerLogin()
 customerModel()
 getBalance()
-pinReset()
-fetchUsers()
 registerCustomer()
 validateAccount()
+// shouldNotRegisterExistingUser()
+connectDb()
