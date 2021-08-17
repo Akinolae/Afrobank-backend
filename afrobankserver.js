@@ -4,8 +4,11 @@ const cors = require('cors')
 const { response } = require('./controller/responseHandler')
 require('./config/database/dbconnect')
 const { dbConfigure } = require('./config/database/dbconnect')
-
+const { generateRandomEmail } = require('./utils')
 const app = express()
+console.log(generateRandomEmail())
+
+// morgan only logs requests in development
 if (process.env.NODE_ENV === 'development') {
     const morgan = require('morgan')
     app.use(morgan('combined'))
@@ -20,5 +23,9 @@ app.use((req, res) => {
     response(msg, 'error', 400, res)
 })
 
+// makes it easy to dynamically configure the db
+// just create a CLUSTER on atlas cloud,
+// pick the URL and add... voila!, you're connected to the DB!
 dbConfigure(process.env.DB_CONNECT)
+
 app.listen(process.env.PORT || 4000, () => console.log(`app is running`))

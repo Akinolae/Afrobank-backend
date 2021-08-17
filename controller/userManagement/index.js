@@ -29,6 +29,7 @@ const {
     decryptPassword,
     hashPassword,
 } = require('../../utils/userUtil')
+const { fetchAllNotifications } = require('../../utils/index')
 
 class UserManagement {
     constructor(_customer_) {
@@ -122,7 +123,6 @@ class UserManagement {
                 StatusCodes.UNPROCESSABLE_ENTITY,
                 res
             )
-            logError('login.txt', user_login.credentials)
         } else {
             const data = await fetch_single_user(userEmail)
 
@@ -205,7 +205,21 @@ class UserManagement {
     }
 
     deleteNotification = async (data) => {
-        await deleteNotification(this.customer, 8101050210, data)
+        // await deleteNotification(this.customer, 8101050210, data)
+    }
+
+    getNotifications = async (accountNumber, res) => {
+        try {
+            const data = await fetchAllNotifications(accountNumber)
+
+            if (!data.status) {
+                response(data.response, false, StatusCodes.NOT_FOUND, res)
+            } else {
+                response(data.response, true, StatusCodes.OK, res)
+            }
+        } catch (e) {
+            console.log(e)
+        }
     }
     changePassword = async (user, password, res) => {}
 }

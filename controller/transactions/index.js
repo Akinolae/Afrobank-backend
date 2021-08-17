@@ -185,7 +185,6 @@ class Transactions {
                 response(data.response, true, StatusCodes.OK, res)
             }
         } catch (error) {
-            logError('/logs/getTransactionHistory.txt', error)
             response(error, false, StatusCodes.BAD_REQUEST, res)
         }
     }

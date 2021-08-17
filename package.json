@@ -3,6 +3,7 @@
     "jest": {
         "testEnvironment": "node"
     },
+    "type": "commonjs",
     "version": "1.0.0",
     "description": "Afro bank Api",
     "main": "afrobankserver.js",
