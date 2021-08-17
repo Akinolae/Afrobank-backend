@@ -148,8 +148,6 @@ const tests = {
                     email: process.env.EMAIL_TEST,
                     password: process.env.PASSWORD,
                 })
-                console.log(result)
-                // expect(result.response.status).toBe(400)
                 expect(result.status).toBeGreaterThanOrEqual(400)
             })
         })
