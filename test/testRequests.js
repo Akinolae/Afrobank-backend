@@ -2,9 +2,7 @@
 require('dotenv').config()
 
 const axios = require('axios')
-const { customer } = require('../model/customer')
-const Customer = require('../controller/index')
-const newCustomer = new Customer(customer)
+const newCustomer = require('../controller/userManagement')
 
 const API_GATEWAY = axios.create({
     baseURL: process.env.AXIOS,
