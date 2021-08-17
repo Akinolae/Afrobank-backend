@@ -11,7 +11,7 @@
         "node": "14.15.5"
     },
     "scripts": {
-        "test": "jest",
+        "test": "jest --coverage ",
         "dev": "nodemon afrobankserver.js",
         "start": "node afrobankserver.js",
         "cleanup": "rm -rf node_modules/ && npm i && npm run dev"
