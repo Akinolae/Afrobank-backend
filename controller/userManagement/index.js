@@ -123,7 +123,6 @@ class UserManagement {
                 StatusCodes.UNPROCESSABLE_ENTITY,
                 res
             )
-            logError('login.txt', user_login.credentials)
         } else {
             const data = await fetch_single_user(userEmail)
 

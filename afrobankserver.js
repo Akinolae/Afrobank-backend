@@ -4,7 +4,12 @@ const cors = require('cors')
 const { response } = require('./controller/responseHandler')
 require('./config/database/dbconnect')
 const { dbConfigure } = require('./config/database/dbconnect')
+const fs = require('fs')
+const path = require('path')
 
+const packageJson = path.join('package.json')
+const json = JSON.parse(fs.readFileSync(packageJson, 'utf-8'))
+// console.log(process)
 const app = express()
 
 // morgan only logs requests in development
