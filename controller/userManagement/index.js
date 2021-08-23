@@ -9,6 +9,7 @@ const {
     user_login,
     setPinSchema,
     pinReset,
+    notifications,
 } = require('../../lib/constants')
 const { user_reg } = require('../../lib/constants')
 const {
@@ -204,7 +205,27 @@ class UserManagement {
         await updateNotification(this.customer, accountNumber, message)
     }
 
-    deleteNotification = async (data) => {
+    deleteNotification = async (accountNumber, index, res) => {
+        try {
+            const resp = await deleteNotification(
+                this.customer,
+                accountNumber,
+                index
+            )
+            if (resp) {
+                response(notifications.delete, true, StatusCodes.OK, res)
+            } else {
+                response(
+                    notifications.deleteError,
+                    false,
+                    StatusCodes.NOT_FOUND,
+                    res
+                )
+            }
+        } catch (error) {
+            response(error, false, 500, res)
+        }
+
         // await deleteNotification(this.customer, 8101050210, data)
     }
 

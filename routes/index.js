@@ -18,7 +18,7 @@ const {
 router.get(`/balance/:id`, getAccountBalance)
 router.get(`/history/:id`, getTransactionHistory)
 router.get('/notifications/:id', fetchAllNotifications)
-router.delete(`/deleteNotification/:index`, deleteNotification)
+router.delete(`/deleteNotification/`, deleteNotification)
 router.post(`/changePassword`, changePassword)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)

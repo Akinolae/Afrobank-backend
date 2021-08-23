@@ -3,16 +3,21 @@ require('dotenv').config()
 
 const axios = require('axios')
 const mongoose = require('mongoose')
-const newCustomer = require('../controller/userManagement')
 const customerModel = require('../model/customer')
-const customerTransactions = require('../controller/transactions/')
 const { verifyAccountNumber, fetch_single_user } = require('../utils/userUtil')
-const { generateRandomEmail } = require('../utils')
-const { dbConfigure } = require('../config/database/dbconnect')
+const {
+    generateRandomEmail,
+    transactionHistory,
+    fetchAllNotifications,
+    calc_account_balance,
+    // createAccountNumber,
+    createPin,
+} = require('../utils')
+const { dbConfig } = require('../config/database/dbconnect')
 
 beforeAll((done) => {
     async function connect() {
-        await dbConfigure(process.env.DB_CONNECT)
+        await dbConfig(process.env.DB_CONNECT)
     }
     connect()
     done()
@@ -41,9 +46,66 @@ const tests = {
                     email: generateRandomEmail(),
                     phoneNumber: '08034335043',
                     gender: 'male',
-                    password: 'thegreatest@1',
+                    password: process.env.EMAIL_PASSWORD,
                 })
                 expect(result.status).toBe(200)
+            })
+        })
+    },
+
+    createPin: () => {
+        describe('create pin', () => {
+            test('should create a pin for the user', () => {
+                const response = createPin()
+                expect(response.length).toBe(4)
+                expect(response).not.toBeNull()
+            })
+        })
+    },
+    // createAccountNumber: () => {
+    //     describe('create accountNumber', () => {
+    //         test('should create accountNumber', async () => {
+    //             const response = await createAccountNumber()
+    //             console.log(response.length)
+    //             // expect(response.length).toBe (10)
+    //             // expect(response).not.toBeNull()
+    //         })
+    //     })
+    // },
+    fetchTransactionHistory: () => {
+        describe('Validate user email', () => {
+            test('should return a valid user', async () => {
+                const response = await fetch_single_user(process.env.EMAIL_TEST)
+                expect(response.status).toBe(true)
+            })
+        })
+    },
+    calculateAccountBalance: () => {
+        describe('Calculate account balance', () => {
+            test('Should return an object', async () => {
+                const resp = await calc_account_balance(
+                    process.env.ACCOUNTNUMBER
+                )
+                expect(resp).not.toBeNull()
+            })
+        })
+    },
+    fetchAllNotifications: () => {
+        describe('Notifications', () => {
+            test('Should return an array of notifications', async () => {
+                const data = await fetchAllNotifications(
+                    process.env.ACCOUNTNUMBER
+                )
+                expect(data.status).toBe(true)
+                expect(data.response).not.toBeNull()
+            })
+        })
+    },
+    verifyUserEmail: () => {
+        describe('Transaction history', () => {
+            test('Returns updated transaction history of a single user', async () => {
+                const data = await transactionHistory(process.env.ACCOUNTNUMBER)
+                expect(data.response).not.toBeNull()
             })
         })
     },
@@ -58,7 +120,7 @@ const tests = {
                     email: process.env.ACCOUNTNUMBER,
                     phoneNumber: '08034335043',
                     gender: 'male',
-                    password: 'thegreatest@1',
+                    password: generateRandomEmail(),
                 })
                 expect(result).toBe(422)
             })

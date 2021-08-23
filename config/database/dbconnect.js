@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const dbConfigure = async (uri) => {
+const dbConfig = async (uri) => {
     try {
         await mongoose.connect(uri, {
             useNewUrlParser: true,
@@ -16,4 +16,4 @@ const dbConfigure = async (uri) => {
     }
 }
 
-module.exports = { dbConfigure }
+module.exports = { dbConfig }
