@@ -17,15 +17,9 @@ const {
     updateNotification,
     deleteNotification,
 } = require('../../lib/queries')
-const {
-    sendMail,
-    createAccountNumber,
-    createPin,
-    logError,
-} = require('../../utils')
+const { createAccountNumber } = require('../../utils')
 const {
     fetch_single_user,
-    login_notify,
     generateUserAccessToken,
     decryptPassword,
     hashPassword,
@@ -49,7 +43,6 @@ class UserManagement {
     ) => {
         const accountNumber = await createAccountNumber(this.customer)
         const accountBalance = process.env.DEFAULT_BALANCE
-        const pin = createPin()
         const hashedPassword = await hashPassword(password)
 
         const user = {
@@ -61,7 +54,6 @@ class UserManagement {
             gender,
             accountNumber,
             accountBalance,
-            pin,
             password: hashedPassword,
         }
         const joi_validate = authSchema.validate({
@@ -84,17 +76,6 @@ class UserManagement {
             try {
                 let user_model = await new this.customer(user)
                 await user_model.save()
-                sendMail(
-                    user_reg.emailTemplate(
-                        firstName,
-                        pin,
-                        accountBalance,
-                        accountNumber
-                    ),
-                    email,
-                    user_reg.reg_mail_subject,
-                    user_reg.reg_mail_text
-                )
                 response(
                     user_reg.resp_msg_registration,
                     true,
@@ -106,12 +87,7 @@ class UserManagement {
                     user_reg.welcome_text
                 )
             } catch (err) {
-                response(
-                    `user with email ${email} already exists`,
-                    false,
-                    StatusCodes.UNPROCESSABLE_ENTITY,
-                    res
-                )
+                response(err, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
             }
         }
     }
@@ -155,12 +131,6 @@ class UserManagement {
                     })
 
                     response('', true, 200, res, token, userData)
-                    sendMail(
-                        login_notify(data.message),
-                        userData.email,
-                        user_login.email_subject,
-                        user_login.email_text
-                    )
                 }
             } else {
                 response(data.message, false, StatusCodes.FORBIDDEN, res)
@@ -242,6 +212,7 @@ class UserManagement {
             console.log(e)
         }
     }
+
     changePassword = async (user, password, res) => {}
 }
 

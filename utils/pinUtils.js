@@ -1,4 +1,5 @@
 const { generate } = require('otp-generator')
+const { decryptPassword } = require('./userUtil')
 
 const createPin = (length = 4) => {
     return generate(length, {
@@ -9,10 +10,10 @@ const createPin = (length = 4) => {
     })
 }
 
-const isPinValid = (data, pin) => {
+const isPinValid = async (data, pin) => {
     if (!data) return
     else {
-        return data === pin
+        return await decryptPassword(data, pin)
     }
 }
 module.exports = { isPinValid, createPin }

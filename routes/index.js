@@ -7,7 +7,7 @@ const { localLogin } = require('../services/login/localLogin')
 const {
     getTransactionHistory,
 } = require('../services/transactionHistory/getTransactionHistory')
-const { pinReset } = require('../services/pinreset/pinreset')
+const { pinReset, createPin } = require('../services/pin/pinreset')
 const { validateAccount } = require('../services/accountValidation')
 const { changePassword } = require('../services/changePassword/changePassword')
 const {
@@ -15,10 +15,11 @@ const {
     fetchAllNotifications,
 } = require('../services/notifications')
 
+router.delete(`/deleteNotification/`, deleteNotification)
 router.get(`/balance/:id`, getAccountBalance)
 router.get(`/history/:id`, getTransactionHistory)
 router.get('/notifications/:id', fetchAllNotifications)
-router.delete(`/deleteNotification/`, deleteNotification)
+router.patch(`/createpin`, createPin)
 router.post(`/changePassword`, changePassword)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)

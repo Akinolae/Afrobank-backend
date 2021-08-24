@@ -55,12 +55,11 @@ const verifyUserAccessToken = (token) => {
     return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
         if (err) throw err
         else return data
-        
     })
 }
 
-const hashPassword = async (password) => {
-    const hash = await encrypt.hash(password, 15)
+const hashPassword = async (password, length = 15) => {
+    const hash = await encrypt.hash(password, length)
     return hash
 }
 
