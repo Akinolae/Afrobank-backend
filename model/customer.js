@@ -41,7 +41,7 @@ const customer = new mongoose.Schema({
     },
     pin: {
         type: String,
-        required: true,
+        default: null,
     },
     surName: {
         type: String,
