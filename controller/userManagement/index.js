@@ -20,7 +20,6 @@ const {
 const { createAccountNumber } = require('../../utils')
 const {
     fetch_single_user,
-    generateUserAccessToken,
     decryptPassword,
     hashPassword,
 } = require('../../utils/userUtil')
@@ -118,20 +117,25 @@ class UserManagement {
                         res
                     )
                 } else {
+                    const {
+                        id,
+                        firstName,
+                        surname,
+                        lastName,
+                        email,
+                        accountNumber,
+                        pin,
+                    } = data.message
                     const userData = {
-                        userId: data.message.id,
-                        firstName: data.message.firstName,
-                        surName: data.message.surName,
-                        lastName: data.message.lastName,
-                        email: data.message.email,
-                        accountNumber: data.message.accountNumber,
-                        pin: data.message.pin,
+                        id,
+                        firstName,
+                        surname,
+                        lastName,
+                        email,
+                        accountNumber,
+                        pin,
                     }
-                    const token = generateUserAccessToken({
-                        payload: userData,
-                    })
-
-                    response('', true, 200, res, token, userData)
+                    response(userData, true, 200, res)
                 }
             } else {
                 response(data.message, false, StatusCodes.FORBIDDEN, res)
