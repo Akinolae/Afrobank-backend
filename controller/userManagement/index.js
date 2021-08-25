@@ -125,6 +125,7 @@ class UserManagement {
                         lastName: data.message.lastName,
                         email: data.message.email,
                         accountNumber: data.message.accountNumber,
+                        pin: data.message.pin,
                     }
                     const token = generateUserAccessToken({
                         payload: userData,
