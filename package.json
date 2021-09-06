@@ -6,13 +6,13 @@
     "type": "commonjs",
     "version": "1.0.0",
     "description": "Afro bank Api",
-    "main": "afrobankserver.js",
+    "main": "/src/afrobankserver.js",
     "engines": {
         "node": "14.15.5"
     },
     "scripts": {
         "test": "jest --coverage ",
-        "dev": "nodemon afrobankserver.js",
+        "dev": "nodemon ./src/afrobankserver.js",
         "start": "node afrobankserver.js",
         "cleanup": "rm -rf node_modules/ && npm i && npm run dev"
     },
@@ -32,11 +32,7 @@
         "nanoid": "^3.1.23",
         "nodemailer": "^6.4.10",
         "nodemon": "^2.0.2",
-        "otp-generator": "^2.0.0",
-        "passport": "^0.4.1",
-        "passport-local": "^1.0.0",
-        "redis": "^3.0.2",
-        "redis-server": "^1.2.2"
+        "otp-generator": "^2.0.0"
     },
     "devDependencies": {
         "morgan": "^1.10.0"
