@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const path = require('path')
 const { transfer } = require('../services/cashTransfer/cashtransfer')
 const { register } = require('../services/Register/register')
 const { getAccountBalance } = require('../services/getBalance/getBalance')
@@ -15,6 +16,11 @@ const {
     fetchAllNotifications,
 } = require('../services/notifications')
 
+router.get(`/`, (req, res) => {
+    res.send(`<div style="display: flex; justify-content: center; font-family: sans-serif; align-content: center; margin: 20% auto;">
+        <h3>Your Afrobank server is running</h3>
+    </div>`)
+})
 router.delete(`/deleteNotification/`, deleteNotification)
 router.get(`/balance/:id`, getAccountBalance)
 router.get(`/history/:id`, getTransactionHistory)
