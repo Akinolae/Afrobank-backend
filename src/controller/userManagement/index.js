@@ -86,7 +86,12 @@ class UserManagement {
                     user_reg.welcome_text
                 )
             } catch (err) {
-                response(err, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+                response(
+                    `user with ${email} already exists`,
+                    false,
+                    StatusCodes.UNPROCESSABLE_ENTITY,
+                    res
+                )
             }
         }
     }
