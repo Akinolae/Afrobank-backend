@@ -63,8 +63,8 @@ const hashPassword = async (password, length = 15) => {
     return hash
 }
 
-const decryptPassword = async (password1, password2) => {
-    const decrypt = await encrypt.compare(password1, password2)
+const decryptPassword = (password1, password2) => {
+    const decrypt = encrypt.compare(password1, password2)
     return decrypt
 }
 

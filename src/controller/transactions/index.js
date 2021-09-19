@@ -49,7 +49,7 @@ class Transactions {
                 ) {
                     if (
                         !isSenderValid.user.pin ||
-                        !isPinValid(isSenderValid.user.pin, pin)
+                        !(await isPinValid(pin, isSenderValid.user.pin))
                     ) {
                         response(
                             transfer.pinError,
@@ -127,7 +127,6 @@ class Transactions {
                     )
                 }
             } catch (error) {
-                logError('/logs/transfer.txt', error)
                 throw error || 'An error occured'
             }
         }
