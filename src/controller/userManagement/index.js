@@ -76,14 +76,7 @@ class UserManagement {
                 let user_model = await new this.customer(user)
                 await user_model.save()
                 response(
-                    {
-                        firstName,
-                        surName,
-                        lastName,
-                        email,
-                        accountNumber,
-                        pin: '',
-                    },
+                    user_reg.resp_msg_registration,
                     true,
                     StatusCodes.OK,
                     res
