@@ -1,9 +1,7 @@
 require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
-const path = require('path')
 const { response } = require('./controller/responseHandler')
-require('./config/database/dbconnect')
 const { dbConfig } = require('./config/database/dbconnect')
 const app = express()
 const URI =
@@ -19,7 +17,6 @@ if (process.env.NODE_ENV === 'development') {
 
 app.use(cors())
 app.use(express.json())
-app.use(express.static(path.join(__dirname, '/template')))
 app.use('/Api/v1', require('./routes/index'))
 
 app.use((req, res) => {
@@ -27,14 +24,10 @@ app.use((req, res) => {
     response(msg, 'error', 400, res)
 })
 
-// makes it easy to dynamically configure the db
-// just create a CLUSTER on atlas cloud,
-// pick the URL and add... voila!, you're connected to the DB!
-dbConfig(URI)
-
 app.listen(process.env.PORT || 4000, () => {
+    // makes it easy to dynamically configure the db
+    // just create a CLUSTER on atlas cloud,
+    // pick the URL and add... voila!, you're connected to the DB!
     console.log(`app is running ${process.env.PORT}`)
-    console.log(
-        `click http://localhost:${process.env.PORT}/Api/v1 to view in browser`
-    )
+    dbConfig(URI)
 })
