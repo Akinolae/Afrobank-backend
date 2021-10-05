@@ -9,6 +9,4 @@ const logError = (path, content) => {
     } else return
 }
 
-module.exports = {
-    logError,
-}
+module.exports = logError
