@@ -13,10 +13,5 @@ module.exports = {
             transaction_id,
             res
         )
-        // userTransactions.getSingleTransaction(
-        //     accountNumber,
-        //     transaction_id,
-        //     res
-        // )
     },
 }
