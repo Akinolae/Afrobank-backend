@@ -190,6 +190,40 @@ class Transactions {
         }
     }
 
+    getSingleTransaction = async (accountNumber, transaction_Id, res) => {
+        if (!!accountNumber && !!transaction_Id) {
+            try {
+                const data = await transactionHistory(accountNumber)
+                if (!!data.status) {
+                    const resp = data.response.find(
+                        (trx) =>
+                            trx.transaction_id.toLowerCase() ===
+                            transaction_Id.toLowerCase()
+                    )
+                    if (!!resp) {
+                        response(resp, true, StatusCodes.OK, res)
+                    } else {
+                        response(
+                            'invalid transaction id',
+                            false,
+                            StatusCodes.NOT_FOUND,
+                            res
+                        )
+                    }
+                }
+            } catch (error) {
+                response(error, false, StatusCodes.BAD_REQUEST, res)
+            }
+        } else {
+            response(
+                'requires account number and transaction id',
+                false,
+                StatusCodes.NOT_FOUND,
+                res
+            )
+        }
+    }
+
     getBalance = async (accountNumber, res) => {
         try {
             const data = await verifyAccountNumber(accountNumber)
