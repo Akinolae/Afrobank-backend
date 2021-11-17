@@ -17,6 +17,7 @@ const {
     updateNotification,
     deleteNotification,
     createOtp,
+    updatePassword,
 } = require('../../lib/queries')
 const { createAccountNumber, createPin } = require('../../utils')
 const {
@@ -225,7 +226,38 @@ class UserManagement {
         }
     }
 
-    changePassword = async (user, password, res) => {}
+    changePassword = async (accountNumber, password, res) => {
+        if (!!accountNumber && !!password) {
+            try {
+                const userExists = await verifyAccountNumber(accountNumber)
+                if (!!userExists.status) {
+                    const hash = await hashPassword(password)
+                    const data = await updatePassword(
+                        this.customer,
+                        accountNumber,
+                        hash
+                    )
+                    response(data.message, true, StatusCodes.OK, res)
+                } else {
+                    response(
+                        userExists.message,
+                        false,
+                        StatusCodes.NOT_FOUND,
+                        res
+                    )
+                }
+            } catch (error) {
+                console.log(error)
+            }
+        } else {
+            response(
+                'Kindly enter required fields',
+                false,
+                StatusCodes.UNPROCESSABLE_ENTITY,
+                res
+            )
+        }
+    }
 
     sendPasswordOtp = async (accountNumber, res) => {
         const code = createPin(5)

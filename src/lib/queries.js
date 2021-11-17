@@ -2,6 +2,7 @@ const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 const { updateBalance } = require('../utils/')
 const { nanoid } = require('nanoid')
 const { pinReset } = require('./constants')
+const customer = require('../model/customer')
 
 const updateTransaction = async (
     _customer_,
@@ -28,6 +29,18 @@ const updateTransaction = async (
         return response
     } catch (error) {
         throw new Error(error)
+    }
+}
+
+const updatePassword = async (cutomer, accountNumber, password) => {
+    try {
+        await customer.updateOne(
+            { accountNumber: accountNumber },
+            { $set: { password: password, otp: null } }
+        )
+        return { status: true, message: 'password changed' }
+    } catch (error) {
+        throw error
     }
 }
 
@@ -97,4 +110,5 @@ module.exports = {
     updateNotification,
     deleteNotification,
     createOtp,
+    updatePassword,
 }
