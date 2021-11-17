@@ -16,12 +16,14 @@ const {
     setNewPin,
     updateNotification,
     deleteNotification,
+    createOtp,
 } = require('../../lib/queries')
-const { createAccountNumber } = require('../../utils')
+const { createAccountNumber, createPin } = require('../../utils')
 const {
     fetch_single_user,
     decryptPassword,
     hashPassword,
+    verifyAccountNumber,
 } = require('../../utils/userUtil')
 const { fetchAllNotifications } = require('../../utils/index')
 
@@ -224,6 +226,65 @@ class UserManagement {
     }
 
     changePassword = async (user, password, res) => {}
+
+    sendPasswordOtp = async (accountNumber, res) => {
+        const code = createPin(5)
+        const otp = await hashPassword(code)
+        const userExists = await verifyAccountNumber(accountNumber)
+        if (!!userExists.status) {
+            try {
+                const data = await createOtp(this.customer, accountNumber, otp)
+                response(data.message, data.status, StatusCodes.OK, res)
+            } catch (error) {
+                throw error
+            }
+        } else {
+            response(userExists.message, false, StatusCodes.NOT_FOUND, res)
+        }
+    }
+
+    forgotPassword = async (accountNumber, pin, res) => {
+        if (!!accountNumber && !!pin) {
+            try {
+                const userExists = await verifyAccountNumber(accountNumber)
+                if (!!userExists.status) {
+                    const { otp } = userExists.user
+                    const isValidOtp = await decryptPassword(pin, otp)
+                    if (!!isValidOtp) {
+                        response(
+                            'Please reset your password',
+                            true,
+                            StatusCodes.OK,
+                            res
+                        )
+                    } else {
+                        response(
+                            'Invalid otp',
+                            false,
+                            StatusCodes.BAD_REQUEST,
+                            res
+                        )
+                    }
+                } else {
+                    response(
+                        userExists.message,
+                        false,
+                        StatusCodes.NOT_FOUND,
+                        res
+                    )
+                }
+            } catch (error) {
+                response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+            }
+        } else {
+            response(
+                'Kindly enter required fields',
+                false,
+                StatusCodes.UNPROCESSABLE_ENTITY,
+                res
+            )
+        }
+    }
 }
 
 const user = new UserManagement(model)

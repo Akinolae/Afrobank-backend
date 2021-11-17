@@ -36,7 +36,7 @@ const setNewPin = async (_customer_, accountNumber, pin) => {
         const user = await verifyAccountNumber(accountNumber)
         if (user.status) {
             const hashedPin = await hashPassword(pin, 10)
-            const resp = await _customer_.updateOne(
+            await _customer_.updateOne(
                 { accountNumber: accountNumber },
                 { $set: { pin: hashedPin } }
             )
@@ -65,6 +65,21 @@ const updateNotification = async (customer, accountNumber, message) => {
     }
 }
 
+const createOtp = async (customer, accountNumber, otp) => {
+    try {
+        await customer.updateOne(
+            {
+                accountNumber: accountNumber,
+            },
+            { $set: { otp: otp } }
+        )
+
+        return { status: true, message: 'otp sent to you' }
+    } catch (error) {
+        throw error
+    }
+}
+
 const deleteNotification = async (customer, accountNumber, index) => {
     try {
         await customer.updateOne(
@@ -81,4 +96,5 @@ module.exports = {
     setNewPin,
     updateNotification,
     deleteNotification,
+    createOtp,
 }
