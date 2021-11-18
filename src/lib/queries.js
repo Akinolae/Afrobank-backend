@@ -78,16 +78,19 @@ const updateNotification = async (customer, accountNumber, message) => {
     }
 }
 
-const createOtp = async (customer, accountNumber, otp) => {
+const createOtp = async (customer, email, otp) => {
     try {
         await customer.updateOne(
             {
-                accountNumber: accountNumber,
+                email: email,
             },
             { $set: { otp: otp } }
         )
 
-        return { status: true, message: 'otp sent to you' }
+        return {
+            status: true,
+            message: 'If email exists you will recieve a 5 digit pin',
+        }
     } catch (error) {
         throw error
     }

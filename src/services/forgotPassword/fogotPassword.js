@@ -6,8 +6,8 @@ const forgotPassword = (req, res) => {
 }
 
 const sendOtp = (req, res) => {
-    const { accountNumber } = req.body
-    user.sendPasswordOtp(accountNumber, res)
+    const { email } = req.body
+    user.sendPasswordOtp(email, res)
 }
 
 module.exports = { forgotPassword, sendOtp }

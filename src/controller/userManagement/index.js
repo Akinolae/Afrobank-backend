@@ -259,13 +259,13 @@ class UserManagement {
         }
     }
 
-    sendPasswordOtp = async (accountNumber, res) => {
+    sendPasswordOtp = async (email, res) => {
         const code = createPin(5)
         const otp = await hashPassword(code)
-        const userExists = await verifyAccountNumber(accountNumber)
+        const userExists = await fetch_single_user(email)
         if (!!userExists.status) {
             try {
-                const data = await createOtp(this.customer, accountNumber, otp)
+                const data = await createOtp(this.customer, email, otp)
                 response(data.message, data.status, StatusCodes.OK, res)
             } catch (error) {
                 throw error
