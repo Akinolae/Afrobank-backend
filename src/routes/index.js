@@ -15,6 +15,10 @@ const {
     deleteNotification,
     fetchAllNotifications,
 } = require('../services/notifications')
+const {
+    forgotPassword,
+    sendOtp,
+} = require('../services/forgotPassword/fogotPassword')
 
 router.delete(`/deleteNotification/`, deleteNotification)
 router.get(`/balance/:id`, getAccountBalance)
@@ -22,7 +26,9 @@ router.get(`/history/:id`, getTransactionHistory)
 router.get('/notifications/:id', fetchAllNotifications)
 router.get(`/transaction/`, getSingleTransaction)
 router.patch(`/createpin`, createPin)
-router.post(`/changePassword`, changePassword)
+router.patch(`/forgotPassword`, forgotPassword)
+router.patch(`/changePassword`, changePassword)
+router.post(`/sendOtp`, sendOtp)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)
 router.post(`/login`, localLogin)

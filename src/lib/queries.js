@@ -2,6 +2,7 @@ const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 const { updateBalance } = require('../utils/')
 const { nanoid } = require('nanoid')
 const { pinReset } = require('./constants')
+const customer = require('../model/customer')
 
 const updateTransaction = async (
     _customer_,
@@ -31,12 +32,24 @@ const updateTransaction = async (
     }
 }
 
+const updatePassword = async (cutomer, accountNumber, password) => {
+    try {
+        await customer.updateOne(
+            { accountNumber: accountNumber },
+            { $set: { password: password, otp: null } }
+        )
+        return { status: true, message: 'password changed' }
+    } catch (error) {
+        throw error
+    }
+}
+
 const setNewPin = async (_customer_, accountNumber, pin) => {
     try {
         const user = await verifyAccountNumber(accountNumber)
         if (user.status) {
             const hashedPin = await hashPassword(pin, 10)
-            const resp = await _customer_.updateOne(
+            await _customer_.updateOne(
                 { accountNumber: accountNumber },
                 { $set: { pin: hashedPin } }
             )
@@ -65,6 +78,24 @@ const updateNotification = async (customer, accountNumber, message) => {
     }
 }
 
+const createOtp = async (customer, email, otp) => {
+    try {
+        await customer.updateOne(
+            {
+                email: email,
+            },
+            { $set: { otp: otp } }
+        )
+
+        return {
+            status: true,
+            message: 'If email exists you will recieve a 5 digit pin',
+        }
+    } catch (error) {
+        throw error
+    }
+}
+
 const deleteNotification = async (customer, accountNumber, index) => {
     try {
         await customer.updateOne(
@@ -81,4 +112,6 @@ module.exports = {
     setNewPin,
     updateNotification,
     deleteNotification,
+    createOtp,
+    updatePassword,
 }
