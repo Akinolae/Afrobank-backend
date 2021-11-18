@@ -17,7 +17,7 @@
         "start": "node ./src/afrobankserver.js",
         "cleanup": "rm -rf node_modules && npm install"
     },
-    "author": "Akinola Makinde < https://github.com/Akinolae >",
+    "author": "Akinola Makinde <https://github.com/Akinolae>",
     "license": "ISC",
     "dependencies": {
         "axios": "^0.21.2",
