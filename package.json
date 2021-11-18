@@ -12,8 +12,9 @@
     },
     "scripts": {
         "test": "jest --coverage ",
-        "dev": "nodemon ./src/afrobankserver.js",
-        "start": "node ./src/afrobankserver.js",
+        "build": "babel ./src/afrobankserver.js -d dist",
+        "dev": "npm run build && nodemon ./src/afrobankserver.js",
+        "start": "npm run build && node ./src/afrobankserver.js",
         "cleanup": "rm -rf node_modules && npm install"
     },
     "author": "Akinola Makinde < https://github.com/Akinolae >",
@@ -36,6 +37,9 @@
         "otp-generator": "^2.0.0"
     },
     "devDependencies": {
+        "@babel/cli": "^7.16.0",
+        "@babel/core": "^7.16.0",
+        "@babel/preset-env": "^7.16.4",
         "morgan": "^1.10.0"
     }
 }
