@@ -108,16 +108,16 @@ class UserManagement {
                 res
             )
         } else {
-            const data = await fetch_single_user(userEmail)
+            const data = await fetch_single_user(userEmail.trim())
 
             if (data.status) {
                 const { password, email } = data.message
                 const decryptPass = await decryptPassword(
-                    userPassword,
+                    userPassword.trim(),
                     password
                 )
 
-                if (email !== userEmail || !decryptPass) {
+                if (email !== userEmail.trim() || !decryptPass) {
                     response(
                         user_login.invalid_credentials,
                         false,
