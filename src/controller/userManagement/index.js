@@ -133,6 +133,7 @@ class UserManagement {
                         email,
                         accountNumber,
                         pin,
+                        accountBalance,
                     } = data.message
                     const userData = {
                         id,
@@ -142,6 +143,7 @@ class UserManagement {
                         email,
                         accountNumber,
                         pin,
+                        accountBalance,
                     }
                     response(userData, true, 200, res)
                 }
