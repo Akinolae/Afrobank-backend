@@ -12,10 +12,8 @@ const dbConfig = async (uri) => {
                 useCreateIndex: true,
             })
             console.log('=== DB connection established ===')
-            return true
         } catch (error) {
             console.log(error)
-            return false
         }
     }
 }
