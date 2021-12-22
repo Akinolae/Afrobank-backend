@@ -2,14 +2,14 @@ require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const { response } = require('./controller/responseHandler')
-const { dbConfig } = require('./config/database/dbconnect')
+const { appConfig } = require('./config/database/dbconnect')
 const app = express()
 const URI =
     process.env.NODE_ENV === 'development'
         ? process.env.DB_CONNECT
         : process.env.DB_CONNECT_PROD
 
-// morgan only logs requests in development
+// morgan only logs requests in development \\
 if (process.env.NODE_ENV === 'development') {
     const morgan = require('morgan')
     app.use(morgan('combined'))
@@ -25,9 +25,9 @@ app.use((req, res) => {
 })
 
 app.listen(process.env.PORT || 4000, () => {
-    // makes it easy to dynamically configure the db
-    // just create a CLUSTER on atlas cloud,
-    // pick the URL and add... voila!, you're connected to the DB!
+    // makes it easy to dynamically configure the db \\
+    // just create a CLUSTER on atlas cloud, \\
+    // pick the URL and add... voila!, you're connected to the DB! \\
     console.log(`app is running ${process.env.PORT}`)
-    dbConfig(URI)
+    appConfig('db', URI)
 })
