@@ -47,9 +47,7 @@ const customer = new mongoose.Schema({
         type: String,
         default: null,
     },
-    surName: {
-        type: String,
-    },
+
     email: {
         type: String,
         required: true,

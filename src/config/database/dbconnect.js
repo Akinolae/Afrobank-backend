@@ -12,12 +12,19 @@ const dbConfig = async (uri) => {
                 useCreateIndex: true,
             })
             console.log('=== DB connection established ===')
-            return true
         } catch (error) {
             console.log(error)
-            return false
         }
     }
 }
 
-module.exports = { dbConfig }
+const appConfig = (type, params) => {
+    if (typeof type !== 'string') throw new Error('App type must be a string')
+    else if (!type || !params) {
+        throw new Error('config type and params are required')
+    } else {
+        type === 'db' && dbConfig(params)
+    }
+}
+
+module.exports = { appConfig }
