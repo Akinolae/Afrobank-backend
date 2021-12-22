@@ -36,7 +36,6 @@ class UserManagement {
     register = async (
         firstName,
         lastName,
-        surName,
         email,
         phoneNumber,
         gender,
@@ -49,7 +48,6 @@ class UserManagement {
 
         const user = {
             firstName,
-            surName,
             lastName,
             email,
             phoneNumber,
@@ -60,7 +58,6 @@ class UserManagement {
         }
         const joi_validate = authSchema.validate({
             firstName,
-            surName,
             lastName,
             email,
             phoneNumber,

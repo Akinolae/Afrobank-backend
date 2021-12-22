@@ -7,7 +7,6 @@ const minutes = date.getMinutes()
 const authSchema = joi.object({
     firstName: joi.string().trim().required(),
     lastName: joi.string().trim().required(),
-    surName: joi.string().trim().required(),
     email: joi
         .string()
         .trim()
