@@ -33,15 +33,9 @@ class UserManagement {
         this.customer = _customer_
     }
 
-    register = async (
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
-        gender,
-        password,
-        res
-    ) => {
+    register = async (params, res) => {
+        const { firstName, lastName, email, phoneNumber, gender, password } =
+            params
         const accountNumber = await createAccountNumber(this.customer)
         const accountBalance = process.env.DEFAULT_BALANCE
         const hashedPassword = await hashPassword(password)
