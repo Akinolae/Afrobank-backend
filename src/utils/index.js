@@ -9,6 +9,7 @@ const {
 } = require('./transactionsUtil')
 const logError = require('./logger')
 const job = require('./cron')
+
 module.exports = {
     calc_account_balance,
     createAccountNumber,

@@ -18,11 +18,16 @@ const dbConfig = async (uri) => {
     }
 }
 
-const appConfig = (type, params) => {
-    if (typeof type !== 'string') throw new Error('App type must be a string')
-    else if (!type || !params) {
-        throw new Error('config type and params are required')
-    } else {
+const appConfig = (config, params) => {
+    // extract the specific config type
+    const { type } = config
+    if (!type || !params)
+        throw new Error('configuration needs a type and a parameter')
+    else if (typeof type !== 'string')
+        throw new Error('app type must be a string')
+    else {
+        // Runs configuration based on the config type specified
+        // makes it easier to add other configurations, dynamically
         type === 'db' && dbConfig(params)
     }
 }
