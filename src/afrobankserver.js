@@ -29,5 +29,5 @@ app.listen(process.env.PORT || 4000, () => {
     // just create a CLUSTER on atlas cloud, \\
     // pick the URL and add... voila!, you're connected to the DB! \\
     console.log(`app is running ${process.env.PORT}`)
-    appConfig('db', URI)
+    appConfig({ type: 'db' }, URI)
 })
