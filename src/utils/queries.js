@@ -1,7 +1,7 @@
 const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 const { updateBalance } = require('../utils/')
 const { nanoid } = require('nanoid')
-const { pinReset } = require('./constants')
+const { pinReset } = require('./validator')
 const customer = require('../model/customer')
 
 const updateTransaction = async (

@@ -4,29 +4,33 @@ require('dotenv').config()
 const model = require('../../model/customer')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const {
-    authSchema,
-    user_login,
-    setPinSchema,
-    pinReset,
-    notifications,
-} = require('../../lib/constants')
-const { user_reg } = require('../../lib/constants')
+
 const {
     setNewPin,
     updateNotification,
     deleteNotification,
     createOtp,
     updatePassword,
-} = require('../../lib/queries')
-const { createAccountNumber, createPin } = require('../../utils')
+} = require('../../utils/queries.js')
+const {
+    createAccountNumber,
+    createPin,
+    fetchAllNotifications,
+} = require('../../utils')
+const {
+    user_reg,
+    authSchema,
+    user_login,
+    setPinSchema,
+    pinReset,
+    notifications,
+} = require('../../utils/validator')
 const {
     fetch_single_user,
     decryptPassword,
     hashPassword,
     verifyAccountNumber,
 } = require('../../utils/userUtil')
-const { fetchAllNotifications } = require('../../utils/index')
 
 class UserManagement {
     constructor(_customer_) {

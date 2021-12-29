@@ -1,13 +1,13 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { sendMail, isPinValid } = require('../../utils')
+const { isPinValid } = require('../../utils')
 const { transactionHistory } = require('../../utils/transactionsUtil')
-const { verifyAccountNumber, decryptPassword } = require('../../utils/userUtil')
+const { verifyAccountNumber } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { updateTransaction } = require('../../lib/queries')
-const { transfer, transferAuthSchema } = require('../../lib/constants')
+const { updateTransaction } = require('../../utils/queries')
+const { transfer, transferAuthSchema } = require('../../utils/validator')
 const customer = require('../userManagement/index')
 
 class Transactions {
