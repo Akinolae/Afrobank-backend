@@ -10,15 +10,15 @@ const {
 } = require('../services/transactionHistory/getTransactionHistory')
 const { pinReset, createPin } = require('../services/pin/pinreset')
 const { validateAccount } = require('../services/accountValidation')
-const { changePassword } = require('../services/changePassword/changePassword')
+const {
+    changePassword,
+    forgotPassword,
+    sendOtp,
+} = require('../services/changePassword/index')
 const {
     deleteNotification,
     fetchAllNotifications,
 } = require('../services/notifications')
-const {
-    forgotPassword,
-    sendOtp,
-} = require('../services/forgotPassword/fogotPassword')
 
 router.delete(`/deleteNotification/`, deleteNotification)
 router.get(`/balance/:id`, getAccountBalance)

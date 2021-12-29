@@ -25,11 +25,9 @@ const appConfig = (config, params) => {
         throw new Error('configuration needs a type and a parameter')
     else if (typeof type !== 'string')
         throw new Error('app type must be a string')
-    else {
-        // Runs configuration based on the config type specified
-        // makes it easier to add other configurations, dynamically
-        type === 'db' && dbConfig(params)
-    }
+    // Runs configuration based on the config type specified
+    // makes it easier to add other configurations, dynamically
+    else type === 'db' && dbConfig(params)
 }
 
 module.exports = { appConfig }
