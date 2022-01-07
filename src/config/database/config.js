@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const nodemailer = require('nodemailer')
 
 const dbConfig = async (uri) => {
     if (typeof uri !== 'string') {
@@ -18,6 +19,42 @@ const dbConfig = async (uri) => {
     }
 }
 
+const emailConfig = async (params) => {
+    if (!params) {
+        throw new Error('Params is required for config')
+    } else if (typeof params !== 'object') {
+        throw new Error('Params must be an object')
+    } else {
+        const { recipient, subject, text, message } = params
+        async function main() {
+            // create reusable transporter object using the default SMTP transport
+            let transporter = nodemailer.createTransport({
+                service: 'gmail',
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false, // true for 465, false for other ports
+                auth: {
+                    user: process.env.EMAIL, // Specific gmail account which can be found in the confi
+                    pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
+                },
+                tls: {
+                    rejectUnauthorized: false,
+                },
+            })
+            let info = await transporter.sendMail({
+                from: `Afrobank ${process.env.EMAIL}`, // sender address
+                to: recipient, //reciever address that was gotten from the frontend/client
+                subject: subject,
+                text: text,
+                html: message,
+            })
+            console.log('Message sent: %s', info.messageId)
+            console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info))
+        }
+        main()
+    }
+}
+
 const appConfig = (config, params) => {
     // extract the specific config type
     const { type } = config
@@ -27,7 +64,12 @@ const appConfig = (config, params) => {
         throw new Error('app type must be a string')
     // Runs configuration based on the config type specified
     // makes it easier to add other configurations, dynamically
-    else type === 'db' && dbConfig(params)
+    else
+        type === 'db'
+            ? dbConfig(params)
+            : type === 'email'
+            ? emailConfig(params)
+            : null
 }
 
 module.exports = { appConfig }
