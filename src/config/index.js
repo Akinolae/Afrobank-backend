@@ -1,9 +1,10 @@
 const mongoose = require('mongoose')
 const nodemailer = require('nodemailer')
+const error = require('../utils/errorUtil')
 
 const dbConfig = async (uri) => {
     if (typeof uri !== 'string') {
-        throw 'Invalid database uri'
+        error('Invalid database uri')
     } else {
         try {
             await mongoose.connect(uri, {
@@ -21,9 +22,9 @@ const dbConfig = async (uri) => {
 
 const emailConfig = async (params) => {
     if (!params) {
-        throw new Error('Params is required for config')
+        error('Params is required for config')
     } else if (typeof params !== 'object') {
-        throw new Error('Params must be an object')
+        error('Params must be an object')
     } else {
         const { recipient, subject, text, message } = params
         async function main() {
@@ -58,10 +59,8 @@ const emailConfig = async (params) => {
 const appConfig = (config, params) => {
     // extract the specific config type
     const { type } = config
-    if (!type || !params)
-        throw new Error('configuration needs a type and a parameter')
-    else if (typeof type !== 'string')
-        throw new Error('app type must be a string')
+    if (!type || !params) error('configuration needs a type and a parameter')
+    else if (typeof type !== 'string') error('app type must be a string')
     // Runs configuration based on the config type specified
     // makes it easier to add other configurations, dynamically
     else
