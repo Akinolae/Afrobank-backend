@@ -13,11 +13,11 @@ const {
     // createAccountNumber,
     createPin,
 } = require('../utils')
-const { dbConfig } = require('../config/database/dbconnect')
+const { appConfig } = require('../config/')
 
 beforeAll((done) => {
     async function connect() {
-        await dbConfig(process.env.DB_CONNECT)
+        await appConfig({ type: 'db' }, process.env.DB_CONNECT)
     }
     connect()
     done()
@@ -129,7 +129,10 @@ const tests = {
     connectDb: () => {
         describe('DB connect', () => {
             test('Ensure that database connects', async () => {
-                const response = await dbConfigure(process.env.DB_CONNECT)
+                const response = await appConfig(
+                    { type: 'db' },
+                    process.env.DB_CONNECT
+                )
                 expect(response).toBe(true)
             }, 30000)
         })
