@@ -149,15 +149,22 @@ class UserManagement {
     }
 
     getUser = async (accountNumber, res) => {
-        const user = await fetch_single_user(accountNumber)
-        const user_details = {
-            firstname: user.message.firstName,
-            surname: user.message.surName,
-            lastName: user.message.lastName,
+        const user = await verifyAccountNumber(accountNumber)
+        if (!!user.status) {
+            const user_details = {
+                id: user.user._id,
+                firstname: user.user.firstName,
+                surname: user.user.surName,
+                lastName: user.user.lastName,
+                email: user.user.email,
+                accountNumber: user.user.accountNumber,
+                pin: user.user.pin,
+                accountBalance: user.user.accountBalance,
+            }
+            response(user_details, true, StatusCodes.OK, res)
+        } else {
+            response(user.message, false, StatusCodes.NOT_FOUND, res)
         }
-        user.status
-            ? response(user_details, true, StatusCodes.OK, res)
-            : response(user.message, false, StatusCodes.NOT_FOUND, res)
     }
 
     // #12
