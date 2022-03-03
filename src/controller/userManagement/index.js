@@ -85,7 +85,7 @@ class UserManagement {
                 )
             } catch (err) {
                 response(
-                    `user with ${email} already exists`,
+                    `user already exists`,
                     false,
                     StatusCodes.UNPROCESSABLE_ENTITY,
                     res
