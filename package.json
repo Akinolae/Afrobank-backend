@@ -12,7 +12,7 @@
     "scripts": {
         "dev": " nodemon ./src/afrobankserver.js",
         "start": "node ./src/afrobankserver.js",
-        "cleanup": "rm -rf node_modules && npm install"
+        "cleanup": "rm -rf node_modules && npm run install"
     },
     "author": "Akinola Makinde <https://github.com/Akinolae>",
     "license": "ISC",
@@ -22,9 +22,7 @@
         "cors": "^2.8.5",
         "dotenv": "^8.2.0",
         "express": "^4.17.1",
-        "express-rate-limit": "^6.0.0",
         "http-status-codes": "^2.1.4",
-        "is-url": "^1.2.4",
         "jest": "^26.4.2",
         "joi": "^17.4.0",
         "jsonwebtoken": "^8.5.1",
