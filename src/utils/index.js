@@ -8,6 +8,7 @@ const {
     fetchAllNotifications,
 } = require('./transactionsUtil')
 const logError = require('./logger')
+const validateAmount = require('./amountValidator')
 const job = require('./cron')
 
 module.exports = {
@@ -21,4 +22,5 @@ module.exports = {
     sendMail,
     transactionHistory,
     updateBalance,
+    validateAmount,
 }

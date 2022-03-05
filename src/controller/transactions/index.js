@@ -1,7 +1,7 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { isPinValid } = require('../../utils')
+const { isPinValid, validateAmount } = require('../../utils')
 const { transactionHistory } = require('../../utils/transactionsUtil')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
@@ -40,6 +40,7 @@ class Transactions {
             try {
                 const isSenderValid = await verifyAccountNumber(sender)
                 const isRecipientValid = await verifyAccountNumber(recipient)
+                const valRes = validateAmount(isSenderValid.user, amount)
 
                 if (
                     isRecipientValid.status &&
@@ -58,32 +59,9 @@ class Transactions {
                             res
                         )
                     } else {
-                        if (+isSenderValid.user.accountBalance <= 0) {
+                        if (!!valRes) {
                             response(
-                                transfer.low_balance,
-                                false,
-                                StatusCodes.UNPROCESSABLE_ENTITY,
-                                res
-                            )
-                        } else if (+amount <= 0) {
-                            response(
-                                transfer.invalid_amount,
-                                false,
-                                StatusCodes.UNPROCESSABLE_ENTITY,
-                                res
-                            )
-                        } else if (+amount < 100) {
-                            response(
-                                transfer.low_amount_error,
-                                false,
-                                StatusCodes.UNPROCESSABLE_ENTITY,
-                                res
-                            )
-                        } else if (
-                            +amount > +isSenderValid.user.accountBalance
-                        ) {
-                            response(
-                                transfer.insufficient_balance,
+                                valRes,
                                 false,
                                 StatusCodes.UNPROCESSABLE_ENTITY,
                                 res
