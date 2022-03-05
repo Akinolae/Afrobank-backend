@@ -11,11 +11,13 @@ const {
     deleteNotification,
     createOtp,
     updatePassword,
+    newSchema,
 } = require('../../utils/queries.js')
 const {
     createAccountNumber,
     createPin,
     fetchAllNotifications,
+    generateUserAccessToken,
 } = require('../../utils')
 const {
     user_reg,
@@ -129,7 +131,9 @@ class UserManagement {
                         accountNumber,
                         pin,
                         accountBalance,
+                        token,
                     } = data.message
+
                     const userData = {
                         id,
                         firstName,
@@ -140,7 +144,16 @@ class UserManagement {
                         pin,
                         accountBalance,
                     }
-                    response(userData, true, 200, res)
+                    if (token === null || undefined) {
+                        await newSchema({
+                            model: this.customer,
+                            email,
+                            payload: generateUserAccessToken(userData),
+                            token,
+                        })
+                    }
+
+                    response({ ...userData, token }, true, 200, res)
                 }
             } else {
                 response(data.message, false, StatusCodes.FORBIDDEN, res)

@@ -9,6 +9,7 @@ const {
 } = require('./transactionsUtil')
 const logError = require('./logger')
 const validateAmount = require('./amountValidator')
+const { generateUserAccessToken, verifyUserAccessToken } = require('./userUtil')
 const job = require('./cron')
 
 module.exports = {
@@ -23,4 +24,6 @@ module.exports = {
     transactionHistory,
     updateBalance,
     validateAmount,
+    generateUserAccessToken,
+    verifyUserAccessToken,
 }

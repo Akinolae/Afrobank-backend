@@ -107,6 +107,19 @@ const deleteNotification = async (customer, accountNumber, index) => {
         throw error
     }
 }
+
+const newSchema = async (data) => {
+    const { model, email, payload, newSchema } = data
+    try {
+        await model.updateOne(
+            { email: email },
+            { [newSchema]: payload },
+            { upsert: true }
+        )
+    } catch (error) {
+        throw error
+    }
+}
 module.exports = {
     updateTransaction,
     setNewPin,
@@ -114,4 +127,5 @@ module.exports = {
     deleteNotification,
     createOtp,
     updatePassword,
+    newSchema,
 }

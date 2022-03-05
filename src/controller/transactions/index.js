@@ -15,7 +15,7 @@ class Transactions {
         this.customer = _customer_
     }
 
-    transfer = async (sender, recipient, amount, pin, res) => {
+    transfer = async (sender, recipient, amount, pin, req, res) => {
         const joi_error = transferAuthSchema.validate({
             sender,
             recipient,

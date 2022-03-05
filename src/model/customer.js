@@ -43,6 +43,10 @@ const customer = new mongoose.Schema({
         type: String,
         default: null,
     },
+    token: {
+        type: String,
+        default: null,
+    },
     otp: {
         type: String,
         default: null,
