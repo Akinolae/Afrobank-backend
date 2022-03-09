@@ -76,7 +76,7 @@ const verifyUser = async (token) => {
     } else if (!verify || !data.status) {
         return 'Invalid token'
     } else {
-        if (verify.email !== data.message.email) {
+        if (verify.email.toLowerCase() !== data.message.email.toLowerCase()) {
             return 'Unauthorized user'
         }
     }

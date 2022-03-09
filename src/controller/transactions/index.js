@@ -82,11 +82,11 @@ class Transactions {
                                         isSenderValid.user.accountNumber,
                                     recipientAccountNumber:
                                         isRecipientValid.user.accountNumber,
-                                    recipientName: `${isRecipientValid.user.surName} ${isRecipientValid.user.firstName} ${isRecipientValid.user.lastName}`,
+                                    recipientName: `${isRecipientValid.user.firstName} ${isRecipientValid.user.lastName}`,
                                     amount,
                                     type: 'debit',
                                 }
-                                const notifyRecipient = `${isSenderValid.user.surName} ${isSenderValid.user.firstName} ${isSenderValid.user.lastName} just sent you ₦${transactionData.amount}`
+                                const notifyRecipient = `${isSenderValid.user.firstName} ${isSenderValid.user.lastName} just sent you ₦${transactionData.amount}`
                                 const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
                                 await customer.createPushNotification(
                                     isSenderValid.user.accountNumber,
