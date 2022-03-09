@@ -3,11 +3,11 @@ require('dotenv').config()
 const model = require('../../model/customer')
 const { isPinValid, validateAmount } = require('../../utils')
 const { transactionHistory } = require('../../utils/transactionsUtil')
-const { verifyAccountNumber } = require('../../utils/userUtil')
+const { verifyAccountNumber, verifyUser } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
-const { transfer, transferAuthSchema } = require('../../utils/validator')
+const { transfer, transferAuthSchema, token } = require('../../utils/validator')
 const customer = require('../userManagement/index')
 
 class Transactions {
@@ -22,90 +22,101 @@ class Transactions {
             amount,
             pin,
         })
-        if (!!joi_error.error) {
-            response(
-                joi_error.error.details[0].message,
-                false,
-                StatusCodes.UNPROCESSABLE_ENTITY,
-                res
-            )
-        } else if (sender === recipient) {
-            response(
-                transfer.single_user,
-                false,
-                StatusCodes.UNPROCESSABLE_ENTITY,
-                res
-            )
-        } else {
-            try {
-                const isSenderValid = await verifyAccountNumber(sender)
-                const isRecipientValid = await verifyAccountNumber(recipient)
-                const valRes = validateAmount(isSenderValid.user, amount)
 
-                if (
-                    isRecipientValid.status &&
-                    isSenderValid.status &&
-                    !!isSenderValid.user &&
-                    !!isRecipientValid.user
-                ) {
-                    if (
+        const authToken = req.headers.authorization
+        const token = !!authToken && authToken.split(' ')[1]
+
+        const data = await verifyUser(token)
+        if (!!data) {
+            response(data, false, StatusCodes.UNAUTHORIZED, res)
+        } else {
+            if (!!joi_error.error) {
+                response(
+                    joi_error.error.details[0].message,
+                    false,
+                    StatusCodes.UNPROCESSABLE_ENTITY,
+                    res
+                )
+            } else if (sender === recipient) {
+                response(
+                    transfer.single_user,
+                    false,
+                    StatusCodes.UNPROCESSABLE_ENTITY,
+                    res
+                )
+            } else {
+                try {
+                    const isSenderValid = await verifyAccountNumber(sender)
+                    const isRecipientValid = await verifyAccountNumber(
+                        recipient
+                    )
+                    const valRes = validateAmount(isSenderValid.user, amount)
+                    const pinValidation =
                         !isSenderValid.user.pin ||
                         !(await isPinValid(pin, isSenderValid.user.pin))
+
+                    if (
+                        isRecipientValid.status &&
+                        isSenderValid.status &&
+                        !!isSenderValid.user &&
+                        !!isRecipientValid.user
                     ) {
-                        response(
-                            transfer.pinError,
-                            false,
-                            StatusCodes.UNPROCESSABLE_ENTITY,
-                            res
-                        )
-                    } else {
-                        if (!!valRes) {
+                        if (pinValidation) {
                             response(
-                                valRes,
+                                transfer.pinError,
                                 false,
                                 StatusCodes.UNPROCESSABLE_ENTITY,
                                 res
                             )
                         } else {
-                            const transactionData = {
-                                senderAccountNumber:
+                            if (!!valRes) {
+                                response(
+                                    valRes,
+                                    false,
+                                    StatusCodes.UNPROCESSABLE_ENTITY,
+                                    res
+                                )
+                            } else {
+                                const transactionData = {
+                                    senderAccountNumber:
+                                        isSenderValid.user.accountNumber,
+                                    recipientAccountNumber:
+                                        isRecipientValid.user.accountNumber,
+                                    recipientName: `${isRecipientValid.user.surName} ${isRecipientValid.user.firstName} ${isRecipientValid.user.lastName}`,
+                                    amount,
+                                    type: 'debit',
+                                }
+                                const notifyRecipient = `${isSenderValid.user.surName} ${isSenderValid.user.firstName} ${isSenderValid.user.lastName} just sent you ₦${transactionData.amount}`
+                                const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
+                                await customer.createPushNotification(
                                     isSenderValid.user.accountNumber,
-                                recipientAccountNumber:
+                                    notifySender
+                                )
+                                await customer.createPushNotification(
                                     isRecipientValid.user.accountNumber,
-                                recipientName: `${isRecipientValid.user.surName} ${isRecipientValid.user.firstName} ${isRecipientValid.user.lastName}`,
-                                amount,
-                                type: 'debit',
+                                    notifyRecipient
+                                )
+                                this.completeTransfer(transactionData, res)
                             }
-                            const notifyRecipient = `${isSenderValid.user.surName} ${isSenderValid.user.firstName} ${isSenderValid.user.lastName} just sent you ₦${transactionData.amount}`
-                            const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
-                            await customer.createPushNotification(
-                                isSenderValid.user.accountNumber,
-                                notifySender
-                            )
-                            await customer.createPushNotification(
-                                isRecipientValid.user.accountNumber,
-                                notifyRecipient
-                            )
-                            this.completeTransfer(transactionData, res)
                         }
+                    } else if (!isRecipientValid.status) {
+                        response(
+                            `${isRecipientValid.message} of recipient`,
+                            false,
+                            StatusCodes.NOT_FOUND,
+                            res
+                        )
+                    } else if (!isSenderValid.status) {
+                        response(
+                            `${isSenderValid.message} of sender`,
+                            false,
+                            StatusCodes.NOT_FOUND,
+                            res
+                        )
                     }
-                } else if (!isRecipientValid.status) {
-                    response(
-                        `${isRecipientValid.message} of recipient`,
-                        false,
-                        StatusCodes.NOT_FOUND,
-                        res
-                    )
-                } else if (!isSenderValid.status) {
-                    response(
-                        `${isSenderValid.message} of sender`,
-                        false,
-                        StatusCodes.NOT_FOUND,
-                        res
-                    )
+                } catch (error) {
+                    throw error || 'An error occured'
                 }
-            } catch (error) {
-                throw error || 'An error occured'
             }
         }
     }
@@ -119,6 +130,9 @@ class Transactions {
             recipientName,
         } = payload
 
+        if (!type) {
+            throw 'transaction type is required'
+        }
         try {
             if (type === 'debit') {
                 const senderResp = await this.updateTransactionHistory(
@@ -131,14 +145,14 @@ class Transactions {
                     recipientAccountNumber,
                     amount
                 )
-                if (!!senderResp && !!recipientResp) {
+                !!senderResp &&
+                    !!recipientResp &&
                     response(
                         transfer.success_message(recipientName, amount),
                         true,
                         StatusCodes.OK,
                         res
                     )
-                }
             }
         } catch (error) {
             response(errResp, false, StatusCodes.BAD_REQUEST, res)
@@ -178,16 +192,14 @@ class Transactions {
                             trx.transaction_id.toLowerCase() ===
                             transaction_Id.toLowerCase()
                     )
-                    if (!!resp) {
-                        response(resp, true, StatusCodes.OK, res)
-                    } else {
-                        response(
-                            'invalid transaction id',
-                            false,
-                            StatusCodes.NOT_FOUND,
-                            res
-                        )
-                    }
+                    !!resp
+                        ? response(resp, true, StatusCodes.OK, res)
+                        : response(
+                              'invalid transaction id',
+                              false,
+                              StatusCodes.NOT_FOUND,
+                              res
+                          )
                 }
             } catch (error) {
                 response(error, false, StatusCodes.BAD_REQUEST, res)

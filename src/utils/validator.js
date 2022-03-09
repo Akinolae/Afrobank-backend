@@ -94,11 +94,17 @@ const transfer = {
     single_user: 'Cash transfer must involve two parties',
 }
 
-const transactions = {}
 const notifications = {
     delete: 'notification deleted',
     deleteError: 'unable to delete notification',
 }
+
+const token = {
+    invalidToken: 'Invalid token',
+    unauthorized: 'Unauthorized user',
+    noToken: 'No auth token provided',
+}
+
 const completeTransfer = {
     invalidAmount: 'Amount must be a number.',
     unsuccessful: 'Unable to complete transaction.',
@@ -274,4 +280,5 @@ module.exports = {
     completeTransfer,
     pinReset,
     notifications,
+    token,
 }

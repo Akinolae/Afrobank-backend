@@ -53,7 +53,7 @@ const generateUserAccessToken = (payload) => {
 
 const verifyUserAccessToken = (token) => {
     return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
-        if (err) throw err
+        if (err) return false
         else return data
     })
 }
@@ -68,6 +68,20 @@ const decryptPassword = (password1, password2) => {
     return decrypt
 }
 
+const verifyUser = async (token) => {
+    const verify = verifyUserAccessToken(token)
+    const data = await fetch_single_user(verify.email)
+    if (!token) {
+        return 'no token provided'
+    } else if (!verify || !data.status) {
+        return 'Invalid token'
+    } else {
+        if (verify.email !== data.message.email) {
+            return 'Unauthorized user'
+        }
+    }
+}
+
 module.exports = {
     fetch_single_user,
     login_notify,
@@ -76,4 +90,5 @@ module.exports = {
     hashPassword,
     decryptPassword,
     verifyAccountNumber,
+    verifyUser,
 }
