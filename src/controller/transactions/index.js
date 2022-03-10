@@ -23,10 +23,7 @@ class Transactions {
             pin,
         })
 
-        const authToken = req.headers.authorization
-        const token = !!authToken && authToken.split(' ')[1]
-
-        const data = await verifyUser(token)
+        const data = await verifyUser(req)
         if (!!data) {
             response(data, false, StatusCodes.UNAUTHORIZED, res)
         } else {

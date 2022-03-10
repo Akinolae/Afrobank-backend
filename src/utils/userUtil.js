@@ -64,7 +64,10 @@ const decryptPassword = (password1, password2) => {
     return decrypt
 }
 
-const verifyUser = async (token) => {
+const verifyUser = async (req) => {
+    const authToken = req.headers.authorization
+    const token = !!authToken && authToken.split(' ')[1]
+
     const verify = verifyUserAccessToken(token)
     const data = await fetch_single_user(verify.email)
     if (!token) return 'no token provided'

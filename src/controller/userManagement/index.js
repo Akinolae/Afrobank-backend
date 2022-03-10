@@ -32,6 +32,7 @@ const {
     decryptPassword,
     hashPassword,
     verifyAccountNumber,
+    verifyUser,
 } = require('../../utils/userUtil')
 
 class UserManagement {
@@ -125,7 +126,6 @@ class UserManagement {
                     const {
                         id,
                         firstName,
-                        surname,
                         lastName,
                         email,
                         accountNumber,
@@ -137,7 +137,6 @@ class UserManagement {
                     const userData = {
                         id,
                         firstName,
-                        surname,
                         lastName,
                         email,
                         accountNumber,
@@ -161,13 +160,16 @@ class UserManagement {
         }
     }
 
-    getUser = async (accountNumber, res) => {
+    getUser = async (accountNumber, res, req) => {
         const user = await verifyAccountNumber(accountNumber)
+        const data = await verifyUser(req)
+        if (!!data) {
+            response(data, false, StatusCodes.UNAUTHORIZED, res)
+        }
         if (!!user.status) {
             const user_details = {
                 id: user.user._id,
                 firstname: user.user.firstName,
-                surname: user.user.surName,
                 lastName: user.user.lastName,
                 email: user.user.email,
                 accountNumber: user.user.accountNumber,
