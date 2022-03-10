@@ -2,7 +2,7 @@ const customer = require('../../controller/userManagement')
 
 module.exports = {
     getUser: (req, res) => {
-        const { accountNumber } = req.body
-        customer.getUser(accountNumber, res)
+        const { id } = req.params
+        customer.getUser(id, res)
     },
 }

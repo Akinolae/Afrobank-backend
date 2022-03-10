@@ -5,14 +5,12 @@ const encrypt = require('bcryptjs')
 const fetch_single_user = async (email) => {
     try {
         const isAvailable = await customer.findOne({ email })
-        if (isAvailable === null || isAvailable === 'undefined') {
+        if (isAvailable === null || isAvailable === 'undefined')
             return {
                 status: false,
                 message: 'invalid email address or password',
             }
-        } else {
-            return { status: true, message: isAvailable }
-        }
+        else return { status: true, message: isAvailable }
     } catch (err) {
         throw err
     }
@@ -21,11 +19,9 @@ const fetch_single_user = async (email) => {
 const verifyAccountNumber = async (accountNumber) => {
     try {
         const isUserAvailable = await customer.findOne({ accountNumber })
-        if (isUserAvailable === null || isUserAvailable === 'undefined') {
+        if (isUserAvailable === null || isUserAvailable === 'undefined')
             return { status: false, message: 'Unable to verify account number' }
-        } else {
-            return { status: true, user: isUserAvailable }
-        }
+        else return { status: true, user: isUserAvailable }
     } catch (error) {
         throw error
     }
@@ -71,11 +67,9 @@ const decryptPassword = (password1, password2) => {
 const verifyUser = async (token) => {
     const verify = verifyUserAccessToken(token)
     const data = await fetch_single_user(verify.email)
-    if (!token) {
-        return 'no token provided'
-    } else if (!verify || !data.status) {
-        return 'Invalid token'
-    } else {
+    if (!token) return 'no token provided'
+    else if (!verify || !data.status) return 'Invalid token'
+    else {
         if (verify.email.toLowerCase() !== data.message.email.toLowerCase()) {
             return 'Unauthorized user'
         }

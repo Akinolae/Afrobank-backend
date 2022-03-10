@@ -212,16 +212,14 @@ class UserManagement {
                 accountNumber,
                 index
             )
-            if (resp) {
-                response(notifications.delete, true, StatusCodes.OK, res)
-            } else {
+            if (resp) response(notifications.delete, true, StatusCodes.OK, res)
+            else
                 response(
                     notifications.deleteError,
                     false,
                     StatusCodes.NOT_FOUND,
                     res
                 )
-            }
         } catch (error) {
             response(error, false, 500, res)
         }
