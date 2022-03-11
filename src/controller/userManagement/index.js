@@ -143,14 +143,12 @@ class UserManagement {
                         pin,
                         accountBalance,
                     }
-                    if (token === null || undefined) {
-                        await newSchema({
-                            model: this.customer,
-                            email,
-                            payload: generateUserAccessToken(userData),
-                            token,
-                        })
-                    }
+                    await newSchema({
+                        model: this.customer,
+                        email,
+                        payload: generateUserAccessToken(userData),
+                        token,
+                    })
 
                     response({ ...userData, token }, true, 200, res)
                 }
