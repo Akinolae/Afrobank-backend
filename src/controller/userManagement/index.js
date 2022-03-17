@@ -165,7 +165,7 @@ class UserManagement {
         if (!!user.status) {
             const user_details = {
                 id: user.user._id,
-                firstname: user.user.firstName,
+                firstName: user.user.firstName,
                 lastName: user.user.lastName,
                 email: user.user.email,
                 accountNumber: user.user.accountNumber,
