@@ -110,12 +110,10 @@ class UserManagement {
 
             if (data.status) {
                 const { password, email } = data.message
-                const decryptPass = await decryptPassword(
-                    userPassword.trim(),
-                    password
-                )
-
-                if (email !== userEmail.trim() || !decryptPass) {
+                if (
+                    email !== userEmail.trim() ||
+                    !(await decryptPassword(userPassword.trim(), password))
+                ) {
                     response(
                         user_login.invalid_credentials,
                         false,
@@ -131,7 +129,6 @@ class UserManagement {
                         accountNumber,
                         pin,
                         accountBalance,
-                        token,
                     } = data.message
 
                     const userData = {
@@ -143,11 +140,12 @@ class UserManagement {
                         pin,
                         accountBalance,
                     }
+
+                    const token = generateUserAccessToken(userData)
                     await newSchema({
                         model: this.customer,
                         email,
-                        payload: generateUserAccessToken(userData),
-                        token,
+                        payload: token,
                     })
 
                     response({ ...userData, token }, true, 200, res)

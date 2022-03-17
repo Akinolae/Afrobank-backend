@@ -109,13 +109,9 @@ const deleteNotification = async (customer, accountNumber, index) => {
 }
 
 const newSchema = async (data) => {
-    const { model, email, payload, newSchema } = data
+    const { model, email, payload } = data
     try {
-        await model.updateOne(
-            { email: email },
-            { [newSchema]: payload },
-            { upsert: true }
-        )
+        await model.updateOne({ email: email }, { $set: { token: payload } })
     } catch (error) {
         throw error
     }
