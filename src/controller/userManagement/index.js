@@ -171,6 +171,7 @@ class UserManagement {
                 accountNumber: user.user.accountNumber,
                 pin: user.user.pin,
                 accountBalance: user.user.accountBalance,
+                token: user.user.token,
             }
             response(user_details, true, StatusCodes.OK, res)
         } else {
