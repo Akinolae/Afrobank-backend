@@ -5,45 +5,45 @@ const hours = date.getHours()
 const minutes = date.getMinutes()
 
 const authSchema = joi.object({
-    firstName: joi.string().trim().required(),
-    lastName: joi.string().trim().required(),
-    email: joi
-        .string()
-        .trim()
-        .email({ tlds: { allow: ['com'] } })
-        .required(),
-    phoneNumber: joi.string().trim().required(),
-    gender: joi.any().valid('male', 'female'),
-    password: joi.string().min(8).max(16).trim().required(),
+  firstName: joi.string().trim().required(),
+  lastName: joi.string().trim().required(),
+  email: joi
+    .string()
+    .trim()
+    .email({ tlds: { allow: ['com'] } })
+    .required(),
+  phoneNumber: joi.string().trim().required(),
+  gender: joi.any().valid('male', 'female'),
+  password: joi.string().min(8).max(16).trim().required(),
 })
 
 const transferAuthSchema = joi.object({
-    sender: joi.string().trim().required(),
-    recipient: joi.string().trim().required(),
-    amount: joi.number().required(),
-    pin: joi.string().max(4).min(4).trim().required(),
+  sender: joi.string().trim().required(),
+  recipient: joi.string().trim().required(),
+  amount: joi.number().required(),
+  pin: joi.string().max(4).min(4).trim().required(),
 })
 
 const setPinSchema = joi.object({
-    accountNumber: joi.string().trim().required(),
-    pin: joi.string().max(4).min(4).trim().required(),
+  accountNumber: joi.string().trim().required(),
+  pin: joi.string().max(4).min(4).trim().required(),
 })
 
 const completeTransactionSchema = joi.object({
-    sender: joi.string().trim().required(),
-    recipient: joi.string().trim().required(),
-    otp: joi.string().max(5).min(5).trim().required(),
-    amount: joi.number().required(),
+  sender: joi.string().trim().required(),
+  recipient: joi.string().trim().required(),
+  otp: joi.string().max(5).min(5).trim().required(),
+  amount: joi.number().required(),
 })
 const user_reg = {
-    resp_msg_registration: 'Registration success',
-    welcome_text:
-        'your Afrobank account was created successfully, enjoy smooth payments and deposits on our platform for free',
-    reg_mail_subject: 'Account registration',
-    reg_mail_text: 'Registration',
-    field_error: 'all fields are required',
-    emailTemplate: (newUser, pin, accountBalance, accountNumber) => {
-        return `
+  resp_msg_registration: 'Registration success',
+  welcome_text:
+    'your Afrobank account was created successfully, enjoy smooth payments and deposits on our platform for free',
+  reg_mail_subject: 'Account registration',
+  reg_mail_text: 'Registration',
+  field_error: 'all fields are required',
+  emailTemplate: (newUser, pin, accountBalance, accountNumber) => {
+    return `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -80,53 +80,53 @@ const user_reg = {
         </html>
         
         `
-    },
+  },
 }
 const transfer = {
-    pinError: 'Invalid pin',
-    low_balance: 'low balance',
-    insufficient_balance: 'Insufficient balance.',
-    invalid_amount: 'please enter a valid amount',
-    low_amount_error: 'you can only send ₦ 100 or more',
-    success_message: (accountName, amount) => {
-        return `Transfer of ₦${amount} to ${accountName} was successful`
-    },
-    single_user: 'Cash transfer must involve two parties',
+  pinError: 'Invalid pin',
+  low_balance: 'low balance',
+  insufficient_balance: 'Insufficient balance.',
+  invalid_amount: 'please enter a valid amount',
+  low_amount_error: 'you can only send ₦ 100 or more',
+  success_message: (accountName, amount) => {
+    return `Transfer of ₦${amount} to ${accountName} was successful`
+  },
+  single_user: 'Cash transfer must involve two parties',
 }
 
 const notifications = {
-    delete: 'notification deleted',
-    deleteError: 'unable to delete notification',
+  delete: 'notification deleted',
+  deleteError: 'unable to delete notification',
 }
 
 const token = {
-    invalidToken: 'Invalid token',
-    unauthorized: 'Unauthorized user',
-    noToken: 'No auth token provided',
+  invalidToken: 'Invalid token',
+  unauthorized: 'Unauthorized user',
+  noToken: 'No auth token provided',
 }
 
 const completeTransfer = {
-    invalidAmount: 'Amount must be a number.',
-    unsuccessful: 'Unable to complete transaction.',
-    invalidCredentials: 'Check that credentials are valid',
-    invalidOtp: 'Ivalid otp',
-    message: (amount, surName, firstName, lastName) => {
-        return `
+  invalidAmount: 'Amount must be a number.',
+  unsuccessful: 'Unable to complete transaction.',
+  invalidCredentials: 'Check that credentials are valid',
+  invalidOtp: 'Ivalid otp',
+  message: (amount, surName, firstName, lastName) => {
+    return `
             Your transfer of ₦${amount} to ${surName.toUpperCase()} ${firstName.toUpperCase()} ${lastName.toUpperCase()} was successful.
         `
-    },
-    senderTemplate: (
-        firstName,
-        surName,
-        lastName,
-        recipient,
-        recipientFirstName,
-        recipientSurname,
-        recipientLastName,
-        amount,
-        senderNewBalance
-    ) => {
-        return `
+  },
+  senderTemplate: (
+    firstName,
+    surName,
+    lastName,
+    recipient,
+    recipientFirstName,
+    recipientSurname,
+    recipientLastName,
+    amount,
+    senderNewBalance
+  ) => {
+    return `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -152,18 +152,18 @@ const completeTransfer = {
         </html>
         
         `
-    },
-    recipientTemplate: (
-        firstName,
-        lastName,
-        surName,
-        amount,
-        recipientBalance,
-        senderFirstName,
-        senderLastName,
-        senderSurname
-    ) => {
-        return `
+  },
+  recipientTemplate: (
+    firstName,
+    lastName,
+    surName,
+    amount,
+    recipientBalance,
+    senderFirstName,
+    senderLastName,
+    senderSurname
+  ) => {
+    return `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -189,22 +189,22 @@ const completeTransfer = {
         </html>
         
         `
-    },
+  },
 }
 
 const user_login = {
-    credentials: 'Email and password is required',
-    invalid_credentials: 'email or password invalid',
-    login_success: 'Login successfully',
-    email_text: 'Login notification',
-    email_subject: 'Account Login',
+  credentials: 'Email and password is required',
+  invalid_credentials: 'email or password invalid',
+  login_success: 'Login successfully',
+  email_text: 'Login notification',
+  email_subject: 'Account Login',
 }
 
 const otp_messsage = {
-    subject: 'AeNS Transaction OTP',
-    text: 'OTP',
-    template: (name, otp) => {
-        return `
+  subject: 'AeNS Transaction OTP',
+  text: 'OTP',
+  template: (name, otp) => {
+    return `
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -231,13 +231,13 @@ const otp_messsage = {
             </body>
             </html>
             `
-    },
+  },
 }
 const pinReset = {
-    message: 'Pin reset successful',
-    error: 'Unable to reset pin, Check that your account number is valid.',
-    emailTemplate: (name) => {
-        return `
+  message: 'Pin reset successful',
+  error: 'Unable to reset pin, Check that your account number is valid.',
+  emailTemplate: (name) => {
+    return `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -265,20 +265,20 @@ const pinReset = {
         </body>
         </html>
         `
-    },
+  },
 }
 
 module.exports = {
-    user_login,
-    user_reg,
-    authSchema,
-    transferAuthSchema,
-    transfer,
-    otp_messsage,
-    setPinSchema,
-    completeTransactionSchema,
-    completeTransfer,
-    pinReset,
-    notifications,
-    token,
+  user_login,
+  user_reg,
+  authSchema,
+  transferAuthSchema,
+  transfer,
+  otp_messsage,
+  setPinSchema,
+  completeTransactionSchema,
+  completeTransfer,
+  pinReset,
+  notifications,
+  token,
 }

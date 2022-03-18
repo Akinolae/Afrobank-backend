@@ -1,5 +1,5 @@
 const error = (message) => {
-    throw new Error(message)
+  throw new Error(message)
 }
 
 module.exports = error

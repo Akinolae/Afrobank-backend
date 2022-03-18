@@ -5,19 +5,19 @@ const { getAccountBalance } = require('../services/getBalance/getBalance')
 const { getUser } = require('../services/getUsers/getUsers')
 const { localLogin } = require('../services/login/localLogin')
 const {
-    getTransactionHistory,
-    getSingleTransaction,
+  getTransactionHistory,
+  getSingleTransaction,
 } = require('../services/transactionHistory/getTransactionHistory')
 const { pinReset, createPin } = require('../services/pin/pinreset')
 const { validateAccount } = require('../services/accountValidation')
 const {
-    changePassword,
-    forgotPassword,
-    sendOtp,
+  changePassword,
+  forgotPassword,
+  sendOtp,
 } = require('../services/changePassword/index')
 const {
-    deleteNotification,
-    fetchAllNotifications,
+  deleteNotification,
+  fetchAllNotifications,
 } = require('../services/notifications')
 
 router.delete(`/deleteNotification/`, deleteNotification)

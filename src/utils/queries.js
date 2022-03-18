@@ -5,123 +5,123 @@ const { pinReset } = require('./validator')
 const customer = require('../model/customer')
 
 const updateTransaction = async (
-    _customer_,
-    _type_,
-    _accountNumber,
-    _amount_
+  _customer_,
+  _type_,
+  _accountNumber,
+  _amount_
 ) => {
-    const date = new Date()
-    const transactionID = `${nanoid()}|${_type_}|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
-    try {
-        const response = await _customer_.findOneAndUpdate(
-            { accountNumber: _accountNumber },
-            {
-                $push: {
-                    transactions: {
-                        transaction_id: transactionID.toUpperCase(),
-                        transaction_type: _type_,
-                        amount: _amount_,
-                    },
-                },
-            }
-        )
-        await updateBalance(_customer_, _type_, _accountNumber, _amount_)
-        return response
-    } catch (error) {
-        throw new Error(error)
-    }
+  const date = new Date()
+  const transactionID = `${nanoid()}|${_type_}|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
+  try {
+    const response = await _customer_.findOneAndUpdate(
+      { accountNumber: _accountNumber },
+      {
+        $push: {
+          transactions: {
+            transaction_id: transactionID.toUpperCase(),
+            transaction_type: _type_,
+            amount: _amount_,
+          },
+        },
+      }
+    )
+    await updateBalance(_customer_, _type_, _accountNumber, _amount_)
+    return response
+  } catch (error) {
+    throw new Error(error)
+  }
 }
 
 const updatePassword = async (cutomer, accountNumber, password) => {
-    try {
-        await customer.updateOne(
-            { accountNumber: accountNumber },
-            { $set: { password: password, otp: null } }
-        )
-        return { status: true, message: 'password changed' }
-    } catch (error) {
-        throw error
-    }
+  try {
+    await customer.updateOne(
+      { accountNumber: accountNumber },
+      { $set: { password: password, otp: null } }
+    )
+    return { status: true, message: 'password changed' }
+  } catch (error) {
+    throw error
+  }
 }
 
 const setNewPin = async (_customer_, accountNumber, pin) => {
-    try {
-        const user = await verifyAccountNumber(accountNumber)
-        if (user.status) {
-            const hashedPin = await hashPassword(pin, 10)
-            await _customer_.updateOne(
-                { accountNumber: accountNumber },
-                { $set: { pin: hashedPin } }
-            )
-            return { status: true, message: pinReset.message }
-        } else throw user
-    } catch (err) {
-        throw err || 'Something went wrong'
-    }
+  try {
+    const user = await verifyAccountNumber(accountNumber)
+    if (user.status) {
+      const hashedPin = await hashPassword(pin, 10)
+      await _customer_.updateOne(
+        { accountNumber: accountNumber },
+        { $set: { pin: hashedPin } }
+      )
+      return { status: true, message: pinReset.message }
+    } else throw user
+  } catch (err) {
+    throw err || 'Something went wrong'
+  }
 }
 
 const updateNotification = async (customer, accountNumber, message) => {
-    try {
-        await customer.updateOne(
-            { accountNumber: accountNumber },
-            {
-                $push: {
-                    notifications: {
-                        notification_text: message,
-                    },
-                },
-            }
-        )
-        return
-    } catch (error) {
-        throw error
-    }
+  try {
+    await customer.updateOne(
+      { accountNumber: accountNumber },
+      {
+        $push: {
+          notifications: {
+            notification_text: message,
+          },
+        },
+      }
+    )
+    return
+  } catch (error) {
+    throw error
+  }
 }
 
 const createOtp = async (customer, email, otp) => {
-    try {
-        await customer.updateOne(
-            {
-                email: email,
-            },
-            { $set: { otp: otp } }
-        )
+  try {
+    await customer.updateOne(
+      {
+        email: email,
+      },
+      { $set: { otp: otp } }
+    )
 
-        return {
-            status: true,
-            message: 'If email exists you will recieve a 5 digit pin',
-        }
-    } catch (error) {
-        throw error
+    return {
+      status: true,
+      message: 'If email exists you will recieve a 5 digit pin',
     }
+  } catch (error) {
+    throw error
+  }
 }
 
 const deleteNotification = async (customer, accountNumber, index) => {
-    try {
-        await customer.updateOne(
-            { accountNumber: accountNumber },
-            { $pull: { notifications: { _id: index } } }
-        )
-        return true
-    } catch (error) {
-        throw error
-    }
+  try {
+    await customer.updateOne(
+      { accountNumber: accountNumber },
+      { $pull: { notifications: { _id: index } } }
+    )
+    return true
+  } catch (error) {
+    throw error
+  }
 }
 
 const newSchema = async (data) => {
-    const { model, email, payload } = data
-    try {
-        await model.updateOne({ email: email }, { $set: { token: payload } })
-    } catch (error) {
-        throw error
-    }
+  const { model, email, payload } = data
+  try {
+    await model.updateOne({ email: email }, { $set: { token: payload } })
+  } catch (error) {
+    throw error
+  }
 }
 module.exports = {
-    updateTransaction,
-    setNewPin,
-    updateNotification,
-    deleteNotification,
-    createOtp,
-    updatePassword,
-    newSchema,
+  updateTransaction,
+  setNewPin,
+  updateNotification,
+  deleteNotification,
+  createOtp,
+  updatePassword,
+  newSchema,
 }

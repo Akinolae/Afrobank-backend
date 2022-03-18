@@ -1,8 +1,8 @@
 const customer = require('../../controller/userManagement')
 
 module.exports = {
-    getUser: (req, res) => {
-        const { id } = req.params
-        customer.getUser(id, res, req)
-    },
+  getUser: (req, res) => {
+    const { id } = req.params
+    customer.getUser(id, res, req)
+  },
 }
