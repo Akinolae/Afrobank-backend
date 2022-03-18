@@ -10,8 +10,7 @@ const URI =
     ? process.env.DB_CONNECT
     : process.env.DB_CONNECT_PROD
 
-const dbConfig = appConfig({ type: 'db' }, URI)
-
+appConfig({ type: 'db' }, URI)
 // morgan only logs requests in development \\
 if (process.env.NODE_ENV === 'development') {
   const morgan = require('morgan')
@@ -32,5 +31,4 @@ app.listen(process.env.PORT || 4000, () => {
   // just create a CLUSTER on atlas cloud, \\
   // pick the URL and add... voila!, you're connected to the DB! \\
   console.log(`app is running ${process.env.PORT}`)
-  dbConfig
 })
