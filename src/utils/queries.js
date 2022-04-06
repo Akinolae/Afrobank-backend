@@ -11,7 +11,6 @@ const updateTransaction = async (
   _amount_,
   _description_
 ) => {
-  console.log(_description_)
   const date = new Date()
   const transactionID = `${nanoid()}|${_type_}|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
   try {
