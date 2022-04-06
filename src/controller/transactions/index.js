@@ -132,13 +132,13 @@ class Transactions {
           type,
           senderAccountNumber,
           amount,
-          recipientDesc
+          senderDesc
         )
         const recipientResp = await this.updateTransactionHistory(
           'credit',
           recipientAccountNumber,
           amount,
-          senderDesc
+          recipientDesc
         )
         !!senderResp &&
           !!recipientResp &&
