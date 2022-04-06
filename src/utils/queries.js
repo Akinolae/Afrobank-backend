@@ -8,8 +8,10 @@ const updateTransaction = async (
   _customer_,
   _type_,
   _accountNumber,
-  _amount_
+  _amount_,
+  _description_
 ) => {
+  console.log(_description_)
   const date = new Date()
   const transactionID = `${nanoid()}|${_type_}|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
   try {
@@ -21,6 +23,7 @@ const updateTransaction = async (
             transaction_id: transactionID.toUpperCase(),
             transaction_type: _type_,
             amount: _amount_,
+            description: _description_,
           },
         },
       }

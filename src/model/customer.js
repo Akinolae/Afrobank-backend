@@ -13,6 +13,10 @@ const transactionSchema = new mongoose.Schema({
     type: Number,
     default: null,
   },
+  description: {
+    type: String,
+    default: null,
+  },
   transaction_date: {
     type: Date,
     default: Date.now,

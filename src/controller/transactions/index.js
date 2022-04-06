@@ -71,6 +71,7 @@ class Transactions {
                   senderAccountNumber: isSenderValid.user.accountNumber,
                   recipientAccountNumber: isRecipientValid.user.accountNumber,
                   recipientName: `${isRecipientValid.user.firstName} ${isRecipientValid.user.lastName}`,
+                  senderName: `${isSenderValid.user.firstName} ${isSenderValid.user.lastName}`,
                   amount,
                   type: 'debit',
                 }
@@ -116,6 +117,7 @@ class Transactions {
       recipientAccountNumber,
       amount,
       recipientName,
+      senderName,
     } = payload
 
     if (!type) {
@@ -123,15 +125,20 @@ class Transactions {
     }
     try {
       if (type === 'debit') {
+        const senderDesc = `TRX-INTERNAL/${recipientName}`
+        const recipientDesc = `TRX-INTERNAL/${senderName}`
+
         const senderResp = await this.updateTransactionHistory(
           type,
           senderAccountNumber,
-          amount
+          amount,
+          recipientDesc
         )
         const recipientResp = await this.updateTransactionHistory(
           'credit',
           recipientAccountNumber,
-          amount
+          amount,
+          senderDesc
         )
         !!senderResp &&
           !!recipientResp &&
@@ -147,8 +154,19 @@ class Transactions {
     }
   }
 
-  updateTransactionHistory = async (type, accountNumber, amount) => {
-    return await updateTransaction(this.customer, type, accountNumber, amount)
+  updateTransactionHistory = async (
+    type,
+    accountNumber,
+    amount,
+    description
+  ) => {
+    return await updateTransaction(
+      this.customer,
+      type,
+      accountNumber,
+      amount,
+      description
+    )
   }
 
   getTransactionHistory = async (accountNumber, res) => {
