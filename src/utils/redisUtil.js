@@ -1,7 +1,7 @@
 const redis = require('redis')
 const url = require('url')
 
-const createRedisConnection = () => {
+const createRedisConnection = async () => {
   let redisClient
 
   try {
@@ -11,7 +11,9 @@ const createRedisConnection = () => {
         redisClient = redis.createClient(redisURL.port, redisURL.hostname, {
           no_ready_check: true,
         })
-      } else redisClient = redis.createClient()
+      } else {
+        redisClient = await redis.createClient().connect()
+      }
     }
   } catch (error) {
     throw error
@@ -19,16 +21,16 @@ const createRedisConnection = () => {
   return redisClient
 }
 
-const redisSet = (key, payload) => {
+const redisSet = async (key, payload) => {
   const data = typeof payload === 'object' ? JSON.stringify(payload) : payload
-  createRedisConnection().set(key, data, (err, response) => {
+  await createRedisConnection().set(key, data, (err, response) => {
     if (err) throw err
     else return response
   })
 }
 
-const keyExists = (key) => {
-  createRedisConnection().exists(key, (err, res) => {
+const keyExists = async (key) => {
+  await createRedisConnection().exists(key, (err, res) => {
     if (err) throw err
     else {
       if (res === 1) return true
@@ -36,8 +38,8 @@ const keyExists = (key) => {
     }
   })
 }
-const redisGet = (key) => {
-  keyExists(key)
+const redisGet = async (key) => {
+  await keyExists(key)
   createRedisConnection().get(key, (err, reply) => {
     if (err) throw err
     else return reply

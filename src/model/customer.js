@@ -78,6 +78,10 @@ const customer = new mongoose.Schema({
     type: Number,
     allowNull: false,
   },
+  account: {
+    type: String,
+    allowNull: false,
+  },
   password: {
     type: String,
     required: true,

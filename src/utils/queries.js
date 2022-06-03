@@ -118,7 +118,23 @@ const newSchema = async (data) => {
     throw error
   }
 }
+
+const addNewField = async (field, value) => {
+  try {
+    console.log(field, value)
+    await customer.updateMany(
+      {},
+      {
+        $set: { [field]: value },
+      }
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
 module.exports = {
+  addNewField,
   updateTransaction,
   setNewPin,
   updateNotification,

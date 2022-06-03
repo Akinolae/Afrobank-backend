@@ -8,6 +8,7 @@ const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
 const { transfer, transferAuthSchema, token } = require('../../utils/validator')
+const { redisGet, redisSet } = require('../../utils/redisUtil')
 const customer = require('../userManagement/index')
 
 class Transactions {
@@ -176,7 +177,9 @@ class Transactions {
       if (!data.status) {
         response(data.response, false, StatusCodes.NOT_FOUND, res)
       } else {
-        response(data.response, true, StatusCodes.OK, res)
+        await redisSet('trx', data.response)
+        const val = redisGet('trx')
+        response(val, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error, false, StatusCodes.BAD_REQUEST, res)

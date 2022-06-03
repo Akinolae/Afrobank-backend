@@ -12,6 +12,7 @@ const {
   createOtp,
   updatePassword,
   newSchema,
+  addNewField,
 } = require('../../utils/queries.js')
 const {
   createAccountNumber,
@@ -172,8 +173,13 @@ class UserManagement {
 
   // #12
 
-  setPin = async (accountNumber, pin, res) => {
+  setPin = async (accountNumber, pin, req, res) => {
     const isValidated = setPinSchema.validate({ accountNumber, pin })
+    const data = await verifyUser(req)
+    if (!!data) {
+      response(data, false, StatusCodes.UNAUTHORIZED, res)
+    }
+
     if (!!isValidated.error) {
       response(
         isValidated.error.message,
@@ -287,6 +293,14 @@ class UserManagement {
         StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
+    }
+  }
+
+  createNewField = async () => {
+    try {
+      await addNewField('account', 'user')
+    } catch (error) {
+      console.log(error)
     }
   }
 }

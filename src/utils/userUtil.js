@@ -67,15 +67,12 @@ const decryptPassword = (password1, password2) => {
 const verifyUser = async (req) => {
   const authToken = req.headers.authorization
   const token = !!authToken && authToken.split(' ')[1]
-
   const verify = verifyUserAccessToken(token)
-  const data = await fetch_single_user(verify.email)
+  const data = await fetch_single_user(req.params.email)
   if (!token) return 'no token provided'
   else if (!verify || !data.status) return 'Invalid token'
-  else {
-    if (verify.email.toLowerCase() !== data.message.email.toLowerCase()) {
-      return 'Unauthorized user'
-    }
+  else if (verify.email.toLowerCase() !== data.message.email.toLowerCase()) {
+    return 'Unauthorized user'
   }
 }
 

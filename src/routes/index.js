@@ -19,6 +19,7 @@ const {
   deleteNotification,
   fetchAllNotifications,
 } = require('../services/notifications')
+const { addNewFieldToDb } = require('../services/dbUpdate')
 
 router.delete(`/deleteNotification/`, deleteNotification)
 router.get(`/balance/:id`, getAccountBalance)
@@ -26,14 +27,15 @@ router.get(`/history/:id`, getTransactionHistory)
 router.get('/notifications/:id', fetchAllNotifications)
 router.get(`/transaction/`, getSingleTransaction)
 router.get(`/user/:id`, getUser)
-router.patch(`/createpin`, createPin)
+router.patch(`/createpin/:email`, createPin)
 router.patch(`/forgotPassword`, forgotPassword)
 router.patch(`/changePassword`, changePassword)
+router.post('/newField', addNewFieldToDb)
 router.post(`/sendOtp`, sendOtp)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)
 router.post(`/login`, localLogin)
-router.post(`/transfer`, transfer)
+router.post(`/transfer/:email`, transfer)
 router.post('/validate', validateAccount)
 
 module.exports = router
