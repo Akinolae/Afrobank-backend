@@ -13,6 +13,7 @@ const {
   updatePassword,
   newSchema,
   addNewField,
+  accountActivation,
 } = require('../../utils/queries.js')
 const {
   createAccountNumber,
@@ -205,6 +206,99 @@ class UserManagement {
     await updateNotification(this.customer, accountNumber, message)
   }
 
+  activateUser = async (req, res) => {
+    const { email } = req.body
+    const data = await verifyUser(req)
+
+    if (!!data) {
+      response(data, false, StatusCodes.UNAUTHORIZED, res)
+    } else {
+      if (!email) {
+        response(
+          'Email is required',
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        const data = await fetch_single_user(req.params.email)
+        const userData = await fetch_single_user(email)
+        if (data.status && userData.status) {
+          const { account } = data.message
+          if (account === 'admin') {
+            await accountActivation(email, true)
+            response(
+              'account activated successfully',
+              true,
+              StatusCodes.OK,
+              res
+            )
+          } else {
+            response(
+              'You are not authorized to do that',
+              false,
+              StatusCodes.UNAUTHORIZED,
+              res
+            )
+          }
+        } else {
+          response(
+            "Couldn't complete request, check credentials",
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        }
+      }
+    }
+  }
+
+  deActivateUser = async (req, res) => {
+    const { email } = req.body
+    const data = await verifyUser(req)
+
+    if (!!data) {
+      response(data, false, StatusCodes.UNAUTHORIZED, res)
+    } else {
+      if (!email) {
+        response(
+          'Email is required',
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        const data = await fetch_single_user(req.params.email)
+        const userData = await fetch_single_user(email)
+        if (data.status && userData.status) {
+          const { account } = data.message
+          if (account === 'admin') {
+            await accountActivation(email, false)
+            response(
+              'account deactivated successfully',
+              true,
+              StatusCodes.OK,
+              res
+            )
+          } else {
+            response(
+              'You are not authorized to do that',
+              false,
+              StatusCodes.UNAUTHORIZED,
+              res
+            )
+          }
+        } else {
+          response(
+            "Couldn't complete request, check credentials",
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        }
+      }
+    }
+  }
   deleteNotification = async (accountNumber, index, res) => {
     try {
       const resp = await deleteNotification(this.customer, accountNumber, index)

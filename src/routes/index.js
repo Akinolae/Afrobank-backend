@@ -20,6 +20,7 @@ const {
   fetchAllNotifications,
 } = require('../services/notifications')
 const { addNewFieldToDb } = require('../services/dbUpdate')
+const { activateAccount, deactivateAccount } = require('../services/account')
 
 router.delete(`/deleteNotification/`, deleteNotification)
 router.get(`/balance/:id`, getAccountBalance)
@@ -30,6 +31,8 @@ router.get(`/user/:id`, getUser)
 router.patch(`/createpin/:email`, createPin)
 router.patch(`/forgotPassword`, forgotPassword)
 router.patch(`/changePassword`, changePassword)
+router.patch(`/acivate/:email`, activateAccount)
+router.patch(`/deactivate/:email`, deactivateAccount)
 router.post('/newField', addNewFieldToDb)
 router.post(`/sendOtp`, sendOtp)
 router.post(`/pinreset`, pinReset)

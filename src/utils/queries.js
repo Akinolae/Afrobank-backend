@@ -110,6 +110,19 @@ const deleteNotification = async (customer, accountNumber, index) => {
   }
 }
 
+const accountActivation = async (email, value) => {
+  try {
+    await customer.updateOne(
+      {
+        email: email,
+      },
+      { $set: { active: value } }
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
 const newSchema = async (data) => {
   const { model, email, payload } = data
   try {
@@ -135,6 +148,7 @@ const addNewField = async (field, value) => {
 
 module.exports = {
   addNewField,
+  accountActivation,
   updateTransaction,
   setNewPin,
   updateNotification,
