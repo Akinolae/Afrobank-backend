@@ -43,6 +43,10 @@ const customer = new mongoose.Schema({
     type: String,
     required: true,
   },
+  active: {
+    type: Boolean,
+    allowNull: false,
+  },
   pin: {
     type: String,
     default: null,

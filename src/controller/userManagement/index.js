@@ -120,6 +120,7 @@ class UserManagement {
             email,
             accountNumber,
             pin,
+            active,
             accountBalance,
             account,
           } = data.message
@@ -133,6 +134,7 @@ class UserManagement {
             pin,
             accountBalance,
             account,
+            active,
           }
 
           const token = generateUserAccessToken(userData)
@@ -300,7 +302,7 @@ class UserManagement {
 
   createNewField = async () => {
     try {
-      await addNewField('account', 'user')
+      await addNewField('active', true)
     } catch (error) {
       console.log(error)
     }
