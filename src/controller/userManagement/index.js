@@ -121,6 +121,7 @@ class UserManagement {
             accountNumber,
             pin,
             accountBalance,
+            account,
           } = data.message
 
           const userData = {
@@ -131,6 +132,7 @@ class UserManagement {
             accountNumber,
             pin,
             accountBalance,
+            account,
           }
 
           const token = generateUserAccessToken(userData)
