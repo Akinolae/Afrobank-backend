@@ -76,7 +76,16 @@ const verifyUser = async (req) => {
   }
 }
 
+const isAdmin = (params) => {
+  if (params === 'admin') {
+    return true
+  } else {
+    return false
+  }
+}
+
 module.exports = {
+  isAdmin,
   fetch_single_user,
   login_notify,
   generateUserAccessToken,

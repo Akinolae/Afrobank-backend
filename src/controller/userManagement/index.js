@@ -35,6 +35,7 @@ const {
   hashPassword,
   verifyAccountNumber,
   verifyUser,
+  isAdmin,
 } = require('../../utils/userUtil')
 
 class UserManagement {
@@ -213,19 +214,21 @@ class UserManagement {
     if (!!data) {
       response(data, false, StatusCodes.UNAUTHORIZED, res)
     } else {
-      if (!email) {
-        response(
-          'Email is required',
-          false,
-          StatusCodes.UNPROCESSABLE_ENTITY,
-          res
-        )
-      } else {
-        const data = await fetch_single_user(req.params.email)
-        const userData = await fetch_single_user(email)
-        if (data.status && userData.status) {
-          const { account } = data.message
-          if (account === 'admin') {
+      try {
+        const resp = await Promise.allSettled([
+          fetch_single_user(req.params.email),
+          fetch_single_user(email),
+        ])
+
+        if (!!resp.filter((data) => data.value.status === false).length) {
+          response(
+            "Couldn't complete request, check credentials",
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          if (isAdmin(resp[0].value.message.account)) {
             await accountActivation(email, true)
             response(
               'account activated successfully',
@@ -241,14 +244,9 @@ class UserManagement {
               res
             )
           }
-        } else {
-          response(
-            "Couldn't complete request, check credentials",
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
         }
+      } catch (error) {
+        response(error, false, StatusCodes.UNAUTHORIZED, res)
       }
     }
   }
@@ -260,19 +258,21 @@ class UserManagement {
     if (!!data) {
       response(data, false, StatusCodes.UNAUTHORIZED, res)
     } else {
-      if (!email) {
-        response(
-          'Email is required',
-          false,
-          StatusCodes.UNPROCESSABLE_ENTITY,
-          res
-        )
-      } else {
-        const data = await fetch_single_user(req.params.email)
-        const userData = await fetch_single_user(email)
-        if (data.status && userData.status) {
-          const { account } = data.message
-          if (account === 'admin') {
+      try {
+        const resp = await Promise.allSettled([
+          fetch_single_user(req.params.email),
+          fetch_single_user(email),
+        ])
+
+        if (!!resp.filter((data) => data.value.status === false).length) {
+          response(
+            "Couldn't complete request, check credentials",
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          if (isAdmin(resp[0].value.message.account)) {
             await accountActivation(email, false)
             response(
               'account deactivated successfully',
@@ -288,14 +288,9 @@ class UserManagement {
               res
             )
           }
-        } else {
-          response(
-            "Couldn't complete request, check credentials",
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
         }
+      } catch (error) {
+        response(error, false, StatusCodes.UNAUTHORIZED, res)
       }
     }
   }
