@@ -146,6 +146,18 @@ const addNewField = async (field, value) => {
   }
 }
 
+const getAllUsers = async () => {
+  try {
+    const res = await customer.find()
+    return {
+      status: true,
+      message: res,
+    }
+  } catch (e) {
+    throw e
+  }
+}
+
 module.exports = {
   addNewField,
   accountActivation,
@@ -156,4 +168,5 @@ module.exports = {
   createOtp,
   updatePassword,
   newSchema,
+  getAllUsers,
 }

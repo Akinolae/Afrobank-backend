@@ -13,6 +13,7 @@ const {
   updatePassword,
   newSchema,
   addNewField,
+  getAllUsers,
   accountActivation,
 } = require('../../utils/queries.js')
 const {
@@ -177,6 +178,41 @@ class UserManagement {
     }
   }
 
+  getUsers = async (req, res) => {
+    const data = await verifyUser(req)
+
+    if (!!data) {
+      response(data, false, StatusCodes.UNAUTHORIZED, res)
+    } else {
+      const user = await fetch_single_user(req.params.email)
+      if (!user.status) {
+        response(user.message, false, StatusCodes.NOT_FOUND, res)
+      } else {
+        if (isAdmin(user.message.account)) {
+          const resp = await getAllUsers()
+          const allUsers = resp.message
+            .filter((data) => data.account !== 'admin')
+            .map((user) => ({
+              accountNumber: user.accountNumber,
+              accountBalance: user.accountBalance,
+              email: user.email,
+              name: `${user.firstName} ${user.lastName}`,
+              phoneNumber: user.phoneNumber,
+              transactions: user.transactions,
+              userId: user._id,
+            }))
+          response(allUsers, true, StatusCodes.OK, res)
+        } else {
+          response(
+            'You are not authorized to do that',
+            false,
+            StatusCodes.UNAUTHORIZED,
+            res
+          )
+        }
+      }
+    }
+  }
   // #12
 
   setPin = async (accountNumber, pin, req, res) => {

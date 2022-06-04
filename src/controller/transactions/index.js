@@ -7,7 +7,7 @@ const { verifyAccountNumber, verifyUser } = require('../../utils/userUtil')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
-const { transfer, transferAuthSchema, token } = require('../../utils/validator')
+const { transfer, transferAuthSchema } = require('../../utils/validator')
 const { redisGet, redisSet } = require('../../utils/redisUtil')
 const customer = require('../userManagement/index')
 

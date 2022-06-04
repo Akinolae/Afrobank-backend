@@ -5,4 +5,7 @@ module.exports = {
     const { id } = req.params
     customer.getUser(id, res, req)
   },
+  getAllUsers: (req, res) => {
+    customer.getUsers(req, res)
+  },
 }
