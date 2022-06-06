@@ -7,36 +7,36 @@ const { StatusCodes } = require('http-status-codes')
 
 const {
   setNewPin,
-  updateNotification,
-  deleteNotification,
   createOtp,
-  updatePassword,
   newSchema,
   addNewField,
   getAllUsers,
+  updatePassword,
   accountActivation,
+  updateNotification,
+  deleteNotification,
 } = require('../../utils/queries.js')
 const {
-  createAccountNumber,
   createPin,
+  createAccountNumber,
   fetchAllNotifications,
   generateUserAccessToken,
 } = require('../../utils')
 const {
+  pinReset,
   user_reg,
   authSchema,
   user_login,
   setPinSchema,
-  pinReset,
   notifications,
 } = require('../../utils/validator')
 const {
-  fetch_single_user,
-  decryptPassword,
-  hashPassword,
-  verifyAccountNumber,
-  verifyUser,
   isAdmin,
+  verifyUser,
+  hashPassword,
+  decryptPassword,
+  fetch_single_user,
+  verifyAccountNumber,
 } = require('../../utils/userUtil')
 
 class UserManagement {
@@ -44,6 +44,7 @@ class UserManagement {
     this.customer = _customer_
   }
 
+  // #1
   register = async (params, res) => {
     const { firstName, lastName, email, phoneNumber, gender, password } = params
     const accountNumber = await createAccountNumber(this.customer)
@@ -92,6 +93,7 @@ class UserManagement {
     }
   }
 
+  // #2
   login = async (userEmail, userPassword, res) => {
     if (!userEmail || !userPassword) {
       response(
@@ -155,38 +157,40 @@ class UserManagement {
     }
   }
 
-  getUser = async (accountNumber, res, req) => {
-    const user = await verifyAccountNumber(accountNumber)
-    const data = await verifyUser(req)
-    if (!!data) {
-      response(data, false, StatusCodes.UNAUTHORIZED, res)
-    }
-    if (!!user.status) {
-      const user_details = {
-        id: user.user._id,
-        firstName: user.user.firstName,
-        lastName: user.user.lastName,
-        email: user.user.email,
-        accountNumber: user.user.accountNumber,
-        pin: user.user.pin,
-        accountBalance: user.user.accountBalance,
-        token: user.user.token,
+  // #3
+  getUser = async (req, res) => {
+    try {
+      const user = await fetch_single_user(req.body.email)
+      const data = await verifyUser(req)
+      if (!!data || !user.status) {
+        response(
+          data || "User doesn't exist" || 'Unable to fetch user',
+          false,
+          StatusCodes.UNAUTHORIZED,
+          res
+        )
+      } else {
+        const { firstName, lastName } = user.message
+        response({ firstName, lastName }, true, StatusCodes.OK, res)
       }
-      response(user_details, true, StatusCodes.OK, res)
-    } else {
-      response(user.message, false, StatusCodes.NOT_FOUND, res)
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
+  // #4
   getUsers = async (req, res) => {
-    const data = await verifyUser(req)
-
-    if (!!data) {
-      response(data, false, StatusCodes.UNAUTHORIZED, res)
-    } else {
+    try {
+      const data = await verifyUser(req)
       const user = await fetch_single_user(req.params.email)
-      if (!user.status) {
-        response(user.message, false, StatusCodes.NOT_FOUND, res)
+
+      if (!!data || !user.status) {
+        response(
+          data || "User doesn't exist" || 'Unable to fetch user',
+          false,
+          StatusCodes.UNAUTHORIZED,
+          res
+        )
       } else {
         if (isAdmin(user.message.account)) {
           const resp = await getAllUsers()
@@ -211,10 +215,12 @@ class UserManagement {
           )
         }
       }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
-  // #12
 
+  // #5
   setPin = async (accountNumber, pin, req, res) => {
     const isValidated = setPinSchema.validate({ accountNumber, pin })
     const data = await verifyUser(req)
@@ -239,6 +245,7 @@ class UserManagement {
     }
   }
 
+  // #6
   createPushNotification = async (accountNumber, message) => {
     await updateNotification(this.customer, accountNumber, message)
   }
@@ -287,6 +294,7 @@ class UserManagement {
     }
   }
 
+  // #7
   deActivateUser = async (req, res) => {
     const { email } = req.body
     const data = await verifyUser(req)
@@ -330,6 +338,8 @@ class UserManagement {
       }
     }
   }
+
+  // #8
   deleteNotification = async (accountNumber, index, res) => {
     try {
       const resp = await deleteNotification(this.customer, accountNumber, index)
@@ -343,6 +353,7 @@ class UserManagement {
     // await deleteNotification(this.customer, 8101050210, data)
   }
 
+  // #9
   getNotifications = async (accountNumber, res) => {
     try {
       const data = await fetchAllNotifications(accountNumber)
@@ -357,6 +368,7 @@ class UserManagement {
     }
   }
 
+  // #10
   changePassword = async (accountNumber, password, res) => {
     if (!!accountNumber && !!password) {
       try {
@@ -381,6 +393,7 @@ class UserManagement {
     }
   }
 
+  // #11
   sendPasswordOtp = async (email, res) => {
     const code = createPin(5)
     const otp = await hashPassword(code)
@@ -397,6 +410,7 @@ class UserManagement {
     }
   }
 
+  // #12
   forgotPassword = async (accountNumber, pin, res) => {
     if (!!accountNumber && !!pin) {
       try {
@@ -425,6 +439,7 @@ class UserManagement {
     }
   }
 
+  // #13
   createNewField = async () => {
     try {
       await addNewField('active', true)
