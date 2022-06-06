@@ -251,91 +251,82 @@ class UserManagement {
   }
 
   activateUser = async (req, res) => {
-    const { email } = req.body
-    const data = await verifyUser(req)
+    try {
+      const data = await verifyUser(req)
+      const resp = await Promise.allSettled([
+        fetch_single_user(req.params.email),
+        fetch_single_user(req.body.email),
+      ])
 
-    if (!!data) {
-      response(data, false, StatusCodes.UNAUTHORIZED, res)
-    } else {
-      try {
-        const resp = await Promise.allSettled([
-          fetch_single_user(req.params.email),
-          fetch_single_user(email),
-        ])
-
-        if (!!resp.filter((data) => data.value.status === false).length) {
+      const hasErrors = !!resp.filter((data) => data.value.status === false)
+        .length
+      if (!!data || !!hasErrors) {
+        response(
+          data || "Couldn't complete request, check credentials",
+          false,
+          !!hasErrors
+            ? StatusCodes.UNPROCESSABLE_ENTITY
+            : StatusCodes.UNAUTHORIZED,
+          res
+        )
+      } else {
+        if (isAdmin(resp[0].value.message.account)) {
+          await accountActivation(req.body.email, true)
+          response('account activated successfully', true, StatusCodes.OK, res)
+        } else {
           response(
-            "Couldn't complete request, check credentials",
+            'You are not authorized to do that',
             false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
+            StatusCodes.UNAUTHORIZED,
             res
           )
-        } else {
-          if (isAdmin(resp[0].value.message.account)) {
-            await accountActivation(email, true)
-            response(
-              'account activated successfully',
-              true,
-              StatusCodes.OK,
-              res
-            )
-          } else {
-            response(
-              'You are not authorized to do that',
-              false,
-              StatusCodes.UNAUTHORIZED,
-              res
-            )
-          }
         }
-      } catch (error) {
-        response(error, false, StatusCodes.UNAUTHORIZED, res)
       }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
   // #7
   deActivateUser = async (req, res) => {
-    const { email } = req.body
-    const data = await verifyUser(req)
+    try {
+      const data = await verifyUser(req)
+      const resp = await Promise.allSettled([
+        fetch_single_user(req.params.email),
+        fetch_single_user(req.body.email),
+      ])
 
-    if (!!data) {
-      response(data, false, StatusCodes.UNAUTHORIZED, res)
-    } else {
-      try {
-        const resp = await Promise.allSettled([
-          fetch_single_user(req.params.email),
-          fetch_single_user(email),
-        ])
-
-        if (!!resp.filter((data) => data.value.status === false).length) {
+      const hasErrors = !!resp.filter((data) => data.value.status === false)
+        .length
+      if (!!data || !!hasErrors) {
+        response(
+          data || "Couldn't complete request, check credentials",
+          false,
+          !!hasErrors
+            ? StatusCodes.UNPROCESSABLE_ENTITY
+            : StatusCodes.UNAUTHORIZED,
+          res
+        )
+      } else {
+        if (isAdmin(resp[0].value.message.account)) {
+          await accountActivation(req.body.email, false)
           response(
-            "Couldn't complete request, check credentials",
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
+            'account deactivated successfully',
+            true,
+            StatusCodes.OK,
             res
           )
         } else {
-          if (isAdmin(resp[0].value.message.account)) {
-            await accountActivation(email, false)
-            response(
-              'account deactivated successfully',
-              true,
-              StatusCodes.OK,
-              res
-            )
-          } else {
-            response(
-              'You are not authorized to do that',
-              false,
-              StatusCodes.UNAUTHORIZED,
-              res
-            )
-          }
+          response(
+            'You are not authorized to do that',
+            false,
+            StatusCodes.UNAUTHORIZED,
+            res
+          )
         }
-      } catch (error) {
-        response(error, false, StatusCodes.UNAUTHORIZED, res)
       }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
