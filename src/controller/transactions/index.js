@@ -27,7 +27,9 @@ class Transactions {
     const data = await verifyUser(req)
     if (!!data || !!joi_error.error || sender === recipient) {
       response(
-        data || !!joi_error.error
+        !!data
+          ? data
+          : !!joi_error.error
           ? joi_error.error.details[0].message
           : transfer.single_user,
         false,
