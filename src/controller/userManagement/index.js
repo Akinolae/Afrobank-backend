@@ -114,7 +114,7 @@ class UserManagement {
           response(
             user_login.invalid_credentials,
             false,
-            StatusCodes.BAD_REQUEST,
+            StatusCodes.UNAUTHORIZED,
             res
           )
         } else {
