@@ -25,92 +25,81 @@ class Transactions {
     })
 
     const data = await verifyUser(req)
-    if (!!data || !!joi_error.error) {
+    if (!!data || !!joi_error.error || sender === recipient) {
       response(
-        data || joi_error.error.details[0].message,
+        data || !!joi_error.error
+          ? joi_error.error.details[0].message
+          : transfer.single_user,
         false,
         !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
     } else {
-      if (sender === recipient) {
-        response(
-          transfer.single_user,
-          false,
-          StatusCodes.UNPROCESSABLE_ENTITY,
-          res
-        )
-      } else {
-        try {
-          const resp = await Promise.allSettled([
-            verifyAccountNumber(sender),
-            verifyAccountNumber(recipient),
-          ])
+      try {
+        const resp = await Promise.allSettled([
+          verifyAccountNumber(sender),
+          verifyAccountNumber(recipient),
+        ])
 
-          const hasErrors = !!resp.filter((data) => data.value.status === false)
-            .length
-          const invalidSenderAcc =
-            typeof resp[0].value.message === 'string'
-              ? resp[0].value.message
-              : ''
-          const invalidRecipientAcc =
-            typeof resp[1].value.message === 'string'
-              ? resp[1].value.message
-              : ''
+        const hasErrors = !!resp.filter((data) => data.value.status === false)
+          .length
+        const invalidSenderAcc =
+          typeof resp[0].value.message === 'string' ? resp[0].value.message : ''
+        const invalidRecipientAcc =
+          typeof resp[1].value.message === 'string' ? resp[1].value.message : ''
 
-          if (hasErrors) {
+        if (hasErrors) {
+          response(
+            invalidSenderAcc || invalidRecipientAcc,
+            false,
+            StatusCodes.NOT_FOUND,
+            res
+          )
+        } else {
+          const userPin = resp[0].value.user.pin
+          const valRes = validateAmount(resp[0].value.user, amount)
+          const pinValidation = !userPin || !(await isPinValid(pin, userPin))
+
+          if (pinValidation) {
             response(
-              invalidSenderAcc || invalidRecipientAcc,
+              transfer.pinError,
               false,
-              StatusCodes.NOT_FOUND,
+              StatusCodes.UNPROCESSABLE_ENTITY,
               res
             )
           } else {
-            const userPin = resp[0].value.user.pin
-            const valRes = validateAmount(resp[0].value.user, amount)
-            const pinValidation = !userPin || !(await isPinValid(pin, userPin))
-
-            if (pinValidation) {
-              response(
-                transfer.pinError,
-                false,
-                StatusCodes.UNPROCESSABLE_ENTITY,
-                res
-              )
+            if (!!valRes) {
+              response(valRes, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
             } else {
-              if (!!valRes) {
-                response(valRes, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
-              } else {
-                const transactionData = {
-                  senderAccountNumber: resp[0].value.user.accountNumber,
-                  recipientAccountNumber: resp[0].value.user.accountNumber,
-                  recipientName: `${resp[1].value.user.firstName} ${resp[1].value.user.lastName}`,
-                  senderName: `${resp[0].value.user.firstName} ${resp[0].value.user.lastName}`,
-                  amount,
-                  type: 'debit',
-                }
-                const notifyRecipient = `${resp[0].value.user.firstName} ${resp[0].value.user.lastName} just sent you ₦${transactionData.amount}`
-                const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
-                await customer.createPushNotification(
-                  resp[0].value.user.accountNumber,
-                  notifySender
-                )
-                await customer.createPushNotification(
-                  resp[1].value.user.accountNumber,
-                  notifyRecipient
-                )
-                this.completeTransfer(transactionData, res)
+              const transactionData = {
+                senderAccountNumber: resp[0].value.user.accountNumber,
+                recipientAccountNumber: resp[0].value.user.accountNumber,
+                recipientName: `${resp[1].value.user.firstName} ${resp[1].value.user.lastName}`,
+                senderName: `${resp[0].value.user.firstName} ${resp[0].value.user.lastName}`,
+                amount,
+                type: 'debit',
               }
+              const notifyRecipient = `${resp[0].value.user.firstName} ${resp[0].value.user.lastName} just sent you ₦${transactionData.amount}`
+              const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
+              await customer.createPushNotification(
+                resp[0].value.user.accountNumber,
+                notifySender
+              )
+              await customer.createPushNotification(
+                resp[1].value.user.accountNumber,
+                notifyRecipient
+              )
+              this.completeTransfer(transactionData, res)
             }
           }
-        } catch (error) {
-          response(
-            error.message || 'An error occured',
-            false,
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            res
-          )
         }
+      } catch (error) {
+        response(
+          error.message || 'An error occured',
+          false,
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          res
+        )
       }
     }
   }
