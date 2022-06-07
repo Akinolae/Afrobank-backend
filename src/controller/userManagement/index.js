@@ -97,65 +97,55 @@ class UserManagement {
 
   // #2
   login = async (userEmail, userPassword, res) => {
-    if (!userEmail || !userPassword) {
-      response(
-        user_login.credentials,
-        false,
-        StatusCodes.UNPROCESSABLE_ENTITY,
-        res
-      )
-    } else {
-      const data = await fetch_single_user(userEmail.trim())
-
-      if (data.status) {
-        const { password, email } = data.message
-        if (
-          email !== userEmail.trim() ||
-          !(await decryptPassword(userPassword.trim(), password))
-        ) {
-          response(
-            user_login.invalid_credentials,
-            false,
-            StatusCodes.UNAUTHORIZED,
-            res
-          )
-        } else {
-          const {
-            id,
-            firstName,
-            lastName,
-            email,
-            accountNumber,
-            pin,
-            active,
-            accountBalance,
-            account,
-          } = data.message
-
-          const userData = {
-            id,
-            firstName,
-            lastName,
-            email,
-            accountNumber,
-            pin,
-            accountBalance,
-            account,
-            active,
-          }
-
-          const token = generateUserAccessToken(userData)
-          await newSchema({
-            model: this.customer,
-            email,
-            payload: token,
-          })
-
-          response({ ...userData, token }, true, 200, res)
-        }
+    try {
+      if (!userEmail || !userPassword) {
+        response(
+          user_login.credentials,
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
       } else {
-        response(data.message, false, StatusCodes.FORBIDDEN, res)
+        const data = await fetch_single_user(userEmail.trim())
+        if (data.status) {
+          if (
+            data.message.email !== userEmail.trim() ||
+            !(await decryptPassword(userPassword.trim(), data.message.password))
+          ) {
+            response(
+              user_login.invalid_credentials,
+              false,
+              StatusCodes.UNAUTHORIZED,
+              res
+            )
+          } else {
+            const userData = {
+              id: data.message.id,
+              firstName: data.message.firstName,
+              lastName: data.message.lastName,
+              email: data.message.email,
+              accountNumber: data.message.accountNumber,
+              pin: data.message.pin,
+              accountBalance: data.message.accountBalance,
+              account: data.message.account,
+              active: data.message.active,
+            }
+
+            const token = generateUserAccessToken(userData)
+            await newSchema({
+              model: this.customer,
+              email: data.message.email,
+              payload: token,
+            })
+
+            response({ ...userData, token }, true, 200, res)
+          }
+        } else {
+          response(data.message, false, StatusCodes.FORBIDDEN, res)
+        }
       }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
@@ -225,25 +215,21 @@ class UserManagement {
   // #5
   setPin = async (accountNumber, pin, req, res) => {
     const isValidated = setPinSchema.validate({ accountNumber, pin })
-    const data = await verifyUser(req)
-    if (!!data) {
-      response(data, false, StatusCodes.UNAUTHORIZED, res)
-    }
-
-    if (!!isValidated.error) {
-      response(
-        isValidated.error.message,
-        false,
-        StatusCodes.UNPROCESSABLE_ENTITY,
-        res
-      )
-    } else {
-      try {
+    try {
+      const data = await verifyUser(req)
+      if (!!data || !!isValidated.error) {
+        response(
+          data || isValidated.error.message,
+          false,
+          StatusCodes.UNAUTHORIZED,
+          res
+        )
+      } else {
         await setNewPin(this.customer, accountNumber, pin)
         response(pinReset.message, true, StatusCodes.OK, res)
-      } catch (e) {
-        response(e.message, false, StatusCodes.BAD_REQUEST, res)
       }
+    } catch (e) {
+      response(e.message, false, StatusCodes.BAD_REQUEST, res)
     }
   }
 
