@@ -182,8 +182,8 @@ class Transactions {
   }
 
   getSingleTransaction = async (accountNumber, transaction_Id, res) => {
-    if (!!accountNumber && !!transaction_Id) {
-      try {
+    try {
+      if (!!accountNumber && !!transaction_Id) {
         const data = await transactionHistory(accountNumber)
         if (!!data.status) {
           const resp = data.response.find(
@@ -199,16 +199,16 @@ class Transactions {
                 res
               )
         }
-      } catch (error) {
-        response(error, false, StatusCodes.BAD_REQUEST, res)
+      } else {
+        response(
+          'requires account number and transaction id',
+          false,
+          StatusCodes.NOT_FOUND,
+          res
+        )
       }
-    } else {
-      response(
-        'requires account number and transaction id',
-        false,
-        StatusCodes.NOT_FOUND,
-        res
-      )
+    } catch (error) {
+      response(error.message, false, StatusCodes.BAD_REQUEST, res)
     }
   }
 
@@ -221,7 +221,7 @@ class Transactions {
         response(data.message, false, StatusCodes.NOT_FOUND, res)
       }
     } catch (error) {
-      response(error, false, StatusCodes.BAD_REQUEST)
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 }

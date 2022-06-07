@@ -328,8 +328,6 @@ class UserManagement {
     } catch (error) {
       response(error, false, 500, res)
     }
-
-    // await deleteNotification(this.customer, 8101050210, data)
   }
 
   // #9
