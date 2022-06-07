@@ -1,8 +1,8 @@
-const customer = require('../../controller/userManagement')
+const { user } = require('../../controller/userManagement')
 
 module.exports = {
   validateAccount: (req, res) => {
     const { accountNumber } = req.body
-    customer.getUser(accountNumber, res)
+    user.getUser(accountNumber, res)
   },
 }

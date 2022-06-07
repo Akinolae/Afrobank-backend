@@ -1,9 +1,9 @@
-const user = require('../../controller/userManagement/index')
+const { user } = require('../../controller/userManagement/index')
 
 module.exports = {
   changePassword: (req, res) => {
-    const { accountNumber, password } = req.body
-    user.changePassword(accountNumber, password, res)
+    const { password } = req.body
+    user.changePassword(password, req, res)
   },
   forgotPassword: (req, res) => {
     const { accountNumber, otp } = req.body
