@@ -1,5 +1,5 @@
 require('dotenv').config()
-const user = require('../../controller/userManagement')
+const { user } = require('../../controller/userManagement')
 module.exports = {
   localLogin: (req, res) => {
     const { email, password } = req.body

@@ -1,15 +1,15 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const { isPinValid, validateAmount } = require('../../utils')
-const { transactionHistory } = require('../../utils/transactionsUtil')
-const { verifyAccountNumber, verifyUser } = require('../../utils/userUtil')
+const customer = require('../userManagement/index')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
-const { transfer, transferAuthSchema } = require('../../utils/validator')
+const { transactionHistory } = require('../../utils/transactionsUtil')
 const { redisGet, redisSet } = require('../../utils/redisUtil')
-const customer = require('../userManagement/index')
+const { isPinValid, validateAmount } = require('../../utils')
+const { transfer, transferAuthSchema } = require('../../utils/validator')
+const { verifyAccountNumber, verifyUser } = require('../../utils/userUtil')
 
 class Transactions {
   constructor(_customer_) {
@@ -146,7 +146,7 @@ class Transactions {
           )
       }
     } catch (error) {
-      response(errResp, false, StatusCodes.BAD_REQUEST, res)
+      response(errpr.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 

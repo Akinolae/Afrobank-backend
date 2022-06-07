@@ -1,10 +1,10 @@
-const customer = require('../../controller/userManagement')
+const { user, UserManagement } = require('../../controller/userManagement')
 
 module.exports = {
   getUser: (req, res) => {
-    customer.getUser(req, res)
+    user.getUser(req, res)
   },
   getAllUsers: (req, res) => {
-    customer.getUsers(req, res)
+    user.getUsers(req, res)
   },
 }

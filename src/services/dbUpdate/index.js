@@ -1,4 +1,4 @@
-const user = require('../../controller/userManagement/index')
+const { user } = require('../../controller/userManagement/index')
 
 module.exports = {
   addNewFieldToDb: () => {

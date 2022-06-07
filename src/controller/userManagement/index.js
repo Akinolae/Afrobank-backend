@@ -84,7 +84,9 @@ class UserManagement {
         await this.createPushNotification(accountNumber, user_reg.welcome_text)
       } catch (err) {
         response(
-          `user already exists`,
+          err.message.includes('duplicate')
+            ? `user already exists`
+            : err.message || 'An error occured',
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
@@ -360,27 +362,32 @@ class UserManagement {
   }
 
   // #10
-  changePassword = async (accountNumber, password, res) => {
-    if (!!accountNumber && !!password) {
-      try {
-        const userExists = await verifyAccountNumber(accountNumber)
-        if (!!userExists.status) {
+  changePassword = async (password, req, res) => {
+    try {
+      const data = await verifyUser(req)
+      if (!!data || !password) {
+        response(
+          data || 'Password is required',
+          false,
+          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        const userExists = await fetch_single_user(req.params.email)
+        if (userExists.status) {
           const hash = await hashPassword(password)
-          const data = await updatePassword(this.customer, accountNumber, hash)
+          const data = await updatePassword(
+            this.customer,
+            userExists.message.accountNumber,
+            hash
+          )
           response(data.message, true, StatusCodes.OK, res)
         } else {
           response(userExists.message, false, StatusCodes.NOT_FOUND, res)
         }
-      } catch (error) {
-        console.log(error)
       }
-    } else {
-      response(
-        'Kindly enter required fields',
-        false,
-        StatusCodes.UNPROCESSABLE_ENTITY,
-        res
-      )
+    } catch (e) {
+      response(e.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
@@ -442,4 +449,4 @@ class UserManagement {
 
 const user = new UserManagement(model)
 Object.freeze(user)
-module.exports = user
+module.exports = { user, UserManagement }
