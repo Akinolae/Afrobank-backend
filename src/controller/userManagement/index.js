@@ -6,11 +6,13 @@ const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 
 const {
+  update2fa,
   setNewPin,
   createOtp,
   newSchema,
   addNewField,
   getAllUsers,
+  update2faCodes,
   updatePassword,
   accountActivation,
   updateNotification,
@@ -424,7 +426,7 @@ class UserManagement {
   // #13
   createNewField = async () => {
     try {
-      await addNewField('2faCodes', [])
+      await addNewField('2faEnabled', false)
     } catch (error) {
       console.log(error)
     }
@@ -449,14 +451,7 @@ class UserManagement {
           res
         )
       } else {
-        await this.customer.updateOne(
-          {
-            email: req.params.email,
-          },
-          {
-            $set: { '2faEnabled': true, '2faCodes': codes },
-          }
-        )
+        await update2fa(req.params.email, true, codes)
         response('2fa enabled successfully', true, StatusCodes.OK, res)
       }
     } catch (error) {
@@ -484,14 +479,7 @@ class UserManagement {
         const codes = user.message['2faCodes']
         const isAvailable = !!codes.filter((data) => data === code).length
         if (isAvailable) {
-          await this.customer.updateOne(
-            {
-              email: req.params.email,
-            },
-            {
-              $set: { '2faEnabled': false, '2faCodes': [] },
-            }
-          )
+          await update2fa(req.params.email, false, [])
           response('2fa disabled successfully', true, StatusCodes.OK, res)
         } else {
           response(
@@ -537,14 +525,7 @@ class UserManagement {
           )
         } else {
           const newCodes = codes.filter((data) => data !== code)
-          await this.customer.updateOne(
-            {
-              email: req.params.email,
-            },
-            {
-              $set: { '2faCodes': newCodes },
-            }
-          )
+          await update2faCodes(req.params.email, newCodes)
           response('validated', true, StatusCodes.OK, res)
         }
       }
