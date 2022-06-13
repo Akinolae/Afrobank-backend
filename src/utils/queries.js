@@ -158,15 +158,52 @@ const getAllUsers = async () => {
   }
 }
 
+const update2fa = async (email, activate, codes) => {
+  try {
+    await customer.updateOne(
+      {
+        email: email,
+      },
+      {
+        $set: {
+          '2faEnabled': activate,
+          '2faCodes': codes,
+        },
+      }
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
+const update2faCodes = async (email, codes) => {
+  try {
+    await customer.updateOne(
+      {
+        email: email,
+      },
+      {
+        $set: {
+          '2faCodes': codes,
+        },
+      }
+    )
+  } catch (error) {
+    throw error
+  }
+}
+
 module.exports = {
+  createOtp,
+  setNewPin,
+  newSchema,
+  update2fa,
   addNewField,
+  getAllUsers,
+  updatePassword,
+  update2faCodes,
   accountActivation,
   updateTransaction,
-  setNewPin,
   updateNotification,
   deleteNotification,
-  createOtp,
-  updatePassword,
-  newSchema,
-  getAllUsers,
 }
