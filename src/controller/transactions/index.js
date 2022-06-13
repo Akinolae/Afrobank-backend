@@ -1,7 +1,7 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
-const customer = require('../userManagement/index')
+const { user } = require('../userManagement/index')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
@@ -83,11 +83,11 @@ class Transactions {
               }
               const notifyRecipient = `${resp[0].value.user.firstName} ${resp[0].value.user.lastName} just sent you ₦${transactionData.amount}`
               const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
-              await customer.createPushNotification(
+              await user.createPushNotification(
                 resp[0].value.user.accountNumber,
                 notifySender
               )
-              await customer.createPushNotification(
+              await user.createPushNotification(
                 resp[1].value.user.accountNumber,
                 notifyRecipient
               )

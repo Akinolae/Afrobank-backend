@@ -78,6 +78,14 @@ const customer = new mongoose.Schema({
     unique: true,
     required: true,
   },
+  '2faEnabled': {
+    type: Boolean,
+    default: false,
+  },
+  '2faCodes': {
+    type: Array,
+    allowNull: true,
+  },
   accountBalance: {
     type: Number,
     allowNull: false,

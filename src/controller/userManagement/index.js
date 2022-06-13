@@ -424,10 +424,131 @@ class UserManagement {
   // #13
   createNewField = async () => {
     try {
-      await addNewField('active', true)
+      await addNewField('2faCodes', [])
     } catch (error) {
       console.log(error)
     }
+  }
+
+  // #14
+  enable2fa = async (req, res) => {
+    const length = 5
+    let codes = []
+    for (var i = 0; i <= length; i++) {
+      const code = createPin(6)
+      codes.push(code)
+    }
+    try {
+      const data = await verifyUser(req)
+      const user = await fetch_single_user(req.params.email)
+      if (!!data || !user.status) {
+        response(
+          data || 'Invalid email address provided',
+          false,
+          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        await this.customer.updateOne(
+          {
+            email: req.params.email,
+          },
+          {
+            $set: { '2faEnabled': true, '2faCodes': codes },
+          }
+        )
+        response('2fa enabled successfully', true, StatusCodes.OK, res)
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+  // #15
+  disable2fa = async (req, res) => {
+    try {
+      const data = await verifyUser(req)
+      const user = await fetch_single_user(req.params.email)
+      const { code } = req.body
+      if (!!data || !user.status || !code) {
+        response(
+          !!data
+            ? data
+            : !code
+            ? '2fa code is required'
+            : 'Invalid email address provided',
+          false,
+          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        const codes = user.message['2faCodes']
+        const isAvailable = !!codes.filter((data) => data === code).length
+        if (isAvailable) {
+          await this.customer.updateOne(
+            {
+              email: req.params.email,
+            },
+            {
+              $set: { '2faEnabled': false, '2faCodes': [] },
+            }
+          )
+          response('2fa disabled successfully', true, StatusCodes.OK, res)
+        } else {
+          response(
+            '2fa code invalid or expired',
+            false,
+            StatusCodes.NOT_FOUND,
+            res
+          )
+        }
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  // #15
+  validate2fa = async (req, res) => {
+    try {
+      const data = await verifyUser(req)
+      const user = await fetch_single_user(req.params.email)
+      const { code } = req.body
+
+      if (!!data || !user.status || !code) {
+        response(
+          !!data
+            ? data
+            : !code
+            ? '2fa code is required'
+            : 'Invalid email address provided',
+          false,
+          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        const codes = user.message['2faCodes']
+        const isAvailable = !!codes.filter((data) => data === code).length
+        if (!isAvailable) {
+          response(
+            '2fa code invalid or expired',
+            false,
+            StatusCodes.NOT_FOUND,
+            res
+          )
+        } else {
+          const newCodes = codes.filter((data) => data !== code)
+          await this.customer.updateOne(
+            {
+              email: req.params.email,
+            },
+            {
+              $set: { '2faCodes': newCodes },
+            }
+          )
+          response('validated', true, StatusCodes.OK, res)
+        }
+      }
+    } catch (error) {}
   }
 }
 
