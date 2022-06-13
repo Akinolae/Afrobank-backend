@@ -1,39 +1,54 @@
 const router = require('express').Router()
 const { transfer } = require('../services/cashTransfer/cashtransfer')
 const { register } = require('../services/Register/register')
-const { getAccountBalance } = require('../services/getBalance/getBalance')
-const { getUser } = require('../services/getUsers/getUsers')
 const { localLogin } = require('../services/login/localLogin')
-const {
-    getTransactionHistory,
-    getSingleTransaction,
-} = require('../services/transactionHistory/getTransactionHistory')
-const { pinReset, createPin } = require('../services/pin/pinreset')
+const { addNewFieldToDb } = require('../services/dbUpdate')
 const { validateAccount } = require('../services/accountValidation')
-const { changePassword } = require('../services/changePassword/changePassword')
+const { getAccountBalance } = require('../services/getBalance/getBalance')
+const { pinReset, createPin } = require('../services/pin/pinreset')
 const {
-    deleteNotification,
-    fetchAllNotifications,
+  getUser,
+  getAllUsers,
+  getProfile,
+} = require('../services/getUsers/getUsers')
+const { activateAccount, deactivateAccount } = require('../services/account')
+const {
+  getTransactionHistory,
+  getSingleTransaction,
+} = require('../services/transactionHistory/getTransactionHistory')
+const {
+  sendOtp,
+  changePassword,
+  forgotPassword,
+} = require('../services/changePassword/index')
+const {
+  deleteNotification,
+  fetchAllNotifications,
 } = require('../services/notifications')
-const {
-    forgotPassword,
-    sendOtp,
-} = require('../services/forgotPassword/fogotPassword')
+const { enable2fa, disable2fa, validate2fa } = require('../services/2fa')
 
-router.delete(`/deleteNotification/`, deleteNotification)
-router.get(`/balance/:id`, getAccountBalance)
-router.get(`/history/:id`, getTransactionHistory)
-router.get('/notifications/:id', fetchAllNotifications)
-router.get(`/transaction/`, getSingleTransaction)
-router.patch(`/createpin`, createPin)
-router.patch(`/forgotPassword`, forgotPassword)
-router.patch(`/changePassword`, changePassword)
 router.post(`/sendOtp`, sendOtp)
+router.post(`/login`, localLogin)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)
-router.post(`/login`, localLogin)
-router.post(`/transfer`, transfer)
-router.post(`/user`, getUser)
+router.get(`/user/:email`, getUser)
 router.post('/validate', validateAccount)
+router.post(`/transfer/:email`, transfer)
+router.post('/newField', addNewFieldToDb)
+router.post('/validate2fa/:email', validate2fa)
+router.patch(`/createpin/:email`, createPin)
+router.get(`/balance/:id`, getAccountBalance)
+router.get(`/getAllUsers/:email`, getAllUsers)
+router.get(`/getProfile/:email`, getProfile)
+router.patch(`/changePassword/:email`, changePassword)
+router.patch(`/forgotPassword`, forgotPassword)
+router.patch(`/acivate/:email`, activateAccount)
+router.patch(`/enable2fa/:email`, enable2fa)
+router.patch(`/disable2fa/:email`, disable2fa)
+router.get(`/history/:id`, getTransactionHistory)
+router.get(`/transaction/`, getSingleTransaction)
+router.patch(`/deactivate/:email`, deactivateAccount)
+router.get('/notifications/:id', fetchAllNotifications)
+router.delete(`/deleteNotification/`, deleteNotification)
 
 module.exports = router

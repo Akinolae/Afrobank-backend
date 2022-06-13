@@ -3,77 +3,95 @@ const jwt = require('jsonwebtoken')
 const encrypt = require('bcryptjs')
 
 const fetch_single_user = async (email) => {
-    try {
-        const isAvailable = await customer.findOne({ email })
-        if (isAvailable === null || isAvailable === 'undefined') {
-            return {
-                status: false,
-                message: 'invalid email address or password',
-            }
-        } else {
-            return { status: true, message: isAvailable }
-        }
-    } catch (err) {
-        throw err
-    }
+  try {
+    const isAvailable = await customer.findOne({ email })
+    if (isAvailable === null || isAvailable === 'undefined')
+      return {
+        status: false,
+        message: 'invalid email address or password',
+      }
+    else return { status: true, message: isAvailable }
+  } catch (err) {
+    throw err
+  }
 }
 
 const verifyAccountNumber = async (accountNumber) => {
-    try {
-        const isUserAvailable = await customer.findOne({ accountNumber })
-        if (isUserAvailable === null || isUserAvailable === 'undefined') {
-            return { status: false, message: 'Unable to verify account number' }
-        } else {
-            return { status: true, user: isUserAvailable }
-        }
-    } catch (error) {
-        throw error
-    }
+  try {
+    const isUserAvailable = await customer.findOne({ accountNumber })
+    if (isUserAvailable === null || isUserAvailable === 'undefined')
+      return { status: false, message: 'Unable to verify account number' }
+    else return { status: true, user: isUserAvailable }
+  } catch (error) {
+    throw error
+  }
 }
 
 const login_notify = (data) => {
-    const date = new Date()
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-    const customerCareLine = '08183430438'
+  const date = new Date()
+  const hours = date.getHours()
+  const minutes = date.getMinutes()
+  const customerCareLine = '08183430438'
 
-    const msg = `  <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
+  const msg = `  <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
     <p>Dear <strong> ${data.firstName} ${data.lastName} ${data.surName} </strong></p>
     <p>A login attempt was made in your account at <strong>${hours}:${minutes}</strong>.</p>
     <p>If this is you kindly ignore, else, contact us at <strong>${customerCareLine}</strong>.</p><br>
 
     <p>Thank you for choosing AfroBank.</p> 
 `
-    return msg
+  return msg
 }
 
 const generateUserAccessToken = (payload) => {
-    return jwt.sign(payload, process.env.TOKEN_SECRET)
+  return jwt.sign(payload, process.env.TOKEN_SECRET)
 }
 
 const verifyUserAccessToken = (token) => {
-    return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
-        if (err) throw err
-        else return data
-    })
+  return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
+    if (err) return false
+    else return data
+  })
 }
 
 const hashPassword = async (password, length = 15) => {
-    const hash = await encrypt.hash(password, length)
-    return hash
+  const hash = await encrypt.hash(password, length)
+  return hash
 }
 
 const decryptPassword = (password1, password2) => {
-    const decrypt = encrypt.compare(password1, password2)
-    return decrypt
+  const decrypt = encrypt.compare(password1, password2)
+  return decrypt
+}
+
+const verifyUser = async (req) => {
+  const authToken = req.headers.authorization
+  const token = !!authToken && authToken.split(' ')[1]
+  const verify = verifyUserAccessToken(token)
+  const data = await fetch_single_user(req.params.email)
+  if (!token) return 'no token provided'
+  else if (!verify || !data.status) return 'Invalid token'
+  else if (verify.email.toLowerCase() !== data.message.email.toLowerCase()) {
+    return 'Unauthorized user'
+  }
+}
+
+const isAdmin = (params) => {
+  if (params === 'admin') {
+    return true
+  } else {
+    return false
+  }
 }
 
 module.exports = {
-    fetch_single_user,
-    login_notify,
-    generateUserAccessToken,
-    verifyUserAccessToken,
-    hashPassword,
-    decryptPassword,
-    verifyAccountNumber,
+  isAdmin,
+  fetch_single_user,
+  login_notify,
+  generateUserAccessToken,
+  verifyUserAccessToken,
+  hashPassword,
+  decryptPassword,
+  verifyAccountNumber,
+  verifyUser,
 }
