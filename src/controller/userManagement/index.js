@@ -529,7 +529,9 @@ class UserManagement {
           response('validated', true, StatusCodes.OK, res)
         }
       }
-    } catch (error) {}
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
   }
 }
 
