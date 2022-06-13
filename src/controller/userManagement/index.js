@@ -121,7 +121,10 @@ class UserManagement {
               res
             )
           } else {
-            const token = generateUserAccessToken(data.message.id)
+            const token = generateUserAccessToken({
+              id: data.message.id,
+              email: data.message.email,
+            })
             await newSchema({
               model: this.customer,
               email: data.message.email,
