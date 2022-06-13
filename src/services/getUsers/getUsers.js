@@ -1,4 +1,4 @@
-const { user, UserManagement } = require('../../controller/userManagement')
+const { user } = require('../../controller/userManagement')
 
 module.exports = {
   getUser: (req, res) => {
@@ -6,5 +6,8 @@ module.exports = {
   },
   getAllUsers: (req, res) => {
     user.getUsers(req, res)
+  },
+  getProfile: (req, res) => {
+    user.getProfile(req, res)
   },
 }

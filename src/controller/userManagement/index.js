@@ -121,26 +121,14 @@ class UserManagement {
               res
             )
           } else {
-            const userData = {
-              id: data.message.id,
-              firstName: data.message.firstName,
-              lastName: data.message.lastName,
-              email: data.message.email,
-              accountNumber: data.message.accountNumber,
-              pin: data.message.pin,
-              accountBalance: data.message.accountBalance,
-              account: data.message.account,
-              active: data.message.active,
-            }
-
-            const token = generateUserAccessToken(userData)
+            const token = generateUserAccessToken(data.message.id)
             await newSchema({
               model: this.customer,
               email: data.message.email,
               payload: token,
             })
 
-            response({ ...userData, token }, true, 200, res)
+            response({ token }, true, 200, res)
           }
         } else {
           response(data.message, false, StatusCodes.FORBIDDEN, res)
@@ -240,6 +228,7 @@ class UserManagement {
     await updateNotification(this.customer, accountNumber, message)
   }
 
+  // #7
   activateUser = async (req, res) => {
     try {
       const data = await verifyUser(req)
@@ -277,7 +266,7 @@ class UserManagement {
     }
   }
 
-  // #7
+  // #8
   deActivateUser = async (req, res) => {
     try {
       const data = await verifyUser(req)
@@ -320,7 +309,7 @@ class UserManagement {
     }
   }
 
-  // #8
+  // #9
   deleteNotification = async (accountNumber, index, res) => {
     try {
       const resp = await deleteNotification(this.customer, accountNumber, index)
@@ -332,7 +321,7 @@ class UserManagement {
     }
   }
 
-  // #9
+  // #10
   getNotifications = async (accountNumber, res) => {
     try {
       const data = await fetchAllNotifications(accountNumber)
@@ -347,7 +336,7 @@ class UserManagement {
     }
   }
 
-  // #10
+  // #11
   changePassword = async (password, req, res) => {
     try {
       const data = await verifyUser(req)
@@ -377,7 +366,7 @@ class UserManagement {
     }
   }
 
-  // #11
+  // #12
   sendPasswordOtp = async (email, res) => {
     const code = createPin(5)
     const otp = await hashPassword(code)
@@ -394,7 +383,7 @@ class UserManagement {
     }
   }
 
-  // #12
+  // #13
   forgotPassword = async (accountNumber, pin, res) => {
     if (!!accountNumber && !!pin) {
       try {
@@ -423,7 +412,7 @@ class UserManagement {
     }
   }
 
-  // #13
+  // #14
   createNewField = async () => {
     try {
       await addNewField('2faEnabled', false)
@@ -432,7 +421,7 @@ class UserManagement {
     }
   }
 
-  // #14
+  // #15
   enable2fa = async (req, res) => {
     const length = 5
     let codes = []
@@ -458,7 +447,7 @@ class UserManagement {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
-  // #15
+  // #16
   disable2fa = async (req, res) => {
     try {
       const data = await verifyUser(req)
@@ -495,7 +484,7 @@ class UserManagement {
     }
   }
 
-  // #15
+  // #17
   validate2fa = async (req, res) => {
     try {
       const data = await verifyUser(req)
@@ -528,6 +517,26 @@ class UserManagement {
           await update2faCodes(req.params.email, newCodes)
           response('validated', true, StatusCodes.OK, res)
         }
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  // #18
+  getProfile = async (req, res) => {
+    try {
+      const data = await verifyUser(req)
+      const user = await fetch_single_user(req.params.email)
+      if (!!data || !user.status) {
+        response(
+          data || 'Invalid email address provided',
+          false,
+          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        response(user.message, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)

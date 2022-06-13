@@ -6,7 +6,11 @@ const { addNewFieldToDb } = require('../services/dbUpdate')
 const { validateAccount } = require('../services/accountValidation')
 const { getAccountBalance } = require('../services/getBalance/getBalance')
 const { pinReset, createPin } = require('../services/pin/pinreset')
-const { getUser, getAllUsers } = require('../services/getUsers/getUsers')
+const {
+  getUser,
+  getAllUsers,
+  getProfile,
+} = require('../services/getUsers/getUsers')
 const { activateAccount, deactivateAccount } = require('../services/account')
 const {
   getTransactionHistory,
@@ -35,6 +39,7 @@ router.post('/validate2fa/:email', validate2fa)
 router.patch(`/createpin/:email`, createPin)
 router.get(`/balance/:id`, getAccountBalance)
 router.get(`/getAllUsers/:email`, getAllUsers)
+router.get(`/getProfile/:email`, getProfile)
 router.patch(`/changePassword/:email`, changePassword)
 router.patch(`/forgotPassword`, forgotPassword)
 router.patch(`/acivate/:email`, activateAccount)
