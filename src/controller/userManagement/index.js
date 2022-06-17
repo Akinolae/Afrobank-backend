@@ -189,6 +189,7 @@ class UserManagement {
               phoneNumber: user.phoneNumber,
               transactions: user.transactions,
               userId: user._id,
+              active: user.active,
             }))
           response(allUsers, true, StatusCodes.OK, res)
         } else {
