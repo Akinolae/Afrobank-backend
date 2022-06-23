@@ -8,6 +8,12 @@ const generate_account_no = () => {
 
 const createAccountNumber = async () => {
   try {
+    /*
+      1. Generates a unique account Number
+      2. Checks if the accountNumber exists or tied to a user
+      3. If it exists create another one 
+      4. Return the accountNumber if it's not tied to a user
+    */
     let accountNumber
     let isAccountNumberExists
     do {
