@@ -19,7 +19,10 @@ const createAccountNumber = async () => {
     do {
       accountNumber = generate_account_no()
       isAccountNumberExists = await verifyAccountNumber(accountNumber)
-    } while (isAccountNumberExists.status)
+    } while (
+      isAccountNumberExists.status ||
+      accountNumber.toString().length !== 10
+    )
     return accountNumber
   } catch (error) {
     throw error
