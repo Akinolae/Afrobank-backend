@@ -5,7 +5,12 @@ You get a virtual account when you register, after registering you can use the a
 
 ```
 clone the repo
-add a .env file DB_CONNECT=mongoDB database
+add a .env file 
+
+NODE_ENV=**********
+DB_CONNECT=**********
+TOKEN_SECRET=**********
+DEFAULT_BALANCE=**********
 ```
 ```
 npm install
