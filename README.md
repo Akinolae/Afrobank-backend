@@ -8,6 +8,9 @@ clone the repo
 add a .env file DB_CONNECT=mongoDB database
 ```
 ```
+npm install
+```
+```
 npm run dev
 ```
 **KEY TAKEAWAY**
