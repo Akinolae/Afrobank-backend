@@ -3,6 +3,13 @@
 AfrobankAPI is the backend that powers the afrobank app
 You get a virtual account when you register, after registering you can use the account number created to initiate transacttions.
 
+```
+clone the repo
+add a .env file DB_CONNECT=mongoDB database
+```
+```
+npm run dev
+```
 **KEY TAKEAWAY**
 
 1. you can recieve money (demo money)
