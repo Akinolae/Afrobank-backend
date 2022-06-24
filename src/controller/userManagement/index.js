@@ -134,7 +134,7 @@ class UserManagement {
             response({ email: data.message.email, token }, true, 200, res)
           }
         } else {
-          response(data.message, false, StatusCodes.FORBIDDEN, res)
+          response(data.message, false, StatusCodes.UNAUTHORIZED, res)
         }
       }
     } catch (error) {

@@ -65,12 +65,18 @@ const appConfig = (config, params) => {
   else if (typeof type !== 'string') error('app type must be a string')
   // Runs configuration based on the config type specified
   // makes it easier to add other configurations, dynamically
-  else
-    type === 'db'
-      ? dbConfig(params)
-      : type === 'email'
-      ? emailConfig(params)
-      : null
+  else {
+    switch (type) {
+      case 'db':
+        dbConfig(params)
+        return true
+      case 'email':
+        emailConfig(params)
+        return true
+      default:
+        return null
+    }
+  }
 }
 
 module.exports = { appConfig }
