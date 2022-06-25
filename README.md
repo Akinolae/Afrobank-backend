@@ -18,12 +18,16 @@ npm install
 ```
 npm run dev
 ```
-**KEY TAKEAWAY**
+# KEY TAKEAWAY
 
+```
 1. you can recieve money (demo money)
 2. you can transfer money
 3. you have access to updated transactions history
 4. get single updated transaction record
+5. Has 2FA feature for security
+```
+
 
 [AFROBANK](https://afrobank.herokuapp.com/Api/v1 'Afrobank')
 
