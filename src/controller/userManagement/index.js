@@ -584,26 +584,23 @@ class UserManagement {
         fetch_single_user(req.params.email),
       ])
 
-      if (!!resp[0].value || !resp[1].status) {
+      if (
+        !!resp[0].value ||
+        !resp[1].status ||
+        !resp[1].value.message['2faEnabled']
+      ) {
         response(
-          resp[0].value || 'Invalid email address provided',
+          resp[0].value || !resp[1].value.message['2faEnabled']
+            ? 'You do not have 2FA enabled'
+            : 'Invalid email address provided',
           false,
           !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        if (!resp[1].value.message['2faEnabled']) {
-          response(
-            'You do not have 2FA enabled',
-            true,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
-        } else {
-          const { codes, hashedCodes } = await generate2FAcodes()
-          await update2fa(req.params.email, true, hashedCodes)
-          response(codes, true, StatusCodes.OK, res)
-        }
+        const { codes, hashedCodes } = await generate2FAcodes()
+        await update2fa(req.params.email, true, hashedCodes)
+        response(codes, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
