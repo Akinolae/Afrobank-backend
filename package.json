@@ -12,7 +12,8 @@
   "scripts": {
     "dev": " nodemon ./src/afrobankserver.js",
     "start": "node ./src/afrobankserver.js",
-    "cleanup": "rm -rf node_modules && npm run install"
+    "cleanup": "rm -rf node_modules && npm run install",
+    "test": "jest"
   },
   "author": "Akinola Makinde <https://github.com/Akinolae>",
   "license": "ISC",

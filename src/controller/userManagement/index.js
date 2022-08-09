@@ -166,31 +166,42 @@ class UserManagement {
   // #4
   getUsers = async (req, res) => {
     try {
-      const data = await verifyUser(req)
-      const user = await fetch_single_user(req.params.email)
+      const resp = await Promise.allSettled([
+        verifyUser(req),
+        fetch_single_user(req.params.email),
+      ])
 
-      if (!!data || !user.status) {
+      const { account } = resp[1].value.message
+
+      if (!!resp[0].value || !resp[1].status) {
         response(
-          data || "User doesn't exist" || 'Unable to fetch user',
+          resp[0].value || "User doesn't exist",
           false,
           StatusCodes.UNAUTHORIZED,
           res
         )
       } else {
-        if (isAdmin(user.message.account)) {
+        if (isAdmin(account)) {
           const resp = await getAllUsers()
           const allUsers = resp.message
             .filter((data) => data.account !== 'admin')
-            .map((user) => ({
-              accountNumber: user.accountNumber,
-              accountBalance: user.accountBalance,
-              email: user.email,
-              name: `${user.firstName} ${user.lastName}`,
-              phoneNumber: user.phoneNumber,
-              transactions: user.transactions,
-              userId: user._id,
-              active: user.active,
-            }))
+            .map(
+              ({
+                firstName,
+                lastName,
+                gender,
+                transactions,
+                accountBalance,
+                phoneNumber,
+              }) => ({
+                name: `${firstName} ${lastName}`,
+                gender,
+                transactions,
+                accountBalance,
+                phoneNumber,
+              })
+            )
+            .sort()
           response(allUsers, true, StatusCodes.OK, res)
         } else {
           response(
