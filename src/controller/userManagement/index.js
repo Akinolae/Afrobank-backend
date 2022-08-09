@@ -131,7 +131,16 @@ class UserManagement {
               payload: token,
             })
 
-            response({ email: data.message.email, token }, true, 200, res)
+            response(
+              {
+                email: data.message.email,
+                token,
+                has2fa: data.message['2faEnabled'],
+              },
+              true,
+              200,
+              res
+            )
           }
         } else {
           response(data.message, false, StatusCodes.UNAUTHORIZED, res)
@@ -175,7 +184,7 @@ class UserManagement {
         ? isAdmin(resp[1].value.message.account)
         : ''
 
-      if (!!resp[0].value || !resp[1].status) {
+      if (!!resp[0].value || !resp[1].status || !isUserAdmin) {
         response(
           resp[0].value || "User doesn't exist",
           false,
