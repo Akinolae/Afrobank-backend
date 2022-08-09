@@ -449,25 +449,40 @@ class UserManagement {
 
   // #15
   enable2fa = async (req, res) => {
-    const length = 5
-    let codes = []
-    for (var i = 0; i <= length; i++) {
-      const code = createPin(6)
-      codes.push(code)
-    }
     try {
-      const data = await verifyUser(req)
-      const user = await fetch_single_user(req.params.email)
-      if (!!data || !user.status) {
+      const resp = await Promise.allSettled([
+        verifyUser(req),
+        fetch_single_user(req.params.email),
+      ])
+      if (!!resp[0].value || !resp[1].status) {
         response(
-          data || 'Invalid email address provided',
+          resp[0].value || 'Invalid email address provided',
           false,
-          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        await update2fa(req.params.email, true, codes)
-        response('2fa enabled successfully', true, StatusCodes.OK, res)
+        if (resp[1].value.message['2faEnabled']) {
+          response(
+            '2fa is currently active',
+            true,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          const length = 5
+          let hashedCodes = []
+          let codes = []
+
+          for (var i = 0; i <= length; i++) {
+            const code = createPin(6)
+            codes.push(code)
+            hashedCodes.push(await hashPassword(code))
+          }
+
+          await update2fa(req.params.email, true, hashedCodes)
+          response({ codes: codes }, true, StatusCodes.OK, res)
+        }
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
@@ -513,24 +528,40 @@ class UserManagement {
   // #17
   validate2fa = async (req, res) => {
     try {
-      const data = await verifyUser(req)
-      const user = await fetch_single_user(req.params.email)
       const { code } = req.body
+      const resp = await Promise.allSettled([
+        verifyUser(req),
+        fetch_single_user(req.params.email),
+      ])
 
-      if (!!data || !user.status || !code) {
+      if (!!resp[0].value || !resp[1].status || !code) {
         response(
-          !!data
-            ? data
+          !!resp[0].value
+            ? resp[0].value
             : !code
             ? '2fa code is required'
             : 'Invalid email address provided',
           false,
-          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        const codes = user.message['2faCodes']
-        const isAvailable = !!codes.filter((data) => data === code).length
+        const codes = resp[1].value.message['2faCodes']
+        let responseValue = []
+        await Promise.all(
+          codes.map(async (data) => {
+            const isValid =
+              !!data && (await decryptPassword(String(code), data))
+            responseValue.push({
+              isValid,
+              data,
+            })
+          })
+        )
+
+        const isAvailable = responseValue.filter(
+          ({ isValid }) => isValid === true
+        ).length
         if (!isAvailable) {
           response(
             '2fa code invalid or expired',
@@ -539,7 +570,9 @@ class UserManagement {
             res
           )
         } else {
-          const newCodes = codes.filter((data) => data !== code)
+          const newCodes = responseValue.map(({ isValid, data }) =>
+            !isValid ? data : ''
+          )
           await update2faCodes(req.params.email, newCodes)
           response('validated', true, StatusCodes.OK, res)
         }
