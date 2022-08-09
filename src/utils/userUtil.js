@@ -1,6 +1,7 @@
 const customer = require('../model/customer')
 const jwt = require('jsonwebtoken')
 const encrypt = require('bcryptjs')
+const { createPin } = require('./pinUtils')
 
 const fetch_single_user = async (email) => {
   try {
@@ -54,14 +55,45 @@ const verifyUserAccessToken = (token) => {
   })
 }
 
+const generate2FAcodes = async () => {
+  const length = 5
+  let hashedCodes = []
+  let codes = []
+
+  for (var i = 0; i <= length; i++) {
+    const code = createPin(6)
+    codes.push(code)
+    hashedCodes.push(await hashPassword(code))
+  }
+  return {
+    hashedCodes,
+    codes,
+  }
+}
+
 const hashPassword = async (password, length = 15) => {
   const hash = await encrypt.hash(password, length)
   return hash
 }
 
-const decryptPassword = (password1, password2) => {
-  const decrypt = encrypt.compare(password1, password2)
+const decryptPassword = async (password1, password2) => {
+  const decrypt = await encrypt.compare(password1, password2)
   return decrypt
+}
+
+const validate2FA = async (codes = [], code) => {
+  let responseValue = []
+  await Promise.all(
+    codes.map(async (data) => {
+      const isValid = !!data && (await decryptPassword(String(code), data))
+      responseValue.push({
+        isValid,
+        data,
+      })
+    })
+  )
+
+  return responseValue
 }
 
 const verifyUser = async (req) => {
@@ -86,12 +118,14 @@ const isAdmin = (params) => {
 
 module.exports = {
   isAdmin,
-  fetch_single_user,
-  login_notify,
-  generateUserAccessToken,
-  verifyUserAccessToken,
-  hashPassword,
-  decryptPassword,
-  verifyAccountNumber,
   verifyUser,
+  validate2FA,
+  hashPassword,
+  login_notify,
+  decryptPassword,
+  generate2FAcodes,
+  fetch_single_user,
+  verifyAccountNumber,
+  verifyUserAccessToken,
+  generateUserAccessToken,
 }

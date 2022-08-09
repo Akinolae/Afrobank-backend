@@ -25,7 +25,12 @@ const {
   deleteNotification,
   fetchAllNotifications,
 } = require('../services/notifications')
-const { enable2fa, disable2fa, validate2fa } = require('../services/2fa')
+const {
+  enable2fa,
+  disable2fa,
+  validate2fa,
+  requestCodes,
+} = require('../services/2fa')
 
 router.post(`/sendOtp`, sendOtp)
 router.post(`/login`, localLogin)
@@ -48,6 +53,7 @@ router.patch(`/disable2fa/:email`, disable2fa)
 router.get(`/history/:id`, getTransactionHistory)
 router.get(`/transaction/`, getSingleTransaction)
 router.patch(`/deactivate/:email`, deactivateAccount)
+router.patch(`/new2FAcodes/:email`, requestCodes)
 router.get('/notifications/:id', fetchAllNotifications)
 router.delete(`/deleteNotification/`, deleteNotification)
 

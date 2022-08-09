@@ -10,4 +10,7 @@ module.exports = {
   validate2fa: (req, res) => {
     user.validate2fa(req, res)
   },
+  requestCodes: (req, res) => {
+    user.requestCodes(req, res)
+  },
 }
