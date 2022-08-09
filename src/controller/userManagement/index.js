@@ -171,7 +171,9 @@ class UserManagement {
         fetch_single_user(req.params.email),
       ])
 
-      const { account } = resp[1].value.message
+      const isUserAdmin = !!resp[1].value.message
+        ? isAdmin(resp[1].value.message.account)
+        : ''
 
       if (!!resp[0].value || !resp[1].status) {
         response(
@@ -181,7 +183,7 @@ class UserManagement {
           res
         )
       } else {
-        if (isAdmin(account)) {
+        if (isUserAdmin) {
           const resp = await getAllUsers()
           const allUsers = resp.message
             .filter((data) => data.account !== 'admin')
