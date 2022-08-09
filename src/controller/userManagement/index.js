@@ -37,6 +37,7 @@ const {
   verifyUser,
   hashPassword,
   decryptPassword,
+  generate2FAcodes,
   fetch_single_user,
   verifyAccountNumber,
 } = require('../../utils/userUtil')
@@ -470,18 +471,9 @@ class UserManagement {
             res
           )
         } else {
-          const length = 5
-          let hashedCodes = []
-          let codes = []
-
-          for (var i = 0; i <= length; i++) {
-            const code = createPin(6)
-            codes.push(code)
-            hashedCodes.push(await hashPassword(code))
-          }
-
+          const { codes, hashedCodes } = await generate2FAcodes()
           await update2fa(req.params.email, true, hashedCodes)
-          response({ codes: codes }, true, StatusCodes.OK, res)
+          response(codes, true, StatusCodes.OK, res)
         }
       }
     } catch (error) {
@@ -575,6 +567,39 @@ class UserManagement {
           )
           await update2faCodes(req.params.email, newCodes)
           response('validated', true, StatusCodes.OK, res)
+        }
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  requestCodes = async (req, res) => {
+    try {
+      const resp = await Promise.allSettled([
+        verifyUser(req),
+        fetch_single_user(req.params.email),
+      ])
+
+      if (!!resp[0].value || !resp[1].status) {
+        response(
+          resp[0].value || 'Invalid email address provided',
+          false,
+          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        if (!resp[1].value.message['2faEnabled']) {
+          response(
+            'You do not have 2FA enabled',
+            true,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          const { codes, hashedCodes } = await generate2FAcodes()
+          await update2fa(req.params.email, true, hashedCodes)
+          response(codes, true, StatusCodes.OK, res)
         }
       }
     } catch (error) {
