@@ -35,6 +35,7 @@ const {
 const {
   isAdmin,
   verifyUser,
+  validate2FA,
   hashPassword,
   decryptPassword,
   generate2FAcodes,
@@ -483,23 +484,36 @@ class UserManagement {
   // #16
   disable2fa = async (req, res) => {
     try {
-      const data = await verifyUser(req)
-      const user = await fetch_single_user(req.params.email)
+      const resp = await Promise.allSettled([
+        verifyUser(req),
+        fetch_single_user(req.params.email),
+      ])
       const { code } = req.body
-      if (!!data || !user.status || !code) {
+      if (
+        resp[0].value ||
+        !resp[1].status ||
+        !resp[1].value.message['2faEnabled'] ||
+        !code
+      ) {
         response(
-          !!data
-            ? data
+          !!resp[0].value
+            ? resp[0].value
             : !code
             ? '2fa code is required'
-            : 'Invalid email address provided',
+            : !resp[1].value.message['2faEnabled']
+            ? "You don't have 2FA enabled"
+            : 'Invalid email address',
           false,
-          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        const codes = user.message['2faCodes']
-        const isAvailable = !!codes.filter((data) => data === code).length
+        const codes = resp[1].value.message['2faCodes']
+        let responseValue = await validate2FA(codes, code)
+        const isAvailable = responseValue.filter(
+          ({ isValid }) => isValid === true
+        ).length
+
         if (isAvailable) {
           await update2fa(req.params.email, false, [])
           response('2fa disabled successfully', true, StatusCodes.OK, res)
@@ -539,18 +553,7 @@ class UserManagement {
         )
       } else {
         const codes = resp[1].value.message['2faCodes']
-        let responseValue = []
-        await Promise.all(
-          codes.map(async (data) => {
-            const isValid =
-              !!data && (await decryptPassword(String(code), data))
-            responseValue.push({
-              isValid,
-              data,
-            })
-          })
-        )
-
+        const responseValue = await validate2FA(codes, code)
         const isAvailable = responseValue.filter(
           ({ isValid }) => isValid === true
         ).length

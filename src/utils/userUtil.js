@@ -81,6 +81,21 @@ const decryptPassword = async (password1, password2) => {
   return decrypt
 }
 
+const validate2FA = async (codes = [], code) => {
+  let responseValue = []
+  await Promise.all(
+    codes.map(async (data) => {
+      const isValid = !!data && (await decryptPassword(String(code), data))
+      responseValue.push({
+        isValid,
+        data,
+      })
+    })
+  )
+
+  return responseValue
+}
+
 const verifyUser = async (req) => {
   const authToken = req.headers.authorization
   const token = !!authToken && authToken.split(' ')[1]
@@ -103,13 +118,14 @@ const isAdmin = (params) => {
 
 module.exports = {
   isAdmin,
-  fetch_single_user,
-  login_notify,
-  generateUserAccessToken,
-  verifyUserAccessToken,
-  hashPassword,
-  decryptPassword,
-  verifyAccountNumber,
   verifyUser,
+  validate2FA,
+  hashPassword,
+  login_notify,
+  decryptPassword,
   generate2FAcodes,
+  fetch_single_user,
+  verifyAccountNumber,
+  verifyUserAccessToken,
+  generateUserAccessToken,
 }
