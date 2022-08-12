@@ -584,14 +584,24 @@ class UserManagement {
         fetch_single_user(req.params.email),
       ])
 
+      const codeNumber = resp[1].value.message['2faCodes'].filter(
+        (data) => !!data
+      )
+
+      const canRequestCode = codeNumber.length >= 1
       if (
         !!resp[0].value ||
         !resp[1].status ||
-        !resp[1].value.message['2faEnabled']
+        !resp[1].value.message['2faEnabled'] ||
+        canRequestCode
       ) {
         response(
-          resp[0].value || !resp[1].value.message['2faEnabled']
+          resp[0].value
+            ? resp[0].value
+            : !resp[1].value.message['2faEnabled']
             ? 'You do not have 2FA enabled'
+            : canRequestCode
+            ? 'You cannot reset codes at this time'
             : 'Invalid email address provided',
           false,
           !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
