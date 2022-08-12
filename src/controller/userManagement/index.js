@@ -104,12 +104,13 @@ class UserManagement {
           res
         )
       } else {
-        const data = await fetch_single_user(userEmail.trim())
-        if (data.status) {
-          if (
-            data.message.email !== userEmail.trim() ||
-            !(await decryptPassword(userPassword.trim(), data.message.password))
-          ) {
+        const { message, status } = await fetch_single_user(userEmail.trim())
+        const { email, password } = message
+        const isValidUser =
+          email !== userEmail.trim() ||
+          !(await decryptPassword(userPassword.trim(), password))
+        if (status) {
+          if (isValidUser) {
             response(
               user_login.invalid_credentials,
               false,
@@ -230,67 +231,42 @@ class UserManagement {
 
   // #7
   activateUser = async (req, res) => {
+    const reqEvent =
+      req.url.split('/')[1] === 'activate'
+        ? 'activate'
+        : req.url.split('/')[1] === 'deactivate'
+        ? 'deactivate'
+        : ''
+
     try {
-      const data = await verifyUser(req)
-      const resp = await Promise.allSettled([
+      const [verify, admin, user] = await Promise.all([
+        verifyUser(req),
         fetch_single_user(req.params.email),
         fetch_single_user(req.body.email),
       ])
 
-      const hasErrors = !!resp.filter((data) => data.value.status === false)
-        .length
-      if (!!data || !!hasErrors) {
+      if (!!verify || !admin.status || !user.status || !reqEvent) {
         response(
-          data || "Couldn't complete request, check credentials",
+          verify
+            ? verify
+            : !reqEvent
+            ? 'Invalid url'
+            : "Couldn't complete request, check credentials",
           false,
-          !!hasErrors
+          !admin.status || !user.status
             ? StatusCodes.UNPROCESSABLE_ENTITY
             : StatusCodes.UNAUTHORIZED,
           res
         )
       } else {
-        if (isAdmin(resp[0].value.message.account)) {
-          await accountActivation(req.body.email, true)
-          response('account activated successfully', true, StatusCodes.OK, res)
-        } else {
+        if (!isAdmin(admin.message.account)) {
+          reqEvent === 'activate'
+            ? await accountActivation(req.body.email, true)
+            : await accountActivation(req.body.email, false)
           response(
-            'You are not authorized to do that',
-            false,
-            StatusCodes.UNAUTHORIZED,
-            res
-          )
-        }
-      }
-    } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
-    }
-  }
-
-  // #8
-  deActivateUser = async (req, res) => {
-    try {
-      const data = await verifyUser(req)
-      const resp = await Promise.allSettled([
-        fetch_single_user(req.params.email),
-        fetch_single_user(req.body.email),
-      ])
-
-      const hasErrors = !!resp.filter((data) => data.value.status === false)
-        .length
-      if (!!data || !!hasErrors) {
-        response(
-          data || "Couldn't complete request, check credentials",
-          false,
-          !!hasErrors
-            ? StatusCodes.UNPROCESSABLE_ENTITY
-            : StatusCodes.UNAUTHORIZED,
-          res
-        )
-      } else {
-        if (isAdmin(resp[0].value.message.account)) {
-          await accountActivation(req.body.email, false)
-          response(
-            'account deactivated successfully',
+            reqEvent === 'activate'
+              ? 'account activated successfully'
+              : 'account deactivated successfully',
             true,
             StatusCodes.OK,
             res
