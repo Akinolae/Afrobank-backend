@@ -11,7 +11,7 @@ const {
   getAllUsers,
   getProfile,
 } = require('../services/getUsers/getUsers')
-const { activateAccount, deactivateAccount } = require('../services/account')
+const { activateAccount } = require('../services/account')
 const {
   getTransactionHistory,
   getSingleTransaction,
