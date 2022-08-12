@@ -178,7 +178,7 @@ class UserManagement {
       if (!!verify || !userData.status || !isUserAdmin) {
         response(
           verify
-            ? "User doesn't exist"
+            ? verify
             : !isUserAdmin
             ? 'You are not authorized to do that'
             : "User doesn't exist",
