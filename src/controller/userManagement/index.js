@@ -395,7 +395,7 @@ class UserManagement {
   // #14
   createNewField = async () => {
     try {
-      await addNewField('2faEnabled', false)
+      await addNewField('isAdmin', false)
     } catch (error) {
       console.log(error)
     }
