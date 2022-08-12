@@ -31,7 +31,6 @@ const {
   notifications,
 } = require('../../utils/validator')
 const {
-  isAdmin,
   verifyUser,
   validate2FA,
   hashPassword,
@@ -174,13 +173,12 @@ class UserManagement {
       const { verify, userData } = await this.userVerification(req)
       const resp = await getAllUsers()
 
-      const isUserAdmin =
-        !!userData.message && isAdmin(userData.message.account)
+      const isUserAdmin = !!userData.message && userData.message.isAdmin
 
       if (!!verify || !userData.status || !isUserAdmin) {
         response(
           verify
-            ? "User doesn't exist"
+            ? verify
             : !isUserAdmin
             ? 'You are not authorized to do that'
             : "User doesn't exist",
@@ -193,9 +191,15 @@ class UserManagement {
           .filter((data) => data.account !== 'admin')
           .map((data) => ({
             name: `${data.firstName} ${data.lastName}`,
-            ...data,
+            email: data.email,
+            gender: data.gender,
+            id: data._id,
+            accountNumber: data.accountNumber,
+            balance: data.accountBalance,
+            transactions: data.transactions,
           }))
           .sort()
+
         response(allUsers, true, StatusCodes.OK, res)
       }
     } catch (error) {
@@ -240,7 +244,7 @@ class UserManagement {
 
     try {
       const [verify, admin, user] = await Promise.all([
-        verifyUser(req),
+        verifyUser({ email: '', req }),
         fetch_single_user(req.params.email),
         fetch_single_user(req.body.email),
       ])
@@ -259,7 +263,7 @@ class UserManagement {
           res
         )
       } else {
-        if (!isAdmin(admin.message.account)) {
+        if (admin.message.isAdmin) {
           reqEvent === 'activate'
             ? await accountActivation(req.body.email, true)
             : await accountActivation(req.body.email, false)
@@ -315,7 +319,7 @@ class UserManagement {
   // #11
   changePassword = async (password, req, res) => {
     try {
-      const data = await verifyUser(req)
+      const data = await verifyUser({ email: '', req })
       if (!!data || !password) {
         response(
           data || 'Password is required',
@@ -391,7 +395,7 @@ class UserManagement {
   // #14
   createNewField = async () => {
     try {
-      await addNewField('2faEnabled', false)
+      await addNewField('isAdmin', false)
     } catch (error) {
       console.log(error)
     }
@@ -400,19 +404,16 @@ class UserManagement {
   // #15
   enable2fa = async (req, res) => {
     try {
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
-      if (!!resp[0].value || !resp[1].status) {
+      const { userData, verify } = await this.userVerification(req)
+      if (!!verify || !userData.status) {
         response(
-          resp[0].value || 'Invalid email address provided',
+          verify || userData.message,
           false,
-          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        if (resp[1].value.message['2faEnabled']) {
+        if (userData.message['2faEnabled']) {
           response(
             '2fa is currently active',
             true,
@@ -523,7 +524,7 @@ class UserManagement {
 
   userVerification = async (req = '') => {
     const [verify, userData] = await Promise.all([
-      verifyUser(req),
+      verifyUser({ email: '', req: req }),
       fetch_single_user(req.params.email),
     ])
 

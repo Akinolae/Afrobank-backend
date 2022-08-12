@@ -7,9 +7,13 @@ const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
 const { transactionHistory } = require('../../utils/transactionsUtil')
 const { redisGet, redisSet } = require('../../utils/redisUtil')
-const { isPinValid, validateAmount } = require('../../utils')
+const { validateAmount } = require('../../utils')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
-const { verifyAccountNumber, verifyUser } = require('../../utils/userUtil')
+const {
+  verifyAccountNumber,
+  verifyUser,
+  decryptPassword,
+} = require('../../utils/userUtil')
 
 class Transactions {
   constructor(_customer_) {
@@ -24,76 +28,68 @@ class Transactions {
       pin,
     })
 
-    const data = await verifyUser(req)
-    if (!!data || !!joi_error.error || sender === recipient) {
+    const [senderDetails, recipientDetails] = await Promise.all([
+      verifyAccountNumber(sender),
+      verifyAccountNumber(recipient),
+    ])
+    const verify = await verifyUser({
+      email: senderDetails.user.email,
+      req: req,
+    })
+
+    if (
+      !!verify ||
+      !!joi_error.error ||
+      !senderDetails.status ||
+      !recipientDetails.status
+    ) {
       response(
-        !!data
-          ? data
+        !!verify
+          ? verify
           : !!joi_error.error
           ? joi_error.error.details[0].message
+          : !senderDetails.status
+          ? senderDetails.message
+          : !recipientDetails.status
+          ? recipientDetails.message
           : transfer.single_user,
         false,
-        !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.UNPROCESSABLE_ENTITY,
+        !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
     } else {
       try {
-        const resp = await Promise.allSettled([
-          verifyAccountNumber(sender),
-          verifyAccountNumber(recipient),
-        ])
+        const userPin = senderDetails.user.pin
+        const valRes = validateAmount(senderDetails.user, amount)
+        const pinValidation = await decryptPassword(pin, userPin)
 
-        const hasErrors = !!resp.filter((data) => data.value.status === false)
-          .length
-        const invalidSenderAcc =
-          typeof resp[0].value.message === 'string' ? resp[0].value.message : ''
-        const invalidRecipientAcc =
-          typeof resp[1].value.message === 'string' ? resp[1].value.message : ''
-
-        if (hasErrors) {
+        if (!pinValidation || !!valRes) {
           response(
-            invalidSenderAcc || invalidRecipientAcc,
+            !pinValidation ? transfer.pinError : valRes,
             false,
-            StatusCodes.NOT_FOUND,
+            StatusCodes.UNPROCESSABLE_ENTITY,
             res
           )
         } else {
-          const userPin = resp[0].value.user.pin
-          const valRes = validateAmount(resp[0].value.user, amount)
-          const pinValidation = !userPin || !(await isPinValid(pin, userPin))
-
-          if (pinValidation) {
-            response(
-              transfer.pinError,
-              false,
-              StatusCodes.UNPROCESSABLE_ENTITY,
-              res
-            )
-          } else {
-            if (!!valRes) {
-              response(valRes, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
-            } else {
-              const transactionData = {
-                senderAccountNumber: resp[0].value.user.accountNumber,
-                recipientAccountNumber: resp[0].value.user.accountNumber,
-                recipientName: `${resp[1].value.user.firstName} ${resp[1].value.user.lastName}`,
-                senderName: `${resp[0].value.user.firstName} ${resp[0].value.user.lastName}`,
-                amount,
-                type: 'debit',
-              }
-              const notifyRecipient = `${resp[0].value.user.firstName} ${resp[0].value.user.lastName} just sent you ₦${transactionData.amount}`
-              const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
-              await user.createPushNotification(
-                resp[0].value.user.accountNumber,
-                notifySender
-              )
-              await user.createPushNotification(
-                resp[1].value.user.accountNumber,
-                notifyRecipient
-              )
-              this.completeTransfer(transactionData, res)
-            }
+          const transactionData = {
+            senderAccountNumber: senderDetails.user.accountNumber,
+            recipientAccountNumber: recipientDetails.user.accountNumber,
+            recipientName: `${recipientDetails.user.firstName} ${recipientDetails.user.lastName}`,
+            senderName: `${senderDetails.user.firstName} ${senderDetails.user.lastName}`,
+            amount,
+            type: 'debit',
           }
+          const notifyRecipient = `${senderDetails.user.firstName} ${senderDetails.user.lastName} just sent you ₦${transactionData.amount}`
+          const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
+          await user.createPushNotification(
+            senderDetails.user.accountNumber,
+            notifySender
+          )
+          await user.createPushNotification(
+            recipientDetails.user.accountNumber,
+            notifyRecipient
+          )
+          this.completeTransfer(transactionData, res)
         }
       } catch (error) {
         response(
@@ -123,21 +119,23 @@ class Transactions {
       if (type === 'debit') {
         const senderDesc = `TRX-INTERNAL/${recipientName}`
         const recipientDesc = `TRX-INTERNAL/${senderName}`
+        const [sender, recipient] = await Promise.all([
+          this.updateTransactionHistory(
+            type,
+            senderAccountNumber,
+            amount,
+            senderDesc
+          ),
+          this.updateTransactionHistory(
+            'credit',
+            recipientAccountNumber,
+            amount,
+            recipientDesc
+          ),
+        ])
 
-        const senderResp = await this.updateTransactionHistory(
-          type,
-          senderAccountNumber,
-          amount,
-          senderDesc
-        )
-        const recipientResp = await this.updateTransactionHistory(
-          'credit',
-          recipientAccountNumber,
-          amount,
-          recipientDesc
-        )
-        !!senderResp &&
-          !!recipientResp &&
+        !!sender &&
+          !!recipient &&
           response(
             transfer.success_message(recipientName, amount),
             true,
@@ -146,7 +144,7 @@ class Transactions {
           )
       }
     } catch (error) {
-      response(errpr.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 

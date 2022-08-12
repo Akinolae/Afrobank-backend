@@ -96,11 +96,14 @@ const validate2FA = async (codes = [], code) => {
   return responseValue
 }
 
-const verifyUser = async (req) => {
+const verifyUser = async (params) => {
+  const { email, req } = params
   const authToken = req.headers.authorization
   const token = !!authToken && authToken.split(' ')[1]
   const verify = verifyUserAccessToken(token)
-  const data = await fetch_single_user(req.params.email)
+  const data = await fetch_single_user(
+    !!req.params.email ? req.params.email : email
+  )
   if (!token) return 'no token provided'
   else if (!verify || !data.status) return 'Invalid token'
   else if (verify.email.toLowerCase() !== data.message.email.toLowerCase()) {

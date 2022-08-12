@@ -90,8 +90,8 @@ const customer = new mongoose.Schema({
     type: Number,
     allowNull: false,
   },
-  account: {
-    type: String,
+  isAdmin: {
+    type: Boolean,
     allowNull: false,
   },
   password: {
