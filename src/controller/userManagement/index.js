@@ -244,7 +244,7 @@ class UserManagement {
 
     try {
       const [verify, admin, user] = await Promise.all([
-        verifyUser(req),
+        verifyUser({ email: '', req }),
         fetch_single_user(req.params.email),
         fetch_single_user(req.body.email),
       ])
@@ -319,7 +319,7 @@ class UserManagement {
   // #11
   changePassword = async (password, req, res) => {
     try {
-      const data = await verifyUser(req)
+      const data = await verifyUser({ email: '', req })
       if (!!data || !password) {
         response(
           data || 'Password is required',
@@ -404,19 +404,16 @@ class UserManagement {
   // #15
   enable2fa = async (req, res) => {
     try {
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
-      if (!!resp[0].value || !resp[1].status) {
+      const { userData, verify } = await this.userVerification(req)
+      if (!!verify || !userData.status) {
         response(
-          resp[0].value || 'Invalid email address provided',
+          verify || userData.message,
           false,
-          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        if (resp[1].value.message['2faEnabled']) {
+        if (userData.message['2faEnabled']) {
           response(
             '2fa is currently active',
             true,
@@ -527,7 +524,7 @@ class UserManagement {
 
   userVerification = async (req = '') => {
     const [verify, userData] = await Promise.all([
-      verifyUser(req),
+      verifyUser({ email: '', req: req }),
       fetch_single_user(req.params.email),
     ])
 
