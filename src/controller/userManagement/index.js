@@ -259,7 +259,7 @@ class UserManagement {
           res
         )
       } else {
-        if (!isAdmin(admin.message.account)) {
+        if (isAdmin(admin.message.account)) {
           reqEvent === 'activate'
             ? await accountActivation(req.body.email, true)
             : await accountActivation(req.body.email, false)
