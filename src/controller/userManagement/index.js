@@ -31,7 +31,6 @@ const {
   notifications,
 } = require('../../utils/validator')
 const {
-  isAdmin,
   verifyUser,
   validate2FA,
   hashPassword,
@@ -174,8 +173,7 @@ class UserManagement {
       const { verify, userData } = await this.userVerification(req)
       const resp = await getAllUsers()
 
-      const isUserAdmin =
-        !!userData.message && isAdmin(userData.message.account)
+      const isUserAdmin = !!userData.message && userData.message.isAdmin
 
       if (!!verify || !userData.status || !isUserAdmin) {
         response(
@@ -193,9 +191,15 @@ class UserManagement {
           .filter((data) => data.account !== 'admin')
           .map((data) => ({
             name: `${data.firstName} ${data.lastName}`,
-            ...data,
+            email: data.email,
+            gender: data.gender,
+            id: data._id,
+            accountNumber: data.accountNumber,
+            balance: data.accountBalance,
+            transactions: data.transactions,
           }))
           .sort()
+
         response(allUsers, true, StatusCodes.OK, res)
       }
     } catch (error) {
@@ -259,7 +263,7 @@ class UserManagement {
           res
         )
       } else {
-        if (isAdmin(admin.message.account)) {
+        if (admin.message.isAdmin) {
           reqEvent === 'activate'
             ? await accountActivation(req.body.email, true)
             : await accountActivation(req.body.email, false)
