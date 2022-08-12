@@ -1,5 +1,3 @@
-// @params {_customer_} object required;
-
 require('dotenv').config()
 const model = require('../../model/customer')
 const { response } = require('../responseHandler')
@@ -51,28 +49,8 @@ class UserManagement {
   // #1
   register = async (params, res) => {
     const { firstName, lastName, email, phoneNumber, gender, password } = params
-    const accountNumber = await createAccountNumber(this.customer)
-    const accountBalance = process.env.DEFAULT_BALANCE
-    const hashedPassword = await hashPassword(password)
 
-    const user = {
-      firstName,
-      lastName,
-      email,
-      phoneNumber,
-      gender,
-      accountNumber,
-      accountBalance,
-      password: hashedPassword,
-    }
-    const joi_validate = authSchema.validate({
-      firstName,
-      lastName,
-      email,
-      phoneNumber,
-      gender,
-      password,
-    })
+    const joi_validate = authSchema.validate(params)
     if (!!joi_validate.error) {
       response(
         joi_validate.error.details[0].message,
@@ -82,6 +60,22 @@ class UserManagement {
       )
     } else {
       try {
+        const [accountNumber, hashedPassword] = await Promise.all([
+          createAccountNumber(this.customer),
+          hashPassword(password),
+        ])
+
+        const user = {
+          firstName,
+          lastName,
+          email,
+          phoneNumber,
+          gender,
+          accountNumber,
+          accountBalance: process.env.DEFAULT_BALANCE,
+          password: hashedPassword,
+        }
+
         let user_model = await new this.customer(user)
         await user_model.save()
         response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
@@ -110,12 +104,13 @@ class UserManagement {
           res
         )
       } else {
-        const data = await fetch_single_user(userEmail.trim())
-        if (data.status) {
-          if (
-            data.message.email !== userEmail.trim() ||
-            !(await decryptPassword(userPassword.trim(), data.message.password))
-          ) {
+        const { message, status } = await fetch_single_user(userEmail.trim())
+        const { email, password } = message
+        const isValidUser =
+          email !== userEmail.trim() ||
+          !(await decryptPassword(userPassword.trim(), password))
+        if (status) {
+          if (isValidUser) {
             response(
               user_login.invalid_credentials,
               false,
@@ -156,17 +151,16 @@ class UserManagement {
   // #3
   getUser = async (req, res) => {
     try {
-      const user = await fetch_single_user(req.body.email)
-      const data = await verifyUser(req)
-      if (!!data || !user.status) {
+      const { verify, userData } = await this.userVerification(req)
+      if (!!verify || !userData.status) {
         response(
-          data || "User doesn't exist" || 'Unable to fetch user',
+          userData || "User doesn't exist" || 'Unable to fetch user',
           false,
           StatusCodes.UNAUTHORIZED,
           res
         )
       } else {
-        const { firstName, lastName } = user.message
+        const { firstName, lastName } = userData.message
         response({ firstName, lastName }, true, StatusCodes.OK, res)
       }
     } catch (error) {
@@ -177,53 +171,32 @@ class UserManagement {
   // #4
   getUsers = async (req, res) => {
     try {
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
+      const { verify, userData } = await this.userVerification(req)
+      const resp = await getAllUsers()
 
-      const isUserAdmin = !!resp[1].value.message
-        ? isAdmin(resp[1].value.message.account)
-        : ''
+      const isUserAdmin =
+        !!userData.message && isAdmin(userData.message.account)
 
-      if (!!resp[0].value || !resp[1].status || !isUserAdmin) {
+      if (!!verify || !userData.status || !isUserAdmin) {
         response(
-          resp[0].value || "User doesn't exist",
+          verify
+            ? "User doesn't exist"
+            : !isUserAdmin
+            ? 'You are not authorized to do that'
+            : "User doesn't exist",
           false,
           StatusCodes.UNAUTHORIZED,
           res
         )
       } else {
-        if (isUserAdmin) {
-          const resp = await getAllUsers()
-          const allUsers = resp.message
-            .filter((data) => data.account !== 'admin')
-            .map(
-              ({
-                firstName,
-                lastName,
-                gender,
-                transactions,
-                accountBalance,
-                phoneNumber,
-              }) => ({
-                name: `${firstName} ${lastName}`,
-                gender,
-                transactions,
-                accountBalance,
-                phoneNumber,
-              })
-            )
-            .sort()
-          response(allUsers, true, StatusCodes.OK, res)
-        } else {
-          response(
-            'You are not authorized to do that',
-            false,
-            StatusCodes.UNAUTHORIZED,
-            res
-          )
-        }
+        const allUsers = resp.message
+          .filter((data) => data.account !== 'admin')
+          .map((data) => ({
+            name: `${data.firstName} ${data.lastName}`,
+            ...data,
+          }))
+          .sort()
+        response(allUsers, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
@@ -258,67 +231,42 @@ class UserManagement {
 
   // #7
   activateUser = async (req, res) => {
+    const reqEvent =
+      req.url.split('/')[1] === 'activate'
+        ? 'activate'
+        : req.url.split('/')[1] === 'deactivate'
+        ? 'deactivate'
+        : ''
+
     try {
-      const data = await verifyUser(req)
-      const resp = await Promise.allSettled([
+      const [verify, admin, user] = await Promise.all([
+        verifyUser(req),
         fetch_single_user(req.params.email),
         fetch_single_user(req.body.email),
       ])
 
-      const hasErrors = !!resp.filter((data) => data.value.status === false)
-        .length
-      if (!!data || !!hasErrors) {
+      if (!!verify || !admin.status || !user.status || !reqEvent) {
         response(
-          data || "Couldn't complete request, check credentials",
+          verify
+            ? verify
+            : !reqEvent
+            ? 'Invalid url'
+            : "Couldn't complete request, check credentials",
           false,
-          !!hasErrors
+          !admin.status || !user.status
             ? StatusCodes.UNPROCESSABLE_ENTITY
             : StatusCodes.UNAUTHORIZED,
           res
         )
       } else {
-        if (isAdmin(resp[0].value.message.account)) {
-          await accountActivation(req.body.email, true)
-          response('account activated successfully', true, StatusCodes.OK, res)
-        } else {
+        if (!isAdmin(admin.message.account)) {
+          reqEvent === 'activate'
+            ? await accountActivation(req.body.email, true)
+            : await accountActivation(req.body.email, false)
           response(
-            'You are not authorized to do that',
-            false,
-            StatusCodes.UNAUTHORIZED,
-            res
-          )
-        }
-      }
-    } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
-    }
-  }
-
-  // #8
-  deActivateUser = async (req, res) => {
-    try {
-      const data = await verifyUser(req)
-      const resp = await Promise.allSettled([
-        fetch_single_user(req.params.email),
-        fetch_single_user(req.body.email),
-      ])
-
-      const hasErrors = !!resp.filter((data) => data.value.status === false)
-        .length
-      if (!!data || !!hasErrors) {
-        response(
-          data || "Couldn't complete request, check credentials",
-          false,
-          !!hasErrors
-            ? StatusCodes.UNPROCESSABLE_ENTITY
-            : StatusCodes.UNAUTHORIZED,
-          res
-        )
-      } else {
-        if (isAdmin(resp[0].value.message.account)) {
-          await accountActivation(req.body.email, false)
-          response(
-            'account deactivated successfully',
+            reqEvent === 'activate'
+              ? 'account activated successfully'
+              : 'account deactivated successfully',
             true,
             StatusCodes.OK,
             res
@@ -484,35 +432,33 @@ class UserManagement {
   // #16
   disable2fa = async (req, res) => {
     try {
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
+      const { userData, verify } = await this.userVerification(req)
       const { code } = req.body
+
       if (
-        resp[0].value ||
-        !resp[1].status ||
-        !resp[1].value.message['2faEnabled'] ||
+        verify ||
+        !userData.status ||
+        !userData.message['2faEnabled'] ||
         !code
       ) {
         response(
-          !!resp[0].value
-            ? resp[0].value
+          !!verify
+            ? verify
             : !code
             ? '2fa code is required'
-            : !resp[1].value.message['2faEnabled']
+            : !userData.message['2faEnabled']
             ? "You don't have 2FA enabled"
             : 'Invalid email address',
           false,
-          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        const codes = resp[1].value.message['2faCodes']
+        const codes = userData.message['2faCodes']
         let responseValue = await validate2FA(codes, code)
-        const isAvailable = responseValue.filter(
+        const isAvailable = responseValue.some(
           ({ isValid }) => isValid === true
-        ).length
+        )
 
         if (isAvailable) {
           await update2fa(req.params.email, false, [])
@@ -535,28 +481,26 @@ class UserManagement {
   validate2fa = async (req, res) => {
     try {
       const { code } = req.body
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
+      const { userData, verify } = await this.userVerification(req)
 
-      if (!!resp[0].value || !resp[1].status || !code) {
+      if (!!verify || !userData.status || !code) {
         response(
-          !!resp[0].value
-            ? resp[0].value
+          !!verify
+            ? verify
             : !code
             ? '2fa code is required'
             : 'Invalid email address provided',
           false,
-          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        const codes = resp[1].value.message['2faCodes']
+        const codes = userData.message['2faCodes']
         const responseValue = await validate2FA(codes, code)
-        const isAvailable = responseValue.filter(
+        const isAvailable = responseValue.some(
           ({ isValid }) => isValid === true
-        ).length
+        )
+
         if (!isAvailable) {
           response(
             '2fa code invalid or expired',
@@ -577,24 +521,37 @@ class UserManagement {
     }
   }
 
+  userVerification = async (req = '') => {
+    const [verify, userData] = await Promise.all([
+      verifyUser(req),
+      fetch_single_user(req.params.email),
+    ])
+
+    return { verify, userData }
+  }
+
   requestCodes = async (req, res) => {
     try {
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
+      const { verify, userData } = await this.userVerification(req)
+      const codeNumber = userData.message['2faCodes'].filter((data) => !!data)
+      const canRequestCode = codeNumber.length >= 1
 
       if (
-        !!resp[0].value ||
-        !resp[1].status ||
-        !resp[1].value.message['2faEnabled']
+        !!verify ||
+        !userData.status ||
+        !userData.message['2faEnabled'] ||
+        canRequestCode
       ) {
         response(
-          resp[0].value || !resp[1].value.message['2faEnabled']
+          verify
+            ? verify
+            : !userData.message['2faEnabled']
             ? 'You do not have 2FA enabled'
+            : canRequestCode
+            ? 'You cannot reset codes at this time'
             : 'Invalid email address provided',
           false,
-          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
@@ -610,17 +567,16 @@ class UserManagement {
   // #18
   getProfile = async (req, res) => {
     try {
-      const data = await verifyUser(req)
-      const user = await fetch_single_user(req.params.email)
-      if (!!data || !user.status) {
+      const { verify, userData } = await this.userVerification(req)
+      if (!!verify || !userData.status) {
         response(
-          data || 'Invalid email address provided',
+          verify || 'Invalid email address provided',
           false,
-          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        response(user.message, true, StatusCodes.OK, res)
+        response(userData, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)

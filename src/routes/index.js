@@ -11,7 +11,7 @@ const {
   getAllUsers,
   getProfile,
 } = require('../services/getUsers/getUsers')
-const { activateAccount, deactivateAccount } = require('../services/account')
+const { activateAccount } = require('../services/account')
 const {
   getTransactionHistory,
   getSingleTransaction,
@@ -47,12 +47,12 @@ router.get(`/getAllUsers/:email`, getAllUsers)
 router.get(`/getProfile/:email`, getProfile)
 router.patch(`/changePassword/:email`, changePassword)
 router.patch(`/forgotPassword`, forgotPassword)
-router.patch(`/acivate/:email`, activateAccount)
+router.patch(`/activate/:email`, activateAccount)
 router.patch(`/enable2fa/:email`, enable2fa)
 router.patch(`/disable2fa/:email`, disable2fa)
 router.get(`/history/:id`, getTransactionHistory)
 router.get(`/transaction/`, getSingleTransaction)
-router.patch(`/deactivate/:email`, deactivateAccount)
+router.patch(`/deactivate/:email`, activateAccount)
 router.patch(`/new2FAcodes/:email`, requestCodes)
 router.get('/notifications/:id', fetchAllNotifications)
 router.delete(`/deleteNotification/`, deleteNotification)
