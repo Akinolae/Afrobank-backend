@@ -535,24 +535,21 @@ class UserManagement {
   validate2fa = async (req, res) => {
     try {
       const { code } = req.body
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
+      const { userData, verify } = await this.userVerification(req)
 
-      if (!!resp[0].value || !resp[1].status || !code) {
+      if (!!verify || !userData.status || !code) {
         response(
-          !!resp[0].value
-            ? resp[0].value
+          !!verify
+            ? verify
             : !code
             ? '2fa code is required'
             : 'Invalid email address provided',
           false,
-          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        const codes = resp[1].value.message['2faCodes']
+        const codes = userData.message['2faCodes']
         const responseValue = await validate2FA(codes, code)
         const isAvailable = responseValue.filter(
           ({ isValid }) => isValid === true
@@ -577,34 +574,37 @@ class UserManagement {
     }
   }
 
+  userVerification = async (req = '') => {
+    const [verify, userData] = await Promise.all([
+      verifyUser(req),
+      fetch_single_user(req.params.email),
+    ])
+
+    return { verify, userData }
+  }
+
   requestCodes = async (req, res) => {
     try {
-      const resp = await Promise.allSettled([
-        verifyUser(req),
-        fetch_single_user(req.params.email),
-      ])
-
-      const codeNumber = resp[1].value.message['2faCodes'].filter(
-        (data) => !!data
-      )
-
+      const { verify, userData } = await this.userVerification(req)
+      const codeNumber = userData.message['2faCodes'].filter((data) => !!data)
       const canRequestCode = codeNumber.length >= 1
+
       if (
-        !!resp[0].value ||
-        !resp[1].status ||
-        !resp[1].value.message['2faEnabled'] ||
+        !!verify ||
+        !userData.status ||
+        !userData.message['2faEnabled'] ||
         canRequestCode
       ) {
         response(
-          resp[0].value
-            ? resp[0].value
-            : !resp[1].value.message['2faEnabled']
+          verify
+            ? verify
+            : !userData.message['2faEnabled']
             ? 'You do not have 2FA enabled'
             : canRequestCode
             ? 'You cannot reset codes at this time'
             : 'Invalid email address provided',
           false,
-          !!resp[0].value ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
@@ -620,17 +620,16 @@ class UserManagement {
   // #18
   getProfile = async (req, res) => {
     try {
-      const data = await verifyUser(req)
-      const user = await fetch_single_user(req.params.email)
-      if (!!data || !user.status) {
+      const { verify, userData } = await this.userVerification(req)
+      if (!!verify || !userData.status) {
         response(
-          data || 'Invalid email address provided',
+          verify || 'Invalid email address provided',
           false,
-          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
           res
         )
       } else {
-        response(user.message, true, StatusCodes.OK, res)
+        response(userData, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
