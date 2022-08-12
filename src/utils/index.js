@@ -10,7 +10,6 @@ const {
 const logError = require('./logger')
 const validateAmount = require('./amountValidator')
 const { generateUserAccessToken, verifyUserAccessToken } = require('./userUtil')
-const job = require('./cron')
 
 module.exports = {
   calc_account_balance,
