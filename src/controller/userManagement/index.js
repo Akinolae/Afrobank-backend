@@ -139,7 +139,7 @@ class UserManagement {
             )
           }
         } else {
-          response(data.message, false, StatusCodes.UNAUTHORIZED, res)
+          response(message, false, StatusCodes.UNAUTHORIZED, res)
         }
       }
     } catch (error) {
@@ -153,7 +153,7 @@ class UserManagement {
       const { verify, userData } = await this.userVerification(req)
       if (!!verify || !userData.status) {
         response(
-          userData || "User doesn't exist" || 'Unable to fetch user',
+          verify || userData.message,
           false,
           StatusCodes.UNAUTHORIZED,
           res
@@ -209,8 +209,8 @@ class UserManagement {
 
   // #5
   setPin = async (accountNumber, pin, req, res) => {
-    const isValidated = setPinSchema.validate({ accountNumber, pin })
     try {
+      const isValidated = setPinSchema.validate({ accountNumber, pin })
       const data = await verifyUser(req)
       if (!!data || !!isValidated.error) {
         response(

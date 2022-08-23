@@ -98,6 +98,7 @@ const validate2FA = async (codes = [], code) => {
 
 const verifyUser = async (params) => {
   const { email, req } = params
+
   const authToken = req.headers.authorization
   const token = !!authToken && authToken.split(' ')[1]
   const verify = verifyUserAccessToken(token)
