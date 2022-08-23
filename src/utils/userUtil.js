@@ -1,7 +1,7 @@
 const customer = require('../model/customer')
+const { generate } = require('otp-generator')
 const jwt = require('jsonwebtoken')
 const encrypt = require('bcryptjs')
-const { createPin } = require('./pinUtils')
 
 const fetch_single_user = async (email) => {
   try {
@@ -61,7 +61,12 @@ const generate2FAcodes = async () => {
   let codes = []
 
   for (var i = 0; i <= length; i++) {
-    const code = createPin(6)
+    const code = generate(6, {
+      alphabets: false,
+      digits: true,
+      specialChars: false,
+      upperCase: false,
+    })
     codes.push(code)
     hashedCodes.push(await hashPassword(code))
   }

@@ -48,7 +48,6 @@ class UserManagement {
   // #1
   register = async (params, res) => {
     const { firstName, lastName, email, phoneNumber, gender, password } = params
-
     const joi_validate = authSchema.validate(params)
     if (!!joi_validate.error) {
       response(
@@ -134,7 +133,7 @@ class UserManagement {
                 has2fa: data.message['2faEnabled'],
               },
               true,
-              200,
+              StatusCodes.OK,
               res
             )
           }
@@ -289,7 +288,7 @@ class UserManagement {
     }
   }
 
-  // #9
+  // #8
   deleteNotification = async (accountNumber, index, res) => {
     try {
       const resp = await deleteNotification(this.customer, accountNumber, index)
@@ -301,7 +300,7 @@ class UserManagement {
     }
   }
 
-  // #10
+  // #9
   getNotifications = async (accountNumber, res) => {
     try {
       const data = await fetchAllNotifications(accountNumber)
@@ -316,37 +315,32 @@ class UserManagement {
     }
   }
 
-  // #11
+  // #10
   changePassword = async (password, req, res) => {
     try {
-      const data = await verifyUser({ email: '', req })
-      if (!!data || !password) {
+      const { verify, userData } = await this.userVerification(req)
+
+      if (!!verify || !userData.status) {
         response(
-          data || 'Password is required',
+          verify || !userData.status,
           false,
-          !!data ? StatusCodes.UNAUTHORIZED : StatusCodes.UNPROCESSABLE_ENTITY,
+          !!verify
+            ? StatusCodes.UNAUTHORIZED
+            : StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
       } else {
-        const userExists = await fetch_single_user(req.params.email)
-        if (userExists.status) {
-          const hash = await hashPassword(password)
-          const data = await updatePassword(
-            this.customer,
-            userExists.message.accountNumber,
-            hash
-          )
-          response(data.message, true, StatusCodes.OK, res)
-        } else {
-          response(userExists.message, false, StatusCodes.NOT_FOUND, res)
-        }
+        const { accountNumber } = userData.message
+        const hash = await hashPassword(password)
+        const data = await updatePassword(this.customer, accountNumber, hash)
+        response(data.message, true, StatusCodes.OK, res)
       }
     } catch (e) {
       response(e.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
-  // #12
+  // #11
   sendPasswordOtp = async (email, res) => {
     const code = createPin(5)
     const otp = await hashPassword(code)
@@ -363,7 +357,7 @@ class UserManagement {
     }
   }
 
-  // #13
+  // #12
   forgotPassword = async (accountNumber, pin, res) => {
     if (!!accountNumber && !!pin) {
       try {
@@ -392,7 +386,7 @@ class UserManagement {
     }
   }
 
-  // #14
+  // #13
   createNewField = async () => {
     try {
       await addNewField('isAdmin', false)
@@ -401,7 +395,7 @@ class UserManagement {
     }
   }
 
-  // #15
+  // #14
   enable2fa = async (req, res) => {
     try {
       const { userData, verify } = await this.userVerification(req)
@@ -430,7 +424,7 @@ class UserManagement {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
-  // #16
+  // #15
   disable2fa = async (req, res) => {
     try {
       const { userData, verify } = await this.userVerification(req)
@@ -478,7 +472,7 @@ class UserManagement {
     }
   }
 
-  // #17
+  // #16
   validate2fa = async (req, res) => {
     try {
       const { code } = req.body
@@ -522,6 +516,7 @@ class UserManagement {
     }
   }
 
+  // #17
   userVerification = async (req = '') => {
     const [verify, userData] = await Promise.all([
       verifyUser({ email: '', req: req }),
@@ -531,6 +526,7 @@ class UserManagement {
     return { verify, userData }
   }
 
+  // #18
   requestCodes = async (req, res) => {
     try {
       const { verify, userData } = await this.userVerification(req)
@@ -565,7 +561,7 @@ class UserManagement {
     }
   }
 
-  // #18
+  // #19
   getProfile = async (req, res) => {
     try {
       const { verify, userData } = await this.userVerification(req)
