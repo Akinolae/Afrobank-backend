@@ -13,10 +13,10 @@ const dbConfig = async (uri) => {
         useFindAndModify: false,
         useCreateIndex: true,
       })
-      console.log('=== DB connection established ===')
+      console.log('==== Connection established ====')
       return true
     } catch (error) {
-      console.log(error)
+      console.error(error)
       return false
     }
   }
@@ -69,10 +69,10 @@ const appConfig = (config, params) => {
     switch (type) {
       case 'db':
         dbConfig(params)
-        return true
+        break
       case 'email':
         emailConfig(params)
-        return true
+        break
       default:
         return null
     }
