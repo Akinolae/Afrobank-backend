@@ -117,20 +117,20 @@ class UserManagement {
             )
           } else {
             const token = generateUserAccessToken({
-              id: data.message.id,
-              email: data.message.email,
+              id: message.id,
+              email: message.email,
             })
             await newSchema({
               model: this.customer,
-              email: data.message.email,
+              email: message.email,
               payload: token,
             })
 
             response(
               {
-                email: data.message.email,
+                email: message.email,
                 token,
-                has2fa: data.message['2faEnabled'],
+                has2fa: message['2faEnabled'],
               },
               true,
               StatusCodes.OK,
