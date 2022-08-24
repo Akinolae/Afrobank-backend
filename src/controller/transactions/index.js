@@ -19,22 +19,22 @@ class Transactions {
     this.customer = _customer_
   }
 
-  transfer = async (sender, recipient, amount, pin, req, res) => {
-    const joi_error = transferAuthSchema.validate({
-      sender,
-      recipient,
-      amount,
-      pin,
-    })
+  transfer = async (req, res) => {
+    const joi_error = transferAuthSchema.validate(req.body)
 
     const [senderDetails, recipientDetails] = await Promise.all([
-      verifyAccountNumber(sender),
-      verifyAccountNumber(recipient),
+      verifyAccountNumber(req.body.sender),
+      verifyAccountNumber(req.body.recipient),
     ])
-    const verify = await verifyUser({
-      email: senderDetails.user.email,
-      req: req,
-    })
+
+    const [verify, valRes, pinValidation] = await Promise.all([
+      verifyUser({
+        email: senderDetails.user.email,
+        req: req,
+      }),
+      validateAmount(senderDetails.user, req.body.amount),
+      decryptPassword(req.body.pin, senderDetails.user.pin),
+    ])
 
     if (
       !!verify ||
@@ -58,10 +58,6 @@ class Transactions {
       )
     } else {
       try {
-        const userPin = senderDetails.user.pin
-        const valRes = validateAmount(senderDetails.user, amount)
-        const pinValidation = await decryptPassword(pin, userPin)
-
         if (!pinValidation || !!valRes) {
           response(
             !pinValidation ? transfer.pinError : valRes,
@@ -75,11 +71,9 @@ class Transactions {
             recipientAccountNumber: recipientDetails.user.accountNumber,
             recipientName: `${recipientDetails.user.firstName} ${recipientDetails.user.lastName}`,
             senderName: `${senderDetails.user.firstName} ${senderDetails.user.lastName}`,
-            amount,
+            amount: req.body.amount,
             type: 'debit',
           }
-          const notifyRecipient = `${senderDetails.user.firstName} ${senderDetails.user.lastName} just sent you ₦${transactionData.amount}`
-          const notifySender = `you just sent ₦${transactionData.amount} to ${transactionData.recipientName}`
 
           this.completeTransfer(transactionData, res)
         }
