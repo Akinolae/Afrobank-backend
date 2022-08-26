@@ -1,4 +1,5 @@
 const { verifyAccountNumber } = require('./userUtil')
+const transactions = require('../model/transactions')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -8,11 +9,29 @@ const sumAmount = (transactions) => {
   return transactions.reduce((a, b) => Number(a) + (Number(b.amount) || 0), 0)
 }
 
+const getAllTransactions = async () => {
+  try {
+    const res = await transactions.find()
+    return {
+      status: true,
+      message: res,
+    }
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 const transactionHistory = async (accountNumber) => {
   try {
     const data = await verifyAccountNumber(accountNumber)
+    const res = await getAllTransactions()
+    const { _id } = data.user
+    const userTransactions = res.message.filter(
+      (user) => user.user_id.toString() === _id.toString()
+    )
+
     if (!data.status) return { status: false, response: data.message }
-    else return { status: true, response: data.user.transactions }
+    else return { status: true, response: userTransactions }
   } catch (error) {
     throw error
   }

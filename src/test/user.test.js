@@ -12,13 +12,14 @@ const {
   fetchAllNotifications,
   calculateAccountBalance,
   createPin,
+  failCustomerLogin,
+  shouldNotRegisterExistingUser,
   // createAccountNumber,
-  // failCustomerLogin,
   // shouldNotRegisterExistingUser,
 } = require('./testRequests')
 
 // Call all test suites;
-// failCustomerLogin()
+failCustomerLogin()
 // createAccountNumber()
 createPin()
 calculateAccountBalance()
@@ -31,5 +32,5 @@ getBalance()
 registerCustomer()
 validateAccount()
 verifyUserEmail()
-// shouldNotRegisterExistingUser()
+shouldNotRegisterExistingUser()
 connectDb()
