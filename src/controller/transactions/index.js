@@ -28,15 +28,12 @@ class Transactions {
       verifyAccountNumber(req.body.recipient),
     ])
 
-    const [verify, valRes, pinValidation] = await Promise.all([
+    const [verify, pinValidation] = await Promise.all([
       verifyUser({
         email: senderDetails.status ? senderDetails.user.email : '',
         req: req,
       }),
-      validateAmount(
-        senderDetails.status ? senderDetails.user : 0,
-        req.body.amout
-      ),
+
       decryptPassword(
         req.body.pin,
         senderDetails.status ? senderDetails.user.pin : ''
@@ -65,6 +62,8 @@ class Transactions {
       )
     } else {
       try {
+        const valRes = validateAmount(senderDetails.user, req.body.amount)
+
         if (!pinValidation || !!valRes) {
           response(
             !pinValidation ? transfer.pinError : valRes,
