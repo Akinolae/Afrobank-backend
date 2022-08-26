@@ -6,29 +6,28 @@ const customer = require('../model/customer')
 
 const updateTransaction = async (
   _customer_,
+  transactions,
   _type_,
   _accountNumber,
   _amount_,
-  _description_
+  _description_,
+  user_id
 ) => {
   const date = new Date()
   const transactionID = `${nanoid()}|${_type_}|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
   try {
-    const response = await _customer_.findOneAndUpdate(
-      { accountNumber: _accountNumber },
-      {
-        $push: {
-          transactions: {
-            transaction_id: transactionID.toUpperCase(),
-            transaction_type: _type_,
-            amount: _amount_,
-            description: _description_,
-          },
-        },
-      }
-    )
+    let transactionModel = await new transactions({
+      transaction_id: transactionID.toUpperCase(),
+      transaction_type: _type_,
+      amount: _amount_,
+      description: _description_,
+      transaction_date: date,
+      user_id: user_id,
+    })
+
+    transactionModel.save()
     await updateBalance(_customer_, _type_, _accountNumber, _amount_)
-    return response
+    return true
   } catch (error) {
     throw new Error(error)
   }

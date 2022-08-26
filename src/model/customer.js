@@ -1,28 +1,5 @@
 const mongoose = require('mongoose')
 
-const transactionSchema = new mongoose.Schema({
-  transaction_id: {
-    type: String,
-    default: null,
-  },
-  transaction_type: {
-    type: String,
-    default: null,
-  },
-  amount: {
-    type: Number,
-    default: null,
-  },
-  description: {
-    type: String,
-    default: null,
-  },
-  transaction_date: {
-    type: Date,
-    default: Date.now,
-  },
-})
-
 const notificationSchema = new mongoose.Schema({
   notification_text: {
     type: String,
@@ -106,7 +83,6 @@ const customer = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  transactions: [transactionSchema],
   notifications: [notificationSchema],
 })
 

@@ -1,4 +1,4 @@
-const { user } = require('../../controller/userManagement')
+const { user } = require('../controller/userManagement')
 
 module.exports = {
   createPin: (req, res) => {

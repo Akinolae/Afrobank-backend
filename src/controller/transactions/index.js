@@ -1,11 +1,11 @@
 require('dotenv').config()
 
 const model = require('../../model/customer')
+const transactions = require('../../model/transactions')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
 const { transactionHistory } = require('../../utils/transactionsUtil')
-const { redisGet, redisSet } = require('../../utils/redisUtil')
 const { validateAmount } = require('../../utils')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const {
@@ -15,8 +15,9 @@ const {
 } = require('../../utils/userUtil')
 
 class Transactions {
-  constructor(_customer_) {
+  constructor(_customer_, _transactions_) {
     this.customer = _customer_
+    this.transactions = _transactions_
   }
 
   transfer = async (req, res) => {
@@ -79,6 +80,8 @@ class Transactions {
             senderName: `${senderDetails.user.firstName} ${senderDetails.user.lastName}`,
             amount: req.body.amount,
             type: 'debit',
+            user_id: senderDetails.user._id,
+            recipient_id: recipientDetails.user._id,
           }
 
           this.completeTransfer(transactionData, res)
@@ -102,6 +105,8 @@ class Transactions {
       amount,
       recipientName,
       senderName,
+      user_id,
+      recipient_id,
     } = payload
 
     if (!type) {
@@ -116,13 +121,15 @@ class Transactions {
             type,
             senderAccountNumber,
             amount,
-            senderDesc
+            senderDesc,
+            user_id
           ),
           this.updateTransactionHistory(
             'credit',
             recipientAccountNumber,
             amount,
-            recipientDesc
+            recipientDesc,
+            recipient_id
           ),
         ])
 
@@ -144,30 +151,39 @@ class Transactions {
     type,
     accountNumber,
     amount,
-    description
+    description,
+    user_id
   ) => {
     return await updateTransaction(
       this.customer,
+      this.transactions,
       type,
       accountNumber,
       amount,
-      description
+      description,
+      user_id
     )
   }
 
-  getTransactionHistory = async (accountNumber, res) => {
+  getTransactionHistory = async (req, res) => {
     try {
-      const data = await transactionHistory(accountNumber)
+      const [verify, data] = await Promise.all([
+        verifyUser({ email: '', req: req }),
+        transactionHistory(req.params.id),
+      ])
 
-      if (!data.status) {
-        response(data.response, false, StatusCodes.NOT_FOUND, res)
+      if (!!verify || !data.status) {
+        response(
+          !!verify ? verify : data.response,
+          false,
+          StatusCodes.NOT_FOUND,
+          res
+        )
       } else {
-        await redisSet('trx', data.response)
-        const val = redisGet('trx')
-        response(val, true, StatusCodes.OK, res)
+        response(data.response, true, StatusCodes.OK, res)
       }
     } catch (error) {
-      response(error, false, StatusCodes.BAD_REQUEST, res)
+      response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
@@ -216,7 +232,7 @@ class Transactions {
   }
 }
 
-const userTransactions = new Transactions(model)
+const userTransactions = new Transactions(model, transactions)
 Object.freeze(userTransactions)
 
 module.exports = userTransactions

@@ -1,4 +1,4 @@
-const customer = require('../../controller/transactions')
+const customer = require('../controller/transactions/index')
 
 module.exports = {
   transfer: (req, res) => {

@@ -1,4 +1,4 @@
-const customer = require('../../controller/transactions')
+const customer = require('../controller/transactions')
 
 module.exports = {
   getAccountBalance: (req, res) => {

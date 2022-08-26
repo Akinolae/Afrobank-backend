@@ -210,7 +210,7 @@ class UserManagement {
   setPin = async (accountNumber, pin, req, res) => {
     try {
       const isValidated = setPinSchema.validate({ accountNumber, pin })
-      const data = await verifyUser(req)
+      const data = await verifyUser({ email: '', req })
       if (!!data || !!isValidated.error) {
         response(
           data || isValidated.error.message,
