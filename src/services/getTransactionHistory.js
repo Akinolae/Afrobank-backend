@@ -1,8 +1,7 @@
-const userTransactions = require('../../controller/transactions')
+const userTransactions = require('../controller/transactions')
 module.exports = {
   getTransactionHistory: (req, res) => {
-    const { id } = req.params
-    userTransactions.getTransactionHistory(id, res)
+    userTransactions.getTransactionHistory(req, res)
   },
   getSingleTransaction: (req, res) => {
     const { transaction_id, accountNumber } = req.body

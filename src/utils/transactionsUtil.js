@@ -9,29 +9,22 @@ const sumAmount = (transactions) => {
   return transactions.reduce((a, b) => Number(a) + (Number(b.amount) || 0), 0)
 }
 
-const getAllTransactions = async () => {
-  try {
-    const res = await transactions.find()
-    return {
-      status: true,
-      message: res,
-    }
-  } catch (error) {
-    throw new Error(error)
-  }
-}
-
 const transactionHistory = async (accountNumber) => {
   try {
-    const data = await verifyAccountNumber(accountNumber)
-    const res = await getAllTransactions()
-    const { _id } = data.user
-    const userTransactions = res.message.filter(
-      (user) => user.user_id.toString() === _id.toString()
-    )
+    const [data, trx] = await Promise.all([
+      verifyAccountNumber(accountNumber),
+      transactions.find(),
+    ])
 
     if (!data.status) return { status: false, response: data.message }
-    else return { status: true, response: userTransactions }
+    else {
+      const userTransactions = trx
+        .filter((user) => user.user_id.toString() === data.user._id.toString())
+        .sort(
+          (a, b) => new Date(b.transaction_date) - new Date(a.transaction_date)
+        )
+      return { status: true, response: userTransactions }
+    }
   } catch (error) {
     throw error
   }

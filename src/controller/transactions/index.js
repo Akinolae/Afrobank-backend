@@ -6,7 +6,6 @@ const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
 const { transactionHistory } = require('../../utils/transactionsUtil')
-const { redisGet, redisSet } = require('../../utils/redisUtil')
 const { validateAmount } = require('../../utils')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const {
@@ -166,17 +165,25 @@ class Transactions {
     )
   }
 
-  getTransactionHistory = async (accountNumber, res) => {
+  getTransactionHistory = async (req, res) => {
     try {
-      const data = await transactionHistory(accountNumber)
+      const [verify, data] = await Promise.all([
+        verifyUser({ email: '', req: req }),
+        transactionHistory(req.params.id),
+      ])
 
-      if (!data.status) {
-        response(data.response, false, StatusCodes.NOT_FOUND, res)
+      if (!!verify || !data.status) {
+        response(
+          !!verify ? verify : data.response,
+          false,
+          StatusCodes.NOT_FOUND,
+          res
+        )
       } else {
         response(data.response, true, StatusCodes.OK, res)
       }
     } catch (error) {
-      response(error, false, StatusCodes.BAD_REQUEST, res)
+      response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
