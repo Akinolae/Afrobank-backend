@@ -25,7 +25,7 @@ npm run dev
 2. you can transfer money
 3. you have access to updated transactions history
 4. get single updated transaction record
-5. Has 2FA feature for security
+5. Has 2FA feature for security with back up codes
 ```
 
 
