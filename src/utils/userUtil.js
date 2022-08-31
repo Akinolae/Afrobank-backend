@@ -45,13 +45,16 @@ const login_notify = (data) => {
 }
 
 const generateUserAccessToken = (payload) => {
-  return jwt.sign(payload, process.env.TOKEN_SECRET)
+  return jwt.sign(payload, process.env.TOKEN_SECRET, {
+    expiresIn: '2 days',
+  })
 }
 
 const verifyUserAccessToken = (token) => {
   return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
-    if (err) return false
-    else return data
+    if (err) {
+      throw err.message
+    } else return data
   })
 }
 
@@ -102,18 +105,24 @@ const validate2FA = async (codes = [], code) => {
 }
 
 const verifyUser = async (params) => {
-  const { email, req } = params
+  try {
+    const { email, req } = params
+    const authToken = req.headers.authorization
+    const token = !!authToken ? authToken.split(' ')[1] : ''
+    const [verify, data] = await Promise.all([
+      verifyUserAccessToken(token),
+      fetch_single_user(!!req.params.email ? req.params.email : email),
+    ])
 
-  const authToken = req.headers.authorization
-  const token = !!authToken && authToken.split(' ')[1]
-  const verify = verifyUserAccessToken(token)
-  const data = await fetch_single_user(
-    !!req.params.email ? req.params.email : email
-  )
-  if (!token) return 'no token provided'
-  else if (!verify || !data.status) return 'Invalid token'
-  else if (verify.email.toLowerCase() !== data.message.email.toLowerCase()) {
-    return 'Unauthorized user'
+    return !data.status
+      ? 'user not found'
+      : verify.email.toLowerCase() !== data.message.email.toLowerCase()
+      ? 'Unauthorized user'
+      : ''
+  } catch (error) {
+    return error.includes('invalid') || error.includes('expired')
+      ? error
+      : 'no token provided'
   }
 }
 
