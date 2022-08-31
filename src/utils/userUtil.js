@@ -108,19 +108,21 @@ const verifyUser = async (params) => {
   try {
     const { email, req } = params
     const authToken = req.headers.authorization
-    const token = !!authToken && authToken.split(' ')[1]
+    const token = !!authToken ? authToken.split(' ')[1] : ''
     const [verify, data] = await Promise.all([
       verifyUserAccessToken(token),
       fetch_single_user(!!req.params.email ? req.params.email : email),
     ])
 
-    return !token || !data.status
-      ? 'no token provided' || data.message
+    return !data.status
+      ? 'user not found'
       : verify.email.toLowerCase() !== data.message.email.toLowerCase()
       ? 'Unauthorized user'
       : ''
   } catch (error) {
-    return error.includes('invalid') || error.includes('expired') ? error : ''
+    return error.includes('invalid') || error.includes('expired')
+      ? error
+      : 'no token provided'
   }
 }
 
