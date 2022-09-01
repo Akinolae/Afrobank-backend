@@ -20,9 +20,11 @@ const fetch_single_user = async (email) => {
 const verifyAccountNumber = async (accountNumber) => {
   try {
     const isUserAvailable = await customer.findOne({ accountNumber })
-    if (isUserAvailable === null || isUserAvailable === 'undefined')
-      return { status: false, message: 'Unable to verify account number' }
-    else return { status: true, user: isUserAvailable }
+    const response =
+      isUserAvailable === null || isUserAvailable === 'undefined'
+        ? { status: false, message: 'Unable to verify account number' }
+        : { status: true, user: isUserAvailable }
+    return response
   } catch (error) {
     throw error
   }
@@ -80,8 +82,12 @@ const generate2FAcodes = async () => {
 }
 
 const hashPassword = async (password, length = 15) => {
-  const hash = await encrypt.hash(password, length)
-  return hash
+  if (typeof password !== 'string') {
+    throw 'Invalid params'
+  } else {
+    const hash = await encrypt.hash(password, length)
+    return hash
+  }
 }
 
 const decryptPassword = async (password1, password2) => {

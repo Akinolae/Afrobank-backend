@@ -192,6 +192,7 @@ const update2faCodes = async (email, codes) => {
   }
 }
 
+
 module.exports = {
   createOtp,
   setNewPin,
