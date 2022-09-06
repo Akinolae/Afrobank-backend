@@ -122,12 +122,14 @@ const verifyUser = async (params) => {
 
     return !data.status
       ? 'user not found'
-      : verify.email.toLowerCase() !== data.message.email.toLowerCase()
+      : verify.id !== data.message.id
       ? 'Unauthorized user'
       : ''
   } catch (error) {
-    return error.includes('invalid') || error.includes('expired')
+    return error.includes('invalid')
       ? error
+      : error.includes('expired')
+      ? 'Token expired'
       : 'no token provided'
   }
 }
