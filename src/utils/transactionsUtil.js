@@ -33,8 +33,9 @@ const transactionHistory = async (accountNumber) => {
 const fetchAllNotifications = async (accountNumber) => {
   try {
     const data = await verifyAccountNumber(accountNumber)
-    if (!data.status) return { status: false, response: data.message }
-    else return { status: true, response: data.user.notifications }
+    return !data.status
+      ? { status: false, response: data.message }
+      : { status: true, response: data.user.notifications }
   } catch (error) {
     throw error
   }
