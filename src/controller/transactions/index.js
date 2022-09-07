@@ -79,7 +79,7 @@ class Transactions {
             senderName: `${senderDetails.user.firstName} ${senderDetails.user.lastName}`,
             amount: req.body.amount,
             type: 'debit',
-            user_id: senderDetails.user._id,
+            sender_id: senderDetails.user._id,
             recipient_id: recipientDetails.user._id,
           }
 
@@ -104,7 +104,7 @@ class Transactions {
       amount,
       recipientName,
       senderName,
-      user_id,
+      sender_id,
       recipient_id,
     } = payload
 
@@ -121,7 +121,7 @@ class Transactions {
             senderAccountNumber,
             amount,
             senderDesc,
-            user_id
+            sender_id
           ),
           this.updateTransactionHistory(
             'credit',

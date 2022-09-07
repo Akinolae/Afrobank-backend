@@ -6,12 +6,11 @@ const encrypt = require('bcryptjs')
 const fetch_single_user = async (email) => {
   try {
     const isAvailable = await customer.findOne({ email })
-    if (isAvailable === null || isAvailable === 'undefined')
-      return {
-        status: false,
-        message: 'invalid email address or password',
-      }
-    else return { status: true, message: isAvailable }
+    const res =
+      isAvailable === null || isAvailable === undefined
+        ? { status: false, message: 'invalid email address or password' }
+        : { status: true, message: isAvailable }
+    return res
   } catch (err) {
     throw err
   }
@@ -54,9 +53,8 @@ const generateUserAccessToken = (payload) => {
 
 const verifyUserAccessToken = (token) => {
   return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
-    if (err) {
-      throw err.message
-    } else return data
+    if (err) throw err.message
+    return data
   })
 }
 
@@ -122,22 +120,20 @@ const verifyUser = async (params) => {
 
     return !data.status
       ? 'user not found'
-      : verify.email.toLowerCase() !== data.message.email.toLowerCase()
+      : verify.id !== data.message.id
       ? 'Unauthorized user'
       : ''
   } catch (error) {
-    return error.includes('invalid') || error.includes('expired')
+    return error.includes('invalid')
       ? error
+      : error.includes('expired')
+      ? 'Token expired'
       : 'no token provided'
   }
 }
 
 const isAdmin = (params) => {
-  if (params === 'admin') {
-    return true
-  } else {
-    return false
-  }
+  return params === 'admin' ? true : false
 }
 
 module.exports = {
