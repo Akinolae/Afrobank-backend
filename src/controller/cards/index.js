@@ -53,6 +53,40 @@ class Cards {
     }
   }
 
+  getUserCards = async (req, res) => {
+    try {
+      const { userData, verify } = await this.userVerification(
+        req,
+        req.params.email
+      )
+      if (!!verify || !userData.status) {
+        response(
+          !!verify ? verify : 'User not found',
+          false,
+          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        const cards = (await fetchAllCards(userData.message._id)).map(
+          (card) => ({
+            cvv: card.cvv,
+            balance: card.balance,
+            ownerId: card.ownerId,
+            expiryDate: card.expiryDate,
+            created: card.created,
+            cardNumber: card.cardNumber,
+            _id: card._id,
+            isActive: card.isActive,
+          })
+        )
+
+        response(cards, true, StatusCodes.OK, res)
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
   userVerification = async (req = '', email) => {
     const [verify, userData] = await Promise.all([
       verifyUser({ email: email, req: req }),

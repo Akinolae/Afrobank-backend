@@ -27,13 +27,14 @@ const {
   validate2fa,
   requestCodes,
 } = require('../services/2FA')
-const { createCard } = require('../services/cards/cardsService')
+const { createCard, fetchCards } = require('../services/cards/cardsService')
 
 router.post(`/sendOtp`, sendOtp)
 router.post(`/login`, localLogin)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)
 router.get(`/user/:email`, getUser)
+router.get(`/userCards/:email`, fetchCards)
 router.post('/validate', validateAccount)
 router.post(`/transfer/`, transfer)
 router.post('/newField', addNewFieldToDb)
