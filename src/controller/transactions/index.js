@@ -4,14 +4,14 @@ const model = require('../../model/customer')
 const transactions = require('../../model/transactions')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
+const { validateAmount } = require('../../utils')
 const { updateTransaction } = require('../../utils/queries')
 const { transactionHistory } = require('../../utils/transactionsUtil')
-const { validateAmount } = require('../../utils')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const {
-  verifyAccountNumber,
   verifyUser,
   decryptPassword,
+  verifyAccountNumber,
 } = require('../../utils/userUtil')
 
 class Transactions {
@@ -33,7 +33,6 @@ class Transactions {
         email: senderDetails.status ? senderDetails.user.email : '',
         req: req,
       }),
-
       decryptPassword(
         req.body.pin,
         senderDetails.status ? senderDetails.user.pin : ''

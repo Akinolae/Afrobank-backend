@@ -12,8 +12,6 @@ const createPin = (length = 4) => {
 
 const isPinValid = async (data, pin) => {
   if (!data) return
-  else {
-    return await decryptPassword(data, pin)
-  }
+  return await decryptPassword(data, pin)
 }
 module.exports = { isPinValid, createPin }

@@ -59,7 +59,7 @@ class UserManagement {
     } else {
       try {
         const [accountNumber, hashedPassword] = await Promise.all([
-          createAccountNumber(this.customer),
+          createAccountNumber({ type: 'accountNumber' }),
           hashPassword(password),
         ])
 
