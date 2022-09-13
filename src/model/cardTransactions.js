@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
 
-const transactionSchema = new mongoose.Schema({
+const cardTransactionsSchema = new mongoose.Schema({
   transaction_id: {
     type: String,
     default: null,
@@ -32,4 +32,4 @@ const transactionSchema = new mongoose.Schema({
   },
 })
 
-module.exports = mongoose.model('cardTransactions', transactionSchema)
+module.exports = mongoose.model('cardTransactions', cardTransactionsSchema)

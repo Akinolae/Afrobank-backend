@@ -4,6 +4,8 @@ const { nanoid } = require('nanoid')
 const { pinReset } = require('./validator')
 const customer = require('../model/customer')
 const cards = require('../model/cards')
+const cardTrx = require('../model/cardTransactions')
+const transactions = require('../model/transactions')
 
 const updateTransaction = async (
   _customer_,
@@ -145,6 +147,11 @@ const addNewField = async (db, field, value) => {
       case 'cards':
         await update({ db: cards, field, value })
         break
+      case 'cardTransactions':
+        await update({ db: cardTrx, field, value })
+        break
+      case 'transactions':
+        await update({ db: transactions, field, value })
       default:
         return null
     }
