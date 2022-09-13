@@ -34,6 +34,11 @@ const cardSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+    allowNull: false,
+  },
 })
 
 module.exports = mongoose.model('cards', cardSchema)

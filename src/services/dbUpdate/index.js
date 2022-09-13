@@ -1,7 +1,6 @@
-const { user } = require('../../controller/userManagement/index')
-
+const { addNewField } = require('../../utils/queries')
 module.exports = {
   addNewFieldToDb: () => {
-    user.createNewField()
+    addNewField('cards', 'isActive', true)
   },
 }

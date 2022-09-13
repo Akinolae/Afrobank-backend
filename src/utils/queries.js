@@ -3,6 +3,7 @@ const { updateBalance } = require('../utils/')
 const { nanoid } = require('nanoid')
 const { pinReset } = require('./validator')
 const customer = require('../model/customer')
+const cards = require('../model/cards')
 
 const updateTransaction = async (
   _customer_,
@@ -131,15 +132,22 @@ const newSchema = async (data) => {
   }
 }
 
-const addNewField = async (field, value) => {
+const addNewField = async (db, field, value) => {
+  const update = async (params) => {
+    const { db, field, value } = params
+    await db.updateMany({}, { $set: { [field]: value } })
+  }
   try {
-    console.log(field, value)
-    await customer.updateMany(
-      {},
-      {
-        $set: { [field]: value },
-      }
-    )
+    switch (db) {
+      case 'user':
+        await update({ db: customer, field, value })
+        break
+      case 'cards':
+        await update({ db: cards, field, value })
+        break
+      default:
+        return null
+    }
   } catch (error) {
     throw error
   }
@@ -191,7 +199,6 @@ const update2faCodes = async (email, codes) => {
     throw error
   }
 }
-
 
 module.exports = {
   createOtp,
