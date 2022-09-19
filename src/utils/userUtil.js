@@ -1,4 +1,5 @@
 const customer = require('../model/customer')
+const card = require('../model/cards')
 const { generate } = require('otp-generator')
 const jwt = require('jsonwebtoken')
 const encrypt = require('bcryptjs')
@@ -19,6 +20,19 @@ const fetch_single_user = async (email) => {
 const verifyAccountNumber = async (accountNumber) => {
   try {
     const isUserAvailable = await customer.findOne({ accountNumber })
+    const response =
+      isUserAvailable === null || isUserAvailable === 'undefined'
+        ? { status: false, message: 'Unable to verify account number' }
+        : { status: true, user: isUserAvailable }
+    return response
+  } catch (error) {
+    throw error
+  }
+}
+
+const verifyCard = async (cardNumber) => {
+  try {
+    const isUserAvailable = await card.findOne({ cardNumber })
     const response =
       isUserAvailable === null || isUserAvailable === 'undefined'
         ? { status: false, message: 'Unable to verify account number' }
@@ -139,6 +153,7 @@ const isAdmin = (params) => {
 module.exports = {
   isAdmin,
   verifyUser,
+  verifyCard,
   validate2FA,
   hashPassword,
   login_notify,

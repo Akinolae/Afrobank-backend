@@ -8,7 +8,6 @@ const {
   setNewPin,
   createOtp,
   newSchema,
-  addNewField,
   getAllUsers,
   update2faCodes,
   updatePassword,
@@ -59,7 +58,7 @@ class UserManagement {
     } else {
       try {
         const [accountNumber, hashedPassword] = await Promise.all([
-          createAccountNumber(this.customer),
+          createAccountNumber({ type: 'accountNumber' }),
           hashPassword(password),
         ])
 
@@ -387,15 +386,6 @@ class UserManagement {
   }
 
   // #13
-  createNewField = async () => {
-    try {
-      await addNewField('isAdmin', false)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  // #14
   enable2fa = async (req, res) => {
     try {
       const { userData, verify } = await this.userVerification(req)
@@ -424,7 +414,7 @@ class UserManagement {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
-  // #15
+  // #14
   disable2fa = async (req, res) => {
     try {
       const { userData, verify } = await this.userVerification(req)
@@ -472,7 +462,7 @@ class UserManagement {
     }
   }
 
-  // #16
+  // #15
   validate2fa = async (req, res) => {
     try {
       const { code } = req.body
@@ -516,7 +506,7 @@ class UserManagement {
     }
   }
 
-  // #17
+  // #16
   userVerification = async (req = '') => {
     const [verify, userData] = await Promise.all([
       verifyUser({ email: '', req: req }),
@@ -526,7 +516,7 @@ class UserManagement {
     return { verify, userData }
   }
 
-  // #18
+  // #17
   requestCodes = async (req, res) => {
     try {
       const { verify, userData } = await this.userVerification(req)
@@ -561,7 +551,7 @@ class UserManagement {
     }
   }
 
-  // #19
+  // #18
   getProfile = async (req, res) => {
     try {
       const { verify, userData } = await this.userVerification(req)

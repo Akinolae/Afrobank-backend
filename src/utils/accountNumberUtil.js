@@ -1,13 +1,17 @@
 const { createPin } = require('../utils/pinUtils')
-const { verifyAccountNumber } = require('./userUtil')
+const { verifyAccountNumber, verifyCard } = require('./userUtil')
 
-const generate_account_no = () => {
-  const acc_no = createPin(10)
+const generate_account_no = (length) => {
+  let acc_no
+  do {
+    acc_no = createPin(length)
+  } while (acc_no.toString() !== length)
   return +acc_no
 }
 
-const createAccountNumber = async () => {
+const createAccountNumber = async (params, length = 10) => {
   try {
+    const { type } = params
     /*
       1. Generates a unique account Number
       2. Checks if the accountNumber exists or tied to a user
@@ -17,11 +21,13 @@ const createAccountNumber = async () => {
     let accountNumber
     let isAccountNumberExists
     do {
-      accountNumber = generate_account_no()
-      isAccountNumberExists = await verifyAccountNumber(accountNumber)
+      accountNumber = generate_account_no(length)
+      isAccountNumberExists = type.includes('accountNumber')
+        ? await verifyAccountNumber(accountNumber)
+        : await verifyCard(accountNumber)
     } while (
       isAccountNumberExists.status ||
-      accountNumber.toString().length !== 10
+      accountNumber.toString().length !== length
     )
     return accountNumber
   } catch (error) {
