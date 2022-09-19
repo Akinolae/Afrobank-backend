@@ -2,7 +2,10 @@ const { createPin } = require('../utils/pinUtils')
 const { verifyAccountNumber, verifyCard } = require('./userUtil')
 
 const generate_account_no = (length) => {
-  const acc_no = createPin(length)
+  let acc_no
+  do {
+    acc_no = createPin(length)
+  } while (acc_no.toString() !== length)
   return +acc_no
 }
 
