@@ -3,6 +3,8 @@ const card = require('../model/cards')
 const { generate } = require('otp-generator')
 const jwt = require('jsonwebtoken')
 const encrypt = require('bcryptjs')
+const { response } = require('../controller/responseHandler')
+const { StatusCodes } = require('http-status-codes')
 
 const fetch_single_user = async (email) => {
   try {
@@ -122,27 +124,26 @@ const validate2FA = async (codes = [], code) => {
   return responseValue
 }
 
-const verifyUser = async (params) => {
+const verifyUser = async (req, res, next) => {
   try {
-    const { email, req } = params
     const authToken = req.headers.authorization
     const token = !!authToken ? authToken.split(' ')[1] : ''
-    const [verify, data] = await Promise.all([
-      verifyUserAccessToken(token),
-      fetch_single_user(!!req.params.email ? req.params.email : email),
-    ])
+    const verify = verifyUserAccessToken(token)
 
-    return !data.status
-      ? 'user not found'
-      : verify.id !== data.message.id
-      ? 'Unauthorized user'
-      : ''
+    if (!verify) {
+      response('user not found', false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+    } else {
+      res.user = verify
+    }
+    next()
   } catch (error) {
-    return error.includes('invalid')
+    const err = error.toString()
+    const errMessage = err.includes('invalid')
       ? error
-      : error.includes('expired')
+      : err.includes('expired')
       ? 'Token expired'
       : 'no token provided'
+    response(errMessage, false, StatusCodes.UNAUTHORIZED, res)
   }
 }
 
