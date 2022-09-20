@@ -9,8 +9,8 @@ const { updateTransaction } = require('../../utils/queries')
 const { transactionHistory } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const {
-  verifyUser,
   decryptPassword,
+  fetch_single_user,
   verifyAccountNumber,
 } = require('../../utils/userUtil')
 
@@ -156,21 +156,12 @@ class Transactions {
 
   getTransactionHistory = async (req, res) => {
     try {
-      const [verify, data] = await Promise.all([
-        verifyUser({ email: '', req: req }),
-        transactionHistory(req.params.id),
-      ])
+      const { message } = await fetch_single_user(res.user.email)
+      const data = await transactionHistory(message.accountNumber)
 
-      if (!!verify || !data.status) {
-        response(
-          !!verify ? verify : data.response,
-          false,
-          StatusCodes.NOT_FOUND,
-          res
-        )
-      } else {
-        response(data.response, true, StatusCodes.OK, res)
-      }
+      !data.status
+        ? response(data.response, false, StatusCodes.NOT_FOUND, res)
+        : response(data.response, true, StatusCodes.OK, res)
     } catch (error) {
       response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
