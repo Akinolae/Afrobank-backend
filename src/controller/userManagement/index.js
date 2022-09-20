@@ -125,16 +125,13 @@ class UserManagement {
               payload: token,
             })
 
-            response(
-              {
-                email: message.email,
-                token,
-                has2fa: message['2faEnabled'],
-              },
-              true,
-              StatusCodes.OK,
-              res
-            )
+            const data = {
+              email: message.email,
+              token,
+              has2fa: message['2faEnabled'],
+            }
+
+            response(data, true, StatusCodes.OK, res)
           }
         } else {
           response(message, false, StatusCodes.UNAUTHORIZED, res)
@@ -148,14 +145,9 @@ class UserManagement {
   // #3
   getUser = async (req, res) => {
     try {
-      const { verify, userData } = await this.userVerification(req)
-      if (!!verify || !userData.status) {
-        response(
-          verify || userData.message,
-          false,
-          StatusCodes.UNAUTHORIZED,
-          res
-        )
+      const { userData } = await this.userVerification(req.params.email)
+      if (!userData.status) {
+        response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
       } else {
         const { firstName, lastName } = userData.message
         response({ firstName, lastName }, true, StatusCodes.OK, res)
@@ -168,16 +160,14 @@ class UserManagement {
   // #4
   getUsers = async (req, res) => {
     try {
-      const { verify, userData } = await this.userVerification(req)
+      const { userData } = await this.userVerification(res.user.email)
       const resp = await getAllUsers()
 
       const isUserAdmin = !!userData.message && userData.message.isAdmin
 
-      if (!!verify || !userData.status || !isUserAdmin) {
+      if (!userData.status || !isUserAdmin) {
         response(
-          verify
-            ? verify
-            : !isUserAdmin
+          !isUserAdmin
             ? 'You are not authorized to do that'
             : "User doesn't exist",
           false,
@@ -206,19 +196,21 @@ class UserManagement {
   }
 
   // #5
-  setPin = async (accountNumber, pin, req, res) => {
+  setPin = async (pin, res) => {
     try {
-      const isValidated = setPinSchema.validate({ accountNumber, pin })
-      const data = await verifyUser({ email: '', req })
-      if (!!data || !!isValidated.error) {
+      const { userData } = await this.userVerification(res.user.email)
+      const invalidPin = !pin || pin.length !== 4
+      if (!userData.status || invalidPin) {
         response(
-          data || isValidated.error.message,
+          invalidPin ? 'Please provide a valid pin code' : userData.message,
           false,
-          StatusCodes.UNAUTHORIZED,
+          !userData.status
+            ? StatusCodes.NOT_FOUND
+            : StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
       } else {
-        await setNewPin(this.customer, accountNumber, pin)
+        await setNewPin(this.customer, userData.message.accountNumber, pin)
         response(pinReset.message, true, StatusCodes.OK, res)
       }
     } catch (e) {
@@ -241,23 +233,18 @@ class UserManagement {
         : ''
 
     try {
-      const [verify, admin, user] = await Promise.all([
-        verifyUser({ email: '', req }),
-        fetch_single_user(req.params.email),
+      const [admin, user] = await Promise.all([
+        fetch_single_user(res.user.email),
         fetch_single_user(req.body.email),
       ])
 
-      if (!!verify || !admin.status || !user.status || !reqEvent) {
+      if (!admin.status || !user.status || !reqEvent) {
         response(
-          verify
-            ? verify
-            : !reqEvent
+          !reqEvent
             ? 'Invalid url'
             : "Couldn't complete request, check credentials",
           false,
-          !admin.status || !user.status
-            ? StatusCodes.UNPROCESSABLE_ENTITY
-            : StatusCodes.UNAUTHORIZED,
+          StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
       } else {
@@ -317,17 +304,10 @@ class UserManagement {
   // #10
   changePassword = async (password, req, res) => {
     try {
-      const { verify, userData } = await this.userVerification(req)
+      const { userData } = await this.userVerification(res.user.email)
 
-      if (!!verify || !userData.status) {
-        response(
-          verify || !userData.status,
-          false,
-          !!verify
-            ? StatusCodes.UNAUTHORIZED
-            : StatusCodes.UNPROCESSABLE_ENTITY,
-          res
-        )
+      if (!userData.status) {
+        response(!userData.status, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
       } else {
         const { accountNumber } = userData.message
         const hash = await hashPassword(password)
@@ -388,14 +368,10 @@ class UserManagement {
   // #13
   enable2fa = async (req, res) => {
     try {
-      const { userData, verify } = await this.userVerification(req)
-      if (!!verify || !userData.status) {
-        response(
-          verify || userData.message,
-          false,
-          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
-          res
-        )
+      const { userData } = await this.userVerification(res.user.email)
+
+      if (!userData.status) {
+        response(userData.message, false, StatusCodes.NOT_FOUND, res)
       } else {
         if (userData.message['2faEnabled']) {
           response(
@@ -406,7 +382,7 @@ class UserManagement {
           )
         } else {
           const { codes, hashedCodes } = await generate2FAcodes()
-          await update2fa(req.params.email, true, hashedCodes)
+          await update2fa(res.user.email, true, hashedCodes)
           response(codes, true, StatusCodes.OK, res)
         }
       }
@@ -417,25 +393,18 @@ class UserManagement {
   // #14
   disable2fa = async (req, res) => {
     try {
-      const { userData, verify } = await this.userVerification(req)
+      const { userData } = await this.userVerification(res.user.email)
       const { code } = req.body
 
-      if (
-        verify ||
-        !userData.status ||
-        !userData.message['2faEnabled'] ||
-        !code
-      ) {
+      if (!userData.status || !userData.message['2faEnabled'] || !code) {
         response(
-          !!verify
-            ? verify
-            : !code
+          !code
             ? '2fa code is required'
             : !userData.message['2faEnabled']
             ? "You don't have 2FA enabled"
             : 'Invalid email address',
           false,
-          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          StatusCodes.NOT_FOUND,
           res
         )
       } else {
@@ -446,7 +415,7 @@ class UserManagement {
         )
 
         if (isAvailable) {
-          await update2fa(req.params.email, false, [])
+          await update2fa(userData.message.email, false, [])
           response('2fa disabled successfully', true, StatusCodes.OK, res)
         } else {
           response(
@@ -466,17 +435,13 @@ class UserManagement {
   validate2fa = async (req, res) => {
     try {
       const { code } = req.body
-      const { userData, verify } = await this.userVerification(req)
+      const { userData } = await this.userVerification(res.user.email)
 
-      if (!!verify || !userData.status || !code) {
+      if (!userData.status || !code) {
         response(
-          !!verify
-            ? verify
-            : !code
-            ? '2fa code is required'
-            : 'Invalid email address provided',
+          !code ? '2fa code is required' : 'Invalid email address provided',
           false,
-          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          StatusCodes.NOT_FOUND,
           res
         )
       } else {
@@ -497,7 +462,7 @@ class UserManagement {
           const newCodes = responseValue.map(({ isValid, data }) =>
             !isValid ? data : ''
           )
-          await update2faCodes(req.params.email, newCodes)
+          await update2faCodes(userData.message.email, newCodes)
           response('validated', true, StatusCodes.OK, res)
         }
       }
@@ -507,43 +472,37 @@ class UserManagement {
   }
 
   // #16
-  userVerification = async (req = '') => {
-    const [verify, userData] = await Promise.all([
-      verifyUser({ email: '', req: req }),
-      fetch_single_user(req.params.email),
-    ])
+  userVerification = async (email) => {
+    const userData = await fetch_single_user(email)
 
-    return { verify, userData }
+    return { userData }
   }
 
   // #17
   requestCodes = async (req, res) => {
     try {
-      const { verify, userData } = await this.userVerification(req)
+      const { userData } = await this.userVerification(res.user.email)
       const codeNumber = userData.message['2faCodes'].filter((data) => !!data)
       const canRequestCode = codeNumber.length >= 1
 
       if (
-        !!verify ||
         !userData.status ||
         !userData.message['2faEnabled'] ||
         canRequestCode
       ) {
         response(
-          verify
-            ? verify
-            : !userData.message['2faEnabled']
+          !userData.message['2faEnabled']
             ? 'You do not have 2FA enabled'
             : canRequestCode
             ? 'You cannot reset codes at this time'
             : 'Invalid email address provided',
           false,
-          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
+          StatusCodes.NOT_FOUND,
           res
         )
       } else {
         const { codes, hashedCodes } = await generate2FAcodes()
-        await update2fa(req.params.email, true, hashedCodes)
+        await update2fa(userData.message.email, true, hashedCodes)
         response(codes, true, StatusCodes.OK, res)
       }
     } catch (error) {
@@ -554,17 +513,15 @@ class UserManagement {
   // #18
   getProfile = async (req, res) => {
     try {
-      const { verify, userData } = await this.userVerification(req)
-      if (!!verify || !userData.status) {
-        response(
-          verify || 'Invalid email address provided',
-          false,
-          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
-          res
-        )
-      } else {
-        response(userData, true, StatusCodes.OK, res)
-      }
+      const { userData } = await this.userVerification(res.user.email)
+      !userData.status
+        ? response(
+            'Invalid email address provided',
+            false,
+            StatusCodes.NOT_FOUND,
+            res
+          )
+        : response(userData, true, StatusCodes.OK, res)
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
