@@ -28,27 +28,18 @@ class Transactions {
       verifyAccountNumber(req.body.recipient),
     ])
 
-    const [verify, pinValidation] = await Promise.all([
-      verifyUser({
-        email: senderDetails.status ? senderDetails.user.email : '',
-        req: req,
-      }),
-      decryptPassword(
-        req.body.pin,
-        senderDetails.status ? senderDetails.user.pin : ''
-      ),
-    ])
+    const pinValidation = await decryptPassword(
+      req.body.pin,
+      senderDetails.status ? senderDetails.user.pin : ''
+    )
 
     if (
-      !!verify ||
       !!joi_error.error ||
       !senderDetails.status ||
       !recipientDetails.status
     ) {
       response(
-        !!verify
-          ? verify
-          : !!joi_error.error
+        !!joi_error.error
           ? joi_error.error.details[0].message
           : !senderDetails.status
           ? senderDetails.message
@@ -56,7 +47,7 @@ class Transactions {
           ? recipientDetails.message
           : transfer.single_user,
         false,
-        !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.UNPROCESSABLE_ENTITY,
+        StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
     } else {

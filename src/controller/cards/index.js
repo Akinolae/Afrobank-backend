@@ -1,5 +1,5 @@
 const { createAccountNumber } = require('../../utils')
-const { verifyUser, fetch_single_user } = require('../../utils/userUtil')
+const { fetch_single_user } = require('../../utils/userUtil')
 const cards = require('../../model/cards')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
@@ -13,16 +13,9 @@ class Cards {
   }
   createCard = async (req, res) => {
     try {
-      const { email } = req.body
-
-      const { userData, verify } = await this.userVerification(req, email)
-      if (!!verify || !userData.status) {
-        response(
-          !!verify ? verify : 'User not found',
-          false,
-          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
-          res
-        )
+      const { userData } = await this.userVerification(res.user.email)
+      if (!userData.status) {
+        response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
         const cards = await fetchAllCards(userData.message._id)
         if (cards.length === 3) {
@@ -55,17 +48,9 @@ class Cards {
 
   getUserCards = async (req, res) => {
     try {
-      const { userData, verify } = await this.userVerification(
-        req,
-        req.params.email
-      )
-      if (!!verify || !userData.status) {
-        response(
-          !!verify ? verify : 'User not found',
-          false,
-          !!verify ? StatusCodes.UNAUTHORIZED : StatusCodes.NOT_FOUND,
-          res
-        )
+      const { userData } = await this.userVerification(res.user.email)
+      if (!userData.status) {
+        response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
         const cards = (await fetchAllCards(userData.message._id)).map(
           (card) => ({
@@ -87,13 +72,9 @@ class Cards {
     }
   }
 
-  userVerification = async (req = '', email) => {
-    const [verify, userData] = await Promise.all([
-      verifyUser({ email: email, req: req }),
-      fetch_single_user(email),
-    ])
-
-    return { verify, userData }
+  userVerification = async (email) => {
+    const userData = await fetch_single_user(email)
+    return { userData }
   }
 }
 
