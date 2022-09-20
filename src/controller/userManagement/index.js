@@ -199,11 +199,14 @@ class UserManagement {
   setPin = async (pin, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
-      if (!userData.status || !pin || pin.length !== 4) {
+      const invalidPin = !pin || pin.length !== 4
+      if (!userData.status || invalidPin) {
         response(
-          userData.message || isValidated.error.message,
+          invalidPin ? 'Please provide a valid pin code' : userData.message,
           false,
-          StatusCodes.UNAUTHORIZED,
+          !userData.status
+            ? StatusCodes.NOT_FOUND
+            : StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
       } else {
