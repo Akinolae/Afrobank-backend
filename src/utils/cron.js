@@ -1,7 +1,9 @@
-const scheduler = require('node-schedule')
+const cron = require('node-cron')
 
 const job = ({ date, method }) => {
-  scheduler.scheduleJob(date, method)
+  if (typeof method !== 'function')
+    throw new Error(`${method} must be a function`)
+  cron.schedule(date, method)
 }
 
-module.exports = job
+module.exports = { job }

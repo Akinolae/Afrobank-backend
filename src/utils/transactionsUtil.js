@@ -72,6 +72,7 @@ const calc_account_balance = async (accountNumber) => {
     throw error
   }
 }
+
 module.exports = {
   transactionHistory,
   calc_account_balance,

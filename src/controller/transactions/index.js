@@ -33,11 +33,10 @@ class Transactions {
       senderDetails.status ? senderDetails.user.pin : ''
     )
 
-    if (
-      !!joi_error.error ||
-      !senderDetails.status ||
-      !recipientDetails.status
-    ) {
+    const hasError =
+      !!joi_error.error || !senderDetails.status || !recipientDetails.status
+
+    if (hasError) {
       response(
         !!joi_error.error
           ? joi_error.error.details[0].message

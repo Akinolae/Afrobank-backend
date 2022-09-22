@@ -1,24 +1,21 @@
 const mongoose = require('mongoose')
 const nodemailer = require('nodemailer')
 const error = require('../utils/errorUtil')
+const { extractConfig } = require('./config')
 
-const dbConfig = async (uri) => {
-  if (typeof uri !== 'string' || typeof uri === 'undefined') {
-    error('Invalid database uri' + JSON.stringify(url))
-  } else {
-    try {
-      await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-        useCreateIndex: true,
-      })
-      console.log('==== Connection established ====')
-      return true
-    } catch (error) {
-      console.error(error)
-      return false
-    }
+const dbConfig = async () => {
+  try {
+    await mongoose.connect(extractConfig('URI'), {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useFindAndModify: false,
+      useCreateIndex: true,
+    })
+    console.log('==== Connection established ====')
+    return true
+  } catch (error) {
+    console.error(error)
+    return false
   }
 }
 
@@ -37,15 +34,15 @@ const emailConfig = async (params) => {
         port: 587,
         secure: false, // true for 465, false for other ports
         auth: {
-          user: process.env.EMAIL, // Specific gmail account which can be found in the confi
-          pass: process.env.EMAIL_PASSWORD, // Specific gmail account which can be found in the co
+          user: extractConfig('email'), // Specific gmail account which can be found in the confi
+          pass: extractConfig('password'), // Specific gmail account which can be found in the co
         },
         tls: {
           rejectUnauthorized: false,
         },
       })
       let info = await transporter.sendMail({
-        from: `Afrobank ${process.env.EMAIL}`, // sender address
+        from: `Afrobank ${extractConfig('email')}`, // sender address
         to: recipient, //reciever address that was gotten from the frontend/client
         subject: subject,
         text: text,
@@ -58,7 +55,7 @@ const emailConfig = async (params) => {
   }
 }
 
-const appConfig = (config, params) => {
+const appConfig = (config, params = {}) => {
   // extract the specific config type
   const { type } = config
   if (!type || !params) error('app config needs a config type and a parameter')
