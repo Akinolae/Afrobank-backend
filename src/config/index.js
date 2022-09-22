@@ -4,23 +4,18 @@ const error = require('../utils/errorUtil')
 const { extractConfig } = require('./config')
 
 const dbConfig = async () => {
-  const uri = extractConfig('URI')
-  if (typeof uri !== 'string' || typeof uri === 'undefined') {
-    error('Invalid database uri' + JSON.stringify(url))
-  } else {
-    try {
-      await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        useFindAndModify: false,
-        useCreateIndex: true,
-      })
-      console.log('==== Connection established ====')
-      return true
-    } catch (error) {
-      console.error(error)
-      return false
-    }
+  try {
+    await mongoose.connect(extractConfig('URI'), {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useFindAndModify: false,
+      useCreateIndex: true,
+    })
+    console.log('==== Connection established ====')
+    return true
+  } catch (error) {
+    console.error(error)
+    return false
   }
 }
 
