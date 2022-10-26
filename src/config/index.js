@@ -4,8 +4,9 @@ const error = require('../utils/errorUtil')
 const { extractConfig } = require('./config')
 
 const dbConfig = async () => {
+  const url = extractConfig('URI')
   try {
-    await mongoose.connect(extractConfig('URI'), {
+    await mongoose.connect(url, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useFindAndModify: false,

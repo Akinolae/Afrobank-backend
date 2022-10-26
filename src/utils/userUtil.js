@@ -7,8 +7,23 @@ const { response } = require('../controller/responseHandler')
 const { StatusCodes } = require('http-status-codes')
 
 const fetch_single_user = async (email) => {
+  console.log(email, 'fetchsingle')
   try {
     const isAvailable = await customer.findOne({ email })
+    const res =
+      isAvailable === null || isAvailable === undefined
+        ? { status: false, message: 'invalid email address or password' }
+        : { status: true, message: isAvailable }
+    return res
+  } catch (err) {
+    throw err
+  }
+}
+
+const fetch_single_user_id = async (id) => {
+  console.log(id, 'fetchsingle')
+  try {
+    const isAvailable = await customer.findOne({ _id: id })
     const res =
       isAvailable === null || isAvailable === undefined
         ? { status: false, message: 'invalid email address or password' }
@@ -37,8 +52,8 @@ const verifyCard = async (cardNumber) => {
     const isUserAvailable = await card.findOne({ cardNumber })
     const response =
       isUserAvailable === null || isUserAvailable === 'undefined'
-        ? { status: false, message: 'Unable to verify account number' }
-        : { status: true, user: isUserAvailable }
+        ? { status: false, message: 'Invalid card' }
+        : { status: true, message: isUserAvailable }
     return response
   } catch (error) {
     throw error
@@ -162,6 +177,7 @@ module.exports = {
   generate2FAcodes,
   fetch_single_user,
   verifyAccountNumber,
+  fetch_single_user_id,
   verifyUserAccessToken,
   generateUserAccessToken,
 }

@@ -1,11 +1,15 @@
-const { createAccountNumber } = require('../../utils')
-const { fetch_single_user } = require('../../utils/userUtil')
+const { createAccountNumber, validateAmount } = require('../../utils')
+const {
+  fetch_single_user,
+  verifyCard,
+  fetch_single_user_id,
+} = require('../../utils/userUtil')
 const cards = require('../../model/cards')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { createExpiryDate } = require('../../utils/dateUtils')
 const { createPin } = require('../../utils/pinUtils')
-const { fetchAllCards } = require('../../utils/cardsUtil')
+const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 
 class Cards {
   constructor(_cards_) {
@@ -75,6 +79,68 @@ class Cards {
   userVerification = async (email) => {
     const userData = await fetch_single_user(email)
     return { userData }
+  }
+
+  sendMoney = async (req, res) => {
+    try {
+      const { cardNumber, sendingCardId, cardPin, amount } = req.body
+      const sendingCard = (await fetchAllCards(res.user.id)).find(
+        (card) => card._id.toString() === sendingCardId
+      )
+
+      const [recipientCard, senderCard] = await Promise.all([
+        verifyCard(cardNumber),
+        verifyCard(!!sendingCard ? sendingCard.cardNumber : ''),
+      ])
+
+      if (!recipientCard.status || !senderCard.status) {
+        response(
+          !recipientCard.status ? recipientCard.message : senderCard.message,
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        const [sender, recipient] = await Promise.all([
+          cardConditionsCheck(senderCard.message),
+          cardConditionsCheck(recipientCard.message),
+        ])
+        const isValidAmount = validateAmount(
+          { accountBalance: sendingCard.balance },
+          amount
+        )
+        if (
+          !sender.status ||
+          !recipient.status ||
+          sendingCard.pin !== cardPin ||
+          !!isValidAmount
+        ) {
+          response(
+            !recipient.status
+              ? recipient.message
+              : !sender.status
+              ? sender.message
+              : !!isValidAmount
+              ? isValidAmount
+              : 'Invalid pin',
+            false,
+            !!isValidAmount
+              ? StatusCodes.UNPROCESSABLE_ENTITY
+              : StatusCodes.UNAUTHORIZED,
+            res
+          )
+        } else {
+        }
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+
+    // console.log(sendindCard)
+    // const _id = message.ownerId
+    // const resp = await this.userVerification({ _id })
+
+    // console.log(resp.message)
   }
 }
 
