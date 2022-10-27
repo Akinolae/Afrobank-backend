@@ -1,4 +1,4 @@
-const { verifyAccountNumber } = require('./userUtil')
+const { verifyAccountNumber, verifyCard } = require('./userUtil')
 const transactions = require('../model/transactions')
 
 const filterTransactions = (type, transactions) => {
@@ -41,17 +41,41 @@ const fetchAllNotifications = async (accountNumber) => {
   }
 }
 
-const updateBalance = async (customer, type, accountNumber, amount) => {
-  const data = await verifyAccountNumber(accountNumber)
+const updateBalance = async (
+  customer,
+  type,
+  accountNumber,
+  amount,
+  { isCardTrx } = {}
+) => {
+  const data = isCardTrx
+    ? await verifyCard(accountNumber)
+    : await verifyAccountNumber(accountNumber)
+
   let currentBalance = 0
   try {
     if (type === 'credit') {
-      currentBalance += +data.user.accountBalance + +amount
-    } else currentBalance = +data.user.accountBalance - +amount
-    await customer.findOneAndUpdate(
-      { accountNumber },
-      { $set: { accountBalance: currentBalance } }
-    )
+      currentBalance += isCardTrx
+        ? +data.message.balance + +amount
+        : +data.user.accountBalance + +amount
+    } else {
+      currentBalance = isCardTrx
+        ? +data.message.balance - +amount
+        : +data.user.accountBalance - +amount
+    }
+    if (!isCardTrx || isCardTrx === null || undefined) {
+      await customer.findOneAndUpdate(
+        { accountNumber },
+        { $set: { accountBalance: currentBalance } }
+      )
+    } else {
+      await customer.findOneAndUpdate(
+        { cardNumber: accountNumber },
+        {
+          $set: { balance: currentBalance },
+        }
+      )
+    }
   } catch (e) {
     throw e
   }

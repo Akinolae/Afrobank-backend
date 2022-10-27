@@ -5,6 +5,8 @@ const {
   fetch_single_user_id,
 } = require('../../utils/userUtil')
 const cards = require('../../model/cards')
+const cardTrx = require('../../model/cardTransactions')
+const { updateTransaction } = require('../../utils/queries')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { createExpiryDate } = require('../../utils/dateUtils')
@@ -83,7 +85,8 @@ class Cards {
 
   sendMoney = async (req, res) => {
     try {
-      const { cardNumber, sendingCardId, cardPin, amount } = req.body
+      const { cardNumber, sendingCardId, cardPin, amount, description } =
+        req.body
       const sendingCard = (await fetchAllCards(res.user.id)).find(
         (card) => card._id.toString() === sendingCardId
       )
@@ -105,15 +108,16 @@ class Cards {
           cardConditionsCheck(senderCard.message),
           cardConditionsCheck(recipientCard.message),
         ])
+
         const isValidAmount = validateAmount(
-          { accountBalance: sendingCard.balance },
+          { accountBalance: senderCard.message.balance },
           amount
         )
         if (
           !sender.status ||
           !recipient.status ||
-          sendingCard.pin !== cardPin ||
-          !!isValidAmount
+          !!isValidAmount ||
+          sendingCard.pin !== cardPin
         ) {
           response(
             !recipient.status
@@ -130,17 +134,45 @@ class Cards {
             res
           )
         } else {
+          let senderData, recipientData
+
+          senderData = {
+            cardNumber: senderCard.message.cardNumber,
+            transaction_type: 'debit',
+            amount: amount,
+            user_id: senderCard.message.ownerId,
+            description: !!description
+              ? `AFROBANK-CARD||TRX-${description}`
+              : 'AFROBANK-CARD||TRX',
+            transaction_date: new Date(),
+          }
+
+          recipientData = {
+            cardNumber: recipientCard.message.cardNumber,
+            transaction_type: 'Credit',
+            amount: amount,
+            user_id: recipientCard.message.ownerId,
+            description: !!description
+              ? `AFROBANK-CARD||TRX-${description}`
+              : 'AFROBANK-CARD||TRX',
+            transaction_date: new Date(),
+          }
+
+          await Promise.all([
+            updateTransaction(cards, cardTrx, null, null, amount, null, null, {
+              isCardTrx: true,
+              trx: senderData,
+            }),
+            updateTransaction(cards, cardTrx, null, null, amount, null, null, {
+              isCardTrx: true,
+              trx: recipientData,
+            }),
+          ])
         }
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
-
-    // console.log(sendindCard)
-    // const _id = message.ownerId
-    // const resp = await this.userVerification({ _id })
-
-    // console.log(resp.message)
   }
 }
 
