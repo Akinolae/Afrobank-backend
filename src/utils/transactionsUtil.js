@@ -43,7 +43,7 @@ const fetchAllNotifications = async (accountNumber) => {
 
 const updateBalance = async (
   customer,
-  type,
+  type = '',
   accountNumber,
   amount,
   { isCardTrx } = {}
@@ -54,7 +54,7 @@ const updateBalance = async (
 
   let currentBalance = 0
   try {
-    if (type === 'credit') {
+    if (type.toLowerCase() === 'credit') {
       currentBalance += isCardTrx
         ? +data.message.balance + +amount
         : +data.user.accountBalance + +amount

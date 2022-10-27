@@ -149,7 +149,7 @@ class Cards {
 
           recipientData = {
             cardNumber: recipientCard.message.cardNumber,
-            transaction_type: 'Credit',
+            transaction_type: 'credit',
             amount: amount,
             user_id: recipientCard.message.ownerId,
             description: !!description
