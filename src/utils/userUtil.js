@@ -21,7 +21,6 @@ const fetch_single_user = async (email) => {
 }
 
 const fetch_single_user_id = async (id) => {
-  console.log(id, 'fetchsingle')
   try {
     const isAvailable = await customer.findOne({ _id: id })
     const res =

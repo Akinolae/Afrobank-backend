@@ -168,6 +168,8 @@ class Cards {
               trx: recipientData,
             }),
           ])
+
+          response('Transfer success', true, StatusCodes.OK, res)
         }
       }
     } catch (error) {
