@@ -14,22 +14,38 @@ const updateTransaction = async (
   _accountNumber,
   _amount_,
   _description_,
-  user_id
+  user_id,
+  { isCardTrx, trx } = {}
 ) => {
   const date = new Date()
   const transactionID = `${nanoid()}|${_type_}|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
   try {
-    let transactionModel = await new transactions({
-      transaction_id: transactionID.toUpperCase(),
-      transaction_type: _type_,
-      amount: _amount_,
-      description: _description_,
-      transaction_date: date,
-      user_id: user_id,
-    })
+    if (isCardTrx === undefined || !isCardTrx) {
+      let transactionModel = await new transactions({
+        transaction_id: transactionID.toUpperCase(),
+        transaction_type: _type_,
+        amount: _amount_,
+        description: _description_,
+        transaction_date: date,
+        user_id: user_id,
+      })
 
-    transactionModel.save()
-    await updateBalance(_customer_, _type_, _accountNumber, _amount_)
+      transactionModel.save()
+      await updateBalance(_customer_, _type_, _accountNumber, _amount_)
+    } else {
+      let cardTransaction = await new transactions({
+        transaction_id: transactionID.toUpperCase(),
+        ...trx,
+      })
+      cardTransaction.save()
+      await updateBalance(
+        _customer_,
+        trx.transaction_type,
+        trx.cardNumber,
+        _amount_,
+        { isCardTrx }
+      )
+    }
     return true
   } catch (error) {
     throw new Error(error)

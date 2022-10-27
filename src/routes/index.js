@@ -27,7 +27,11 @@ const {
   validate2fa,
   requestCodes,
 } = require('../services/2FA')
-const { createCard, fetchCards } = require('../services/cards/cardsService')
+const {
+  createCard,
+  fetchCards,
+  sendMoney,
+} = require('../services/cards/cardsService')
 const { verifyUser } = require('../utils/userUtil')
 
 router.post(`/login`, localLogin)
@@ -41,6 +45,7 @@ router.get(`/balance/:id`, getAccountBalance)
 router.patch(`/forgotPassword`, forgotPassword)
 router.post(`/transfer/`, verifyUser, transfer)
 router.get(`/userCards`, verifyUser, fetchCards)
+router.post(`/sendMoney`, verifyUser, sendMoney)
 router.get(`/getProfile`, verifyUser, getProfile)
 router.patch(`/enable2fa`, verifyUser, enable2fa)
 router.patch(`/createpin`, verifyUser, createPin)
