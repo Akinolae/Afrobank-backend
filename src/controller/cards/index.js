@@ -1,17 +1,16 @@
-const { createAccountNumber, validateAmount } = require('../../utils')
-const {
-  fetch_single_user,
-  verifyCard,
-  fetch_single_user_id,
-} = require('../../utils/userUtil')
 const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
-const { updateTransaction } = require('../../utils/queries')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { createExpiryDate } = require('../../utils/dateUtils')
-const { createPin } = require('../../utils/pinUtils')
+const { updateTransaction } = require('../../utils/queries')
+const { fetch_single_user, verifyCard } = require('../../utils/userUtil')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
+const { generateCard, validateAmount } = require('../../utils')
+
+//class @Cards contains all the actions pertaining to card
+//1. @createCard ~~~ only authenticated users can create cards
+//2. @gettingUserCards ~~~ only authenticated user can view his/her cards
+//3. @sendMoney ~~~ only authenticared users can send money from cards
 
 class Cards {
   constructor(_cards_) {
@@ -23,8 +22,8 @@ class Cards {
       if (!userData.status) {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
-        const cards = await fetchAllCards(userData.message._id)
-        if (cards.length === 3) {
+        const cards = (await fetchAllCards(userData.message._id)).length
+        if (cards === 3) {
           response(
             'You can only have three cards at the moment',
             false,
@@ -32,17 +31,8 @@ class Cards {
             res
           )
         } else {
-          const cardNumber = await createAccountNumber({ type: 'Card' }, 16)
-          const cardData = {
-            cardNumber,
-            created: new Date(),
-            expiryDate: createExpiryDate(new Date(), 2),
-            ownerId: userData.message._id,
-            balance: 0,
-            pin: createPin(),
-            cvv: createPin(3),
-          }
-          const newCard = await new this.cards(cardData)
+          const card = await generateCard(userData)
+          const newCard = await new this.cards(card)
           await newCard.save()
           response('Card creation successful', true, StatusCodes.OK, res)
         }
@@ -87,10 +77,13 @@ class Cards {
     try {
       const { cardNumber, sendingCardId, cardPin, amount, description } =
         req.body
+
+      // get the sending card with the card id
       const sendingCard = (await fetchAllCards(res.user.id)).find(
         (card) => card._id.toString() === sendingCardId
       )
 
+      //VerifyBoth cards to know if they exist
       const [recipientCard, senderCard] = await Promise.all([
         verifyCard(cardNumber),
         verifyCard(!!sendingCard ? sendingCard.cardNumber : ''),
@@ -104,11 +97,13 @@ class Cards {
           res
         )
       } else {
+        //Check the conditions of both cards if they can process transactions
         const [sender, recipient] = await Promise.all([
           cardConditionsCheck(senderCard.message),
           cardConditionsCheck(recipientCard.message),
         ])
 
+        //Check if user has suffcient balance to process transactions
         const isValidAmount = validateAmount(
           { accountBalance: senderCard.message.balance },
           amount

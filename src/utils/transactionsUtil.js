@@ -1,5 +1,8 @@
 const { verifyAccountNumber, verifyCard } = require('./userUtil')
 const transactions = require('../model/transactions')
+const { createExpiryDate } = require('./dateUtils')
+const createAccountNumber = require('./accountNumberUtil')
+const { createPin } = require('./pinUtils')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -81,6 +84,32 @@ const updateBalance = async (
   }
 }
 
+const generateCard = async (params) => {
+  let info
+
+  try {
+    if (typeof params !== 'object') throw 'Transaction info should be an object'
+    else {
+      const cardNumber = await createAccountNumber(
+        { type: 'Card', isCard: true },
+        16
+      )
+
+      info = {
+        cardNumber,
+        created: new Date(),
+        expiryDate: createExpiryDate(new Date(), 2),
+        ownerId: params.message._id,
+        balance: 0,
+        pin: createPin(),
+        CVV: createPin(3),
+      }
+    }
+    return info
+  } catch (error) {
+    throw error
+  }
+}
 const calc_account_balance = async (accountNumber) => {
   let transactions, getAllCredits, getAllDebits, sumCreditTotal, sumDebitTotal
   try {
@@ -98,8 +127,9 @@ const calc_account_balance = async (accountNumber) => {
 }
 
 module.exports = {
+  generateCard,
+  updateBalance,
   transactionHistory,
   calc_account_balance,
-  updateBalance,
   fetchAllNotifications,
 }

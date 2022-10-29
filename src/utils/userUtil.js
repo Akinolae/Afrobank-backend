@@ -7,7 +7,6 @@ const { response } = require('../controller/responseHandler')
 const { StatusCodes } = require('http-status-codes')
 
 const fetch_single_user = async (email) => {
-  console.log(email, 'fetchsingle')
   try {
     const isAvailable = await customer.findOne({ email })
     const res =
