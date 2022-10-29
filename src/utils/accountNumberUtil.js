@@ -1,5 +1,6 @@
 const { createPin } = require('../utils/pinUtils')
 const { verifyAccountNumber, verifyCard } = require('./userUtil')
+const generator = require('creditcard-generator')
 
 const generate_account_no = (length) => {
   const acc_no = createPin(length)
@@ -8,7 +9,8 @@ const generate_account_no = (length) => {
 
 const createAccountNumber = async (params, length = 10) => {
   try {
-    const { type } = params
+    const { type, isCard } = params
+
     /*
       1. Generates a unique account Number
       2. Checks if the accountNumber exists or tied to a user
@@ -18,15 +20,18 @@ const createAccountNumber = async (params, length = 10) => {
     let accountNumber
     let isAccountNumberExists
     do {
-      accountNumber = generate_account_no(length)
+      accountNumber = !!isCard
+        ? generator.GenCC('Mastercard')
+        : generate_account_no(length)
+
       isAccountNumberExists = type.includes('accountNumber')
         ? await verifyAccountNumber(accountNumber)
-        : await verifyCard(accountNumber)
+        : await verifyCard(accountNumber[0])
     } while (
       isAccountNumberExists.status ||
       accountNumber.toString().length !== length
     )
-    return accountNumber
+    return accountNumber[0]
   } catch (error) {
     throw error
   }
