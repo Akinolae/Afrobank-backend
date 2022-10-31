@@ -5,7 +5,7 @@ const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
 const { fetch_single_user, verifyCard } = require('../../utils/userUtil')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
-const { generateCard, validateAmount } = require('../../utils')
+const { generateCard, validateAmount, generateTrxInfo } = require('../../utils')
 
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
@@ -98,16 +98,17 @@ class Cards {
         )
       } else {
         //Check the conditions of both cards if they can process transactions
-        const [sender, recipient] = await Promise.all([
+        //Check if user has suffcient balance to process transactions
+
+        const [sender, recipient, isValidAmount] = await Promise.all([
           cardConditionsCheck(senderCard.message),
           cardConditionsCheck(recipientCard.message),
+          validateAmount(
+            { accountBalance: senderCard.message.balance },
+            amount
+          ),
         ])
 
-        //Check if user has suffcient balance to process transactions
-        const isValidAmount = validateAmount(
-          { accountBalance: senderCard.message.balance },
-          amount
-        )
         if (
           !sender.status ||
           !recipient.status ||
@@ -130,29 +131,18 @@ class Cards {
           )
         } else {
           let senderData, recipientData
-
-          senderData = {
-            cardNumber: senderCard.message.cardNumber,
-            transaction_type: 'debit',
-            amount: amount,
-            user_id: senderCard.message.ownerId,
-            description: !!description
-              ? `AFROBANK-CARD||TRX-${description}`
-              : 'AFROBANK-CARD||TRX',
-            transaction_date: new Date(),
-          }
-
-          recipientData = {
-            cardNumber: recipientCard.message.cardNumber,
-            transaction_type: 'credit',
-            amount: amount,
-            user_id: recipientCard.message.ownerId,
-            description: !!description
-              ? `AFROBANK-CARD||TRX-${description}`
-              : 'AFROBANK-CARD||TRX',
-            transaction_date: new Date(),
-          }
-
+          senderData = generateTrxInfo(
+            senderCard.message,
+            'debit',
+            description,
+            amount
+          )
+          recipientData = generateTrxInfo(
+            recipientCard.message,
+            'credit',
+            description,
+            amount
+          )
           await Promise.all([
             updateTransaction(cards, cardTrx, null, null, amount, null, null, {
               isCardTrx: true,

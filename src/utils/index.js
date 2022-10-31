@@ -4,6 +4,7 @@ const createAccountNumber = require('./accountNumberUtil')
 const {
   generateCard,
   updateBalance,
+  generateTrxInfo,
   transactionHistory,
   calc_account_balance,
   fetchAllNotifications,
@@ -20,6 +21,7 @@ module.exports = {
   generateCard,
   updateBalance,
   validateAmount,
+  generateTrxInfo,
   transactionHistory,
   generateRandomEmail,
   createAccountNumber,
