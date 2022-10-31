@@ -110,6 +110,20 @@ const generateCard = async (params) => {
     throw error
   }
 }
+
+const generateTrxInfo = (userInfo, trxType, description, amount) => {
+  return {
+    cardNumber: userInfo.cardNumber,
+    transaction_type: trxType,
+    user_id: userInfo.ownerId,
+    transaction_date: new Date(),
+    description: !!description
+      ? `AFROBANK-CARD||TRX-${description}`
+      : 'AFROBANK-CARD||TRX',
+    amount,
+  }
+}
+
 const calc_account_balance = async (accountNumber) => {
   let transactions, getAllCredits, getAllDebits, sumCreditTotal, sumDebitTotal
   try {
@@ -129,6 +143,7 @@ const calc_account_balance = async (accountNumber) => {
 module.exports = {
   generateCard,
   updateBalance,
+  generateTrxInfo,
   transactionHistory,
   calc_account_balance,
   fetchAllNotifications,
