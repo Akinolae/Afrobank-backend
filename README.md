@@ -26,6 +26,8 @@ npm run dev
 3. you have access to updated transactions history
 4. get single updated transaction record
 5. Has 2FA feature for security with back up codes
+6. Card creation
+7. Card Transactions
 ```
 
 
