@@ -1,12 +1,14 @@
-const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
-const { updateBalance } = require('../utils/')
-const { nanoid } = require('nanoid')
-const { pinReset } = require('./validator')
-const customer = require('../model/customer')
+//imports
 const cards = require('../model/cards')
 const cardTrx = require('../model/cardTransactions')
+const customer = require('../model/customer')
 const transactions = require('../model/transactions')
+const { nanoid } = require('nanoid')
+const { pinReset } = require('./validator')
+const { updateBalance } = require('../utils/')
+const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 
+// updates transactions db for both card and normal transactions ...//
 const updateTransaction = async (
   _customer_,
   transactions,
@@ -14,27 +16,52 @@ const updateTransaction = async (
   _accountNumber,
   _amount_,
   _description_,
-  user_id
+  user_id,
+  { isCardTrx, trx } = {}
 ) => {
   const date = new Date()
-  const transactionID = `${nanoid()}|${_type_}|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
-  try {
-    let transactionModel = await new transactions({
-      transaction_id: transactionID.toUpperCase(),
-      transaction_type: _type_,
-      amount: _amount_,
-      description: _description_,
-      transaction_date: date,
-      user_id: user_id,
-    })
 
-    transactionModel.save()
-    await updateBalance(_customer_, _type_, _accountNumber, _amount_)
+  //generates transaction id for every transaction
+
+  const transactionID = `${nanoid()}|${
+    _type_ || trx.transaction_type
+  }|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
+  try {
+    //Bloc processes only non card transactions
+    if (isCardTrx === undefined || !isCardTrx) {
+      let transactionModel = await new transactions({
+        transaction_id: transactionID.toUpperCase(),
+        transaction_type: _type_,
+        amount: _amount_,
+        description: _description_,
+        transaction_date: date,
+        user_id: user_id,
+      })
+
+      transactionModel.save()
+      await updateBalance(_customer_, _type_, _accountNumber, _amount_)
+    } else {
+      //Bloc processes card transactions
+      //updates the transactions table accordingly as well as balance of the cards...//
+      let cardTransaction = await new transactions({
+        transaction_id: transactionID.toUpperCase(),
+        ...trx,
+      })
+      cardTransaction.save()
+      await updateBalance(
+        _customer_,
+        trx.transaction_type,
+        trx.cardNumber,
+        _amount_,
+        { isCardTrx }
+      )
+    }
     return true
   } catch (error) {
     throw new Error(error)
   }
 }
+//transactions update ends...
 
 const updatePassword = async (cutomer, accountNumber, password) => {
   try {

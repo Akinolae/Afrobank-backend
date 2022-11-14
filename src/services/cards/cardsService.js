@@ -7,4 +7,7 @@ module.exports = {
   fetchCards: (req, res) => {
     cards.getUserCards(req, res)
   },
+  sendMoney: (req, res) => {
+    cards.sendMoney(req, res)
+  },
 }

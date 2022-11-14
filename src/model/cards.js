@@ -14,12 +14,10 @@ const cardSchema = new mongoose.Schema({
   },
   expiryDate: {
     type: Date,
-    required: true,
     allowNull: false,
   },
   ownerId: {
     type: String,
-    required: true,
     allowNull: false,
   },
   balance: {

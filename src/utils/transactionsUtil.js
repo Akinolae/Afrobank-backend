@@ -1,5 +1,8 @@
-const { verifyAccountNumber } = require('./userUtil')
+const { verifyAccountNumber, verifyCard } = require('./userUtil')
 const transactions = require('../model/transactions')
+const { createExpiryDate } = require('./dateUtils')
+const createAccountNumber = require('./accountNumberUtil')
+const { createPin } = require('./pinUtils')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -41,19 +44,83 @@ const fetchAllNotifications = async (accountNumber) => {
   }
 }
 
-const updateBalance = async (customer, type, accountNumber, amount) => {
-  const data = await verifyAccountNumber(accountNumber)
+const updateBalance = async (
+  customer,
+  type = '',
+  accountNumber,
+  amount,
+  { isCardTrx } = {}
+) => {
+  const data = isCardTrx
+    ? await verifyCard(accountNumber)
+    : await verifyAccountNumber(accountNumber)
+
   let currentBalance = 0
   try {
-    if (type === 'credit') {
-      currentBalance = +data.user.accountBalance + +amount
-    } else currentBalance = +data.user.accountBalance - +amount
-    await customer.findOneAndUpdate(
-      { accountNumber },
-      { $set: { accountBalance: currentBalance } }
-    )
+    if (type.toLowerCase() === 'credit') {
+      currentBalance += isCardTrx
+        ? +data.message.balance + +amount
+        : +data.user.accountBalance + +amount
+    } else {
+      currentBalance = isCardTrx
+        ? +data.message.balance - +amount
+        : +data.user.accountBalance - +amount
+    }
+    if (!isCardTrx || isCardTrx === null || undefined) {
+      await customer.findOneAndUpdate(
+        { accountNumber },
+        { $set: { accountBalance: currentBalance } }
+      )
+    } else {
+      await customer.findOneAndUpdate(
+        { cardNumber: accountNumber },
+        {
+          $set: { balance: currentBalance },
+        }
+      )
+    }
   } catch (e) {
     throw e
+  }
+}
+
+const generateCard = async (params) => {
+  let info
+
+  try {
+    if (typeof params !== 'object') throw 'Transaction info should be an object'
+    else {
+      const cardNumber = await createAccountNumber(
+        { type: 'Card', isCard: true },
+        16
+      )
+
+      info = {
+        cardNumber,
+        created: new Date(),
+        expiryDate: createExpiryDate(new Date(), 2),
+        ownerId: params.message._id,
+        balance: 0,
+        pin: createPin(),
+        CVV: createPin(3),
+      }
+    }
+    return info
+  } catch (error) {
+    throw error
+  }
+}
+
+const generateTrxInfo = (userInfo, trxType, description, amount) => {
+  return {
+    cardNumber: userInfo.cardNumber,
+    transaction_type: trxType,
+    user_id: userInfo.ownerId,
+    transaction_date: new Date(),
+    description: !!description
+      ? `AFROBANK-CARD||TRX-${description}`
+      : 'AFROBANK-CARD||TRX',
+    amount,
   }
 }
 
@@ -72,9 +139,12 @@ const calc_account_balance = async (accountNumber) => {
     throw error
   }
 }
+
 module.exports = {
+  generateCard,
+  updateBalance,
+  generateTrxInfo,
   transactionHistory,
   calc_account_balance,
-  updateBalance,
   fetchAllNotifications,
 }

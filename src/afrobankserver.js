@@ -4,11 +4,6 @@ const cors = require('cors')
 const express = require('express')
 const { appConfig } = require('./config')
 
-const URI =
-  process.env.NODE_ENV === 'development'
-    ? process.env.DB_CONNECT
-    : process.env.DB_CONNECT_PROD
-
 // morgan only logs requests in development \\
 const app = express()
 
@@ -26,11 +21,12 @@ app.use((req, res) => {
   const msg = 'page not found'
   response(msg, 'error', 404, res)
 })
+
 app.listen(process.env.PORT || 4000, () => {
   // makes it easy to dynamically configure the db \\
   // just create a CLUSTER on atlas cloud, \\
   // pick the URL and add... voila!, you're connected to the DB! \\
   process.on('warning', (e) => console.warn(e.stack))
-  appConfig({ type: 'db' }, URI)
+  appConfig({ type: 'db' })
   console.log(`app is running ${process.env.PORT}`)
 })
