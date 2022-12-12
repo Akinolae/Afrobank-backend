@@ -1,4 +1,3 @@
-const { nanoid } = require('nanoid')
 const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
 const { response } = require('../responseHandler')
