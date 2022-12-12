@@ -1,9 +1,14 @@
+const { nanoid } = require('nanoid')
 const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
-const { fetch_single_user, verifyCard } = require('../../utils/userUtil')
+const {
+  fetch_single_user,
+  verifyCard,
+  useCrypto,
+} = require('../../utils/userUtil')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 const { generateCard, validateAmount, generateTrxInfo } = require('../../utils')
 
@@ -32,7 +37,13 @@ class Cards {
           )
         } else {
           const card = await generateCard(userData)
-          const newCard = await new this.cards(card)
+
+          const newCard = await new this.cards({
+            cardToken: useCrypto({
+              payLoad: card,
+            }),
+            ownerId: userData.message._id,
+          })
           await newCard.save()
           response('Card creation successful', true, StatusCodes.OK, res)
         }
@@ -48,20 +59,15 @@ class Cards {
       if (!userData.status) {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
-        const cards = (await fetchAllCards(userData.message._id)).map(
-          (card) => ({
-            cvv: card.cvv,
-            balance: card.balance,
-            ownerId: card.ownerId,
-            expiryDate: card.expiryDate,
-            created: card.created,
-            cardNumber: card.cardNumber,
-            _id: card._id,
-            isActive: card.isActive,
-          })
+        const cards = await fetchAllCards(userData.message._id)
+        response(
+          cards.map((card) =>
+            JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+          ),
+          true,
+          StatusCodes.OK,
+          res
         )
-
-        response(cards, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
@@ -79,9 +85,11 @@ class Cards {
         req.body
 
       // get the sending card with the card id
-      const sendingCard = (await fetchAllCards(res.user.id)).find(
-        (card) => card._id.toString() === sendingCardId
-      )
+      const sendingCard = (await fetchAllCards(res.user.id))
+        .map((card) =>
+          JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+        )
+        .find((card) => card.card_id.toString() === sendingCardId)
 
       //VerifyBoth cards to know if they exist
       const [recipientCard, senderCard] = await Promise.all([
@@ -89,6 +97,7 @@ class Cards {
         verifyCard(!!sendingCard ? sendingCard.cardNumber : ''),
       ])
 
+      console.log({ recipientCard, senderCard })
       if (!recipientCard.status || !senderCard.status) {
         response(
           !recipientCard.status ? recipientCard.message : senderCard.message,

@@ -3,6 +3,7 @@ const transactions = require('../model/transactions')
 const { createExpiryDate } = require('./dateUtils')
 const createAccountNumber = require('./accountNumberUtil')
 const { createPin } = require('./pinUtils')
+const { nanoid } = require('nanoid')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -103,6 +104,8 @@ const generateCard = async (params) => {
         balance: 0,
         pin: createPin(),
         CVV: createPin(3),
+        isActive: true,
+        card_id: nanoid(),
       }
     }
     return info

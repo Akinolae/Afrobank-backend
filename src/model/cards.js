@@ -1,41 +1,15 @@
 const mongoose = require('mongoose')
 
 const cardSchema = new mongoose.Schema({
-  cardNumber: {
-    type: String,
-    required: true,
-    allowNull: false,
-  },
-  created: {
-    type: Date,
-    default: Date.now,
-    required: true,
-    allowNull: false,
-  },
-  expiryDate: {
-    type: Date,
-    allowNull: false,
-  },
   ownerId: {
     type: String,
     allowNull: false,
+    required: true,
   },
-  balance: {
-    type: Number,
-    allowNull: false,
-  },
-  cvv: {
-    type: Number,
-    allowNull: false,
-  },
-  pin: {
+  cardToken: {
     type: String,
-    default: null,
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
     allowNull: false,
+    required: true,
   },
 })
 
