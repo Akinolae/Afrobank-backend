@@ -97,7 +97,6 @@ class Cards {
         verifyCard(!!sendingCard ? sendingCard.cardNumber : ''),
       ])
 
-      console.log({ recipientCard, senderCard })
       if (!recipientCard.status || !senderCard.status) {
         response(
           !recipientCard.status ? recipientCard.message : senderCard.message,
