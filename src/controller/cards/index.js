@@ -35,6 +35,7 @@ class Cards {
             res
           )
         } else {
+          // Generates a new card for users
           const card = await generateCard(userData)
 
           const newCard = await new this.cards({
@@ -58,15 +59,10 @@ class Cards {
       if (!userData.status) {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
-        const cards = await fetchAllCards(userData.message._id)
-        response(
-          cards.map((card) =>
-            JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-          ),
-          true,
-          StatusCodes.OK,
-          res
+        const cards = (await fetchAllCards(userData.message._id)).map((card) =>
+          JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
         )
+        response(cards, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
