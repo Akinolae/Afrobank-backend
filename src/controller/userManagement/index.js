@@ -26,11 +26,9 @@ const {
   user_reg,
   authSchema,
   user_login,
-  setPinSchema,
   notifications,
 } = require('../../utils/validator')
 const {
-  verifyUser,
   validate2FA,
   hashPassword,
   decryptPassword,
