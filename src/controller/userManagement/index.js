@@ -91,26 +91,37 @@ class UserManagement {
       if (!userData.status) {
         response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
       } else {
-        const accountNumber = await createAccountNumber({
-          type: 'accountNumber',
-        })
+        if (
+          (await this.virtualAccount.find({ user_id: userData.message._id }))
+            .length >= 1
+        ) {
+          response(
+            'User has an existing account',
+            true,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          const accountNumber = await createAccountNumber({
+            type: 'accountNumber',
+          })
 
-        const accountData = {
-          user_id: userData.message._id,
-          active: true,
-          pin: process.env.PIN,
-          accountNumber: accountNumber,
-          accountBalance: process.env.DEFAULT_BALANCE,
+          const accountData = {
+            user_id: userData.message._id,
+            active: true,
+            pin: process.env.PIN,
+            accountNumber: accountNumber,
+            accountBalance: process.env.DEFAULT_BALANCE,
+          }
+          let accountModel = await new this.virtualAccount(accountData)
+          await accountModel.save()
+          response(
+            'Account number generated successfully',
+            true,
+            StatusCodes.OK,
+            res
+          )
         }
-
-        let accountModel = await new this.virtualAccount(accountData)
-        await accountModel.save()
-        response(
-          'Account number generated successfully',
-          true,
-          StatusCodes.OK,
-          res
-        )
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
