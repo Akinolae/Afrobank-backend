@@ -8,6 +8,7 @@ const {
   verifyCard,
   useCrypto,
 } = require('../../utils/userUtil')
+const { sendEmail } = require('../../utils/emailUtils')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 const { generateCard, validateAmount, generateTrxInfo } = require('../../utils')
 
@@ -21,15 +22,21 @@ class Cards {
     this.cards = _cards_
   }
   createCard = async (req, res) => {
+    const { welcomeEmail } = require('../../templates/welcomeEmail')
     try {
       const { userData } = await this.userVerification(res.user.email)
+      sendEmail(userData.message.email, {
+        subject: 'Test Email',
+        text: welcomeEmail,
+        html: '<p>Test Email</p>',
+      })
       if (!userData.status) {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
         const cards = (await fetchAllCards(userData.message._id)).length
-        if (cards === 3) {
+        if (cards >= 1) {
           response(
-            'You can only have three cards at the moment',
+            'You can only create one card at a time',
             false,
             StatusCodes.UNPROCESSABLE_ENTITY,
             res
@@ -45,6 +52,7 @@ class Cards {
             ownerId: userData.message._id,
           })
           await newCard.save()
+
           response('Card creation successful', true, StatusCodes.OK, res)
         }
       }
@@ -86,7 +94,7 @@ class Cards {
         )
         .find((card) => card.card_id.toString() === sendingCardId)
 
-      //VerifyBoth cards to know if they exist
+      //Verify Both cards to know if they exist
       const [recipientCard, senderCard] = await Promise.all([
         verifyCard(cardNumber),
         verifyCard(!!sendingCard ? sendingCard.cardNumber : ''),
@@ -134,6 +142,11 @@ class Cards {
           )
         } else {
           let senderData, recipientData
+
+          /* 
+          SenderData && RecipientData auto generates transaction information to be added to the DB          
+          */
+
           senderData = generateTrxInfo(
             senderCard.message,
             'debit',
@@ -146,6 +159,7 @@ class Cards {
             description,
             amount
           )
+
           await Promise.all([
             updateTransaction(cards, cardTrx, null, null, amount, null, null, {
               isCardTrx: true,
@@ -159,6 +173,27 @@ class Cards {
 
           response('Transfer success', true, StatusCodes.OK, res)
         }
+        lojk
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  changeCardPin = async (req, res) => {
+    try {
+      const { pin, cardNumber } = req.body
+      const { userData } = await this.userVerification(res.user.email)
+      if (!userData.status) {
+        response('User not found', false, StatusCodes.NOT_FOUND, res)
+      } else {
+        const cards = (await fetchAllCards(userData.message._id))
+          .map((card) =>
+            JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+          )
+          .find((data) => data.cardNumber === cardNumber)
+
+        console.log(cards)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)

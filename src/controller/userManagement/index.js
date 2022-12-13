@@ -1,5 +1,6 @@
 require('dotenv').config()
 const model = require('../../model/customer')
+const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 
@@ -38,8 +39,9 @@ const {
 } = require('../../utils/userUtil')
 
 class UserManagement {
-  constructor(_customer_) {
+  constructor(_customer_, _virtualAccount_) {
     this.customer = _customer_
+    this.virtualAccount = _virtualAccount_
   }
 
   // #1
@@ -55,10 +57,7 @@ class UserManagement {
       )
     } else {
       try {
-        const [accountNumber, hashedPassword] = await Promise.all([
-          createAccountNumber({ type: 'accountNumber' }),
-          hashPassword(password),
-        ])
+        const hashedPassword = await hashPassword(password)
 
         const user = {
           firstName,
@@ -66,8 +65,6 @@ class UserManagement {
           email,
           phoneNumber,
           gender,
-          accountNumber,
-          accountBalance: process.env.DEFAULT_BALANCE,
           password: hashedPassword,
         }
 
@@ -85,6 +82,38 @@ class UserManagement {
           res
         )
       }
+    }
+  }
+
+  generateAccountNumber = async (req, res) => {
+    try {
+      const { userData } = await this.userVerification(res.user.email)
+      if (!userData.status) {
+        response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
+      } else {
+        const accountNumber = await createAccountNumber({
+          type: 'accountNumber',
+        })
+
+        const accountData = {
+          user_id: userData.message._id,
+          active: true,
+          pin: process.env.PIN,
+          accountNumber: accountNumber,
+          accountBalance: process.env.DEFAULT_BALANCE,
+        }
+
+        let accountModel = await new this.virtualAccount(accountData)
+        await accountModel.save()
+        response(
+          'Account number generated successfully',
+          true,
+          StatusCodes.OK,
+          res
+        )
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
@@ -526,6 +555,6 @@ class UserManagement {
   }
 }
 
-const user = new UserManagement(model)
+const user = new UserManagement(model, virtualAccount)
 Object.freeze(user)
 module.exports = { user, UserManagement }

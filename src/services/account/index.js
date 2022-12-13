@@ -7,4 +7,7 @@ module.exports = {
   deactivateAccount: (req, res) => {
     user.deActivateUser(req, res)
   },
+  generateAccountNumber: (req, res) => {
+    user.generateAccountNumber(req, res)
+  },
 }

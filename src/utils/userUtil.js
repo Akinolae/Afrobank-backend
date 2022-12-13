@@ -1,4 +1,5 @@
 const customer = require('../model/customer')
+const account = require('../model/virtualAccounts')
 const card = require('../model/cards')
 const { generate } = require('otp-generator')
 const jwt = require('jsonwebtoken')
@@ -35,7 +36,7 @@ const fetch_single_user_id = async (id) => {
 
 const verifyAccountNumber = async (accountNumber) => {
   try {
-    const isUserAvailable = await customer.findOne({ accountNumber })
+    const isUserAvailable = await account.findOne({ accountNumber })
     const response =
       isUserAvailable === null || isUserAvailable === 'undefined'
         ? { status: false, message: 'Unable to verify account number' }

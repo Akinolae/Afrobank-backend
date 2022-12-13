@@ -20,10 +20,6 @@ const customer = new mongoose.Schema({
     type: String,
     required: true,
   },
-  active: {
-    type: Boolean,
-    allowNull: false,
-  },
   pin: {
     type: String,
     default: null,
@@ -36,7 +32,6 @@ const customer = new mongoose.Schema({
     type: String,
     default: null,
   },
-
   email: {
     type: String,
     required: true,
@@ -50,11 +45,6 @@ const customer = new mongoose.Schema({
     type: String,
     required: true,
   },
-  accountNumber: {
-    type: Number,
-    unique: true,
-    required: true,
-  },
   '2faEnabled': {
     type: Boolean,
     default: false,
@@ -62,10 +52,6 @@ const customer = new mongoose.Schema({
   '2faCodes': {
     type: Array,
     allowNull: true,
-  },
-  accountBalance: {
-    type: Number,
-    allowNull: false,
   },
   isAdmin: {
     type: Boolean,
