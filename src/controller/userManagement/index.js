@@ -71,8 +71,9 @@ class UserManagement {
         let user_model = await new this.customer(user)
         await user_model.save()
         response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
-        await this.createPushNotification(accountNumber, user_reg.welcome_text)
+        // await this.createPushNotification(accountNumber, user_reg.welcome_text)
       } catch (err) {
+        console.log(err)
         response(
           err.message.includes('duplicate')
             ? `user already exists`

@@ -101,7 +101,6 @@ const generateCard = async (params) => {
         created: new Date(),
         expiryDate: createExpiryDate(new Date(), 2),
         ownerId: params.message._id,
-        balance: 0,
         pin: createPin(),
         CVV: createPin(3),
         isActive: true,
