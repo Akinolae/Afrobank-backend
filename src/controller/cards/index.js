@@ -120,14 +120,18 @@ class Cards {
 
       /*
       
-      picks sender card and prepare for transaction
+      picks sender card from list of cards and prepare for transaction
+      We have to ensure that card belongs to the rightful owner before processing any transaction.
 
       */
       const senderCard = userCards
         .map((card) =>
           JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
         )
-        .find((card) => card.cardNumber.toString() === sendingCardId)
+        .find(
+          (card) =>
+            card.cardNumber.toString() === isSenderValid.message.cardNumber
+        )
 
       if (!isRecipientValid.status || !isSenderValid.status) {
         response(
