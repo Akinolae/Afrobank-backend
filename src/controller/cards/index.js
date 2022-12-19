@@ -155,19 +155,16 @@ class Cards {
       } else {
         /* 
         
-        gets virtual account attchedd to both cards
+        gets virtual account attached to both cards
         
         */
 
-        const [recipientVirtualAccount, senderVirtualAccount] =
-          await Promise.all([
-            ...[isRecipientValid.message, isSenderValid.message].map(
-              ({ accountNumber }) => this.virtualAccount.find({ accountNumber })
-            ),
-          ])
+        const senderVirtualAccount = await this.virtualAccount.find({
+          accountNumber: isSenderValid.message.accountNumber,
+        })
 
         //Check the conditions of both cards if they can process transactions
-        //Check if user has suffcient balance to process transactions
+        //Check if user has sufficient balance to process transactions
 
         const [sender, recipient, isValidAmount] = await Promise.all([
           cardConditionsCheck(isSenderValid.message),
