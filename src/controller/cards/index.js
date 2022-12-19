@@ -111,7 +111,10 @@ class Cards {
       const { cardNumber, sendingCardId, cardPin, amount, description } =
         req.body
 
-      //Verify Both cards to know if they exist
+      /*
+      Verify Both cards to know if they exist
+      */
+
       const [isRecipientValid, isSenderValid, userCards] = await Promise.all([
         verifyCard(cardNumber),
         verifyCard(sendingCardId),
@@ -119,11 +122,10 @@ class Cards {
       ])
 
       /*
-      
       picks sender card from list of cards and prepare for transaction
       We have to ensure that card belongs to the rightful owner before processing any transaction.
-
       */
+
       const senderCard = userCards
         .map((card) =>
           JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
@@ -144,9 +146,7 @@ class Cards {
         )
       } else if (
         /*
-      
       bloc only allows card owner to spend from card
-
       */
         !Object.keys(senderCard).length
       ) {
@@ -158,17 +158,17 @@ class Cards {
         )
       } else {
         /* 
-        
-        gets virtual account attached to both cards
-        
+        gets virtual account attached to sender card
         */
 
         const senderVirtualAccount = await this.virtualAccount.find({
           accountNumber: isSenderValid.message.accountNumber,
         })
 
-        //Check the conditions of both cards if they can process transactions
-        //Check if user has sufficient balance to process transactions
+        /* 
+        Check the conditions of both cards if they can accept or make transactions
+        Check if user has sufficient balance to process transactions
+        */
 
         const [sender, recipient, isValidAmount] = await Promise.all([
           cardConditionsCheck(isSenderValid.message),
