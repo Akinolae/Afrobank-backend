@@ -3,6 +3,7 @@ const transactions = require('../model/transactions')
 const { createExpiryDate } = require('./dateUtils')
 const createAccountNumber = require('./accountNumberUtil')
 const { createPin } = require('./pinUtils')
+const { nanoid } = require('nanoid')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -44,41 +45,21 @@ const fetchAllNotifications = async (accountNumber) => {
   }
 }
 
-const updateBalance = async (
-  customer,
-  type = '',
-  accountNumber,
-  amount,
-  { isCardTrx } = {}
-) => {
-  const data = isCardTrx
-    ? await verifyCard(accountNumber)
-    : await verifyAccountNumber(accountNumber)
+const updateBalance = async (customer, type = '', accountNumber, amount) => {
+  const data = await verifyAccountNumber(accountNumber)
 
   let currentBalance = 0
   try {
     if (type.toLowerCase() === 'credit') {
-      currentBalance += isCardTrx
-        ? +data.message.balance + +amount
-        : +data.user.accountBalance + +amount
+      currentBalance += +data.user.accountBalance + +amount
     } else {
-      currentBalance = isCardTrx
-        ? +data.message.balance - +amount
-        : +data.user.accountBalance - +amount
+      currentBalance = +data.user.accountBalance - +amount
     }
-    if (!isCardTrx || isCardTrx === null || undefined) {
-      await customer.findOneAndUpdate(
-        { accountNumber },
-        { $set: { accountBalance: currentBalance } }
-      )
-    } else {
-      await customer.findOneAndUpdate(
-        { cardNumber: accountNumber },
-        {
-          $set: { balance: currentBalance },
-        }
-      )
-    }
+
+    await customer.findOneAndUpdate(
+      { accountNumber },
+      { $set: { accountBalance: currentBalance } }
+    )
   } catch (e) {
     throw e
   }
@@ -100,9 +81,10 @@ const generateCard = async (params) => {
         created: new Date(),
         expiryDate: createExpiryDate(new Date(), 2),
         ownerId: params.message._id,
-        balance: 0,
         pin: createPin(),
         CVV: createPin(3),
+        isActive: true,
+        card_id: nanoid(),
       }
     }
     return info
@@ -114,6 +96,7 @@ const generateCard = async (params) => {
 const generateTrxInfo = (userInfo, trxType, description, amount) => {
   return {
     cardNumber: userInfo.cardNumber,
+    accountNumber: userInfo.accountNumber,
     transaction_type: trxType,
     user_id: userInfo.ownerId,
     transaction_date: new Date(),

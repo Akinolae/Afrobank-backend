@@ -7,7 +7,10 @@ const { validateAccount } = require('../services/accountValidation')
 const { getAccountBalance } = require('../services/getBalance')
 const { pinReset, createPin } = require('../services/pinreset')
 const { getUser, getAllUsers, getProfile } = require('../services/getUsers')
-const { activateAccount } = require('../services/account')
+const {
+  activateAccount,
+  generateAccountNumber,
+} = require('../services/account')
 const {
   getTransactionHistory,
   getSingleTransaction,
@@ -31,6 +34,7 @@ const {
   createCard,
   fetchCards,
   sendMoney,
+  resetPin,
 } = require('../services/cards/cardsService')
 const { verifyUser } = require('../utils/userUtil')
 
@@ -54,6 +58,7 @@ router.post('/createCard', verifyUser, createCard)
 router.get(`/getAllUsers`, verifyUser, getAllUsers)
 router.patch(`/disable2fa`, verifyUser, disable2fa)
 router.post('/validate2fa', verifyUser, validate2fa)
+router.patch(`/reset-card-pin`, verifyUser, resetPin)
 router.patch(`/activate`, verifyUser, activateAccount)
 router.patch(`/new2FAcodes`, verifyUser, requestCodes)
 router.get('/notifications/:id', fetchAllNotifications)
@@ -61,5 +66,6 @@ router.get(`/history`, verifyUser, getTransactionHistory)
 router.patch(`/deactivatel`, verifyUser, activateAccount)
 router.patch(`/changePassword`, verifyUser, changePassword)
 router.delete(`/deleteNotification/`, deleteNotification)
+router.get(`/generate-account`, verifyUser, generateAccountNumber)
 
 module.exports = router

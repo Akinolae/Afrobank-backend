@@ -1,10 +1,12 @@
 const customer = require('../model/customer')
+const account = require('../model/virtualAccounts')
 const card = require('../model/cards')
 const { generate } = require('otp-generator')
 const jwt = require('jsonwebtoken')
 const encrypt = require('bcryptjs')
 const { response } = require('../controller/responseHandler')
 const { StatusCodes } = require('http-status-codes')
+const CryptoJS = require('crypto-js')
 
 const fetch_single_user = async (email) => {
   try {
@@ -34,7 +36,7 @@ const fetch_single_user_id = async (id) => {
 
 const verifyAccountNumber = async (accountNumber) => {
   try {
-    const isUserAvailable = await customer.findOne({ accountNumber })
+    const isUserAvailable = await account.findOne({ accountNumber })
     const response =
       isUserAvailable === null || isUserAvailable === 'undefined'
         ? { status: false, message: 'Unable to verify account number' }
@@ -45,11 +47,28 @@ const verifyAccountNumber = async (accountNumber) => {
   }
 }
 
+const useCrypto = ({ payLoad = '', encrypt = true }) => {
+  let data
+  const message =
+    typeof payLoad === 'string' ? payLoad : JSON.stringify(payLoad)
+  if (encrypt) {
+    data = CryptoJS.AES.encrypt(message, process.env.TOKEN_SECRET).toString()
+  } else {
+    const decryptCode = CryptoJS.AES.decrypt(message, process.env.TOKEN_SECRET)
+    data = decryptCode.toString(CryptoJS.enc.Utf8)
+  }
+  return data
+}
 const verifyCard = async (cardNumber) => {
   try {
-    const isUserAvailable = await card.findOne({ cardNumber })
+    const isUserAvailable = (await card.find({}))
+      .map((card) =>
+        JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+      )
+      .find((card) => card.cardNumber === cardNumber)
+
     const response =
-      isUserAvailable === null || isUserAvailable === 'undefined'
+      isUserAvailable === null || isUserAvailable === undefined
         ? { status: false, message: 'Invalid card' }
         : { status: true, message: isUserAvailable }
     return response
@@ -166,6 +185,7 @@ const isAdmin = (params) => {
 
 module.exports = {
   isAdmin,
+  useCrypto,
   verifyUser,
   verifyCard,
   validate2FA,

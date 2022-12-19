@@ -2,9 +2,7 @@ const cards = require('../model/cards')
 
 const fetchAllCards = async (id) => {
   try {
-    return ((await cards.find()) || []).filter(
-      (card) => card.ownerId === String(id)
-    )
+    return await cards.find({ ownerId: id })
   } catch (error) {
     throw error
   }

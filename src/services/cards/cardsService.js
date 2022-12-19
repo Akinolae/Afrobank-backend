@@ -10,4 +10,7 @@ module.exports = {
   sendMoney: (req, res) => {
     cards.sendMoney(req, res)
   },
+  resetPin: (req, res) => {
+    cards.changeCardPin(req, res)
+  },
 }

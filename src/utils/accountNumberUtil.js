@@ -31,7 +31,8 @@ const createAccountNumber = async (params, length = 10) => {
       isAccountNumberExists.status ||
       accountNumber.toString().length !== length
     )
-    return accountNumber[0]
+
+    return !!isCard ? accountNumber[0] : accountNumber
   } catch (error) {
     throw error
   }
