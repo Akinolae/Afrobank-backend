@@ -174,7 +174,7 @@ class Cards {
           cardConditionsCheck(isSenderValid.message),
           cardConditionsCheck(isRecipientValid.message),
           validateAmount(
-            { accountBalance: senderVirtualAccount.accountBalance },
+            { accountBalance: senderVirtualAccount[0].accountBalance },
             amount
           ),
         ])
