@@ -5,9 +5,9 @@ const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { updateTransaction } = require('../../utils/queries')
 const {
-  fetch_single_user,
-  verifyCard,
   useCrypto,
+  verifyCard,
+  fetch_single_user,
 } = require('../../utils/userUtil')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 const {
@@ -34,7 +34,7 @@ class Cards {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
         const cards = (await fetchAllCards(userData.message._id)).length
-        if (cards >= 1) {
+        if (cards >= 2) {
           response(
             'You can only create one card at a time',
             false,
@@ -61,14 +61,14 @@ class Cards {
           3. New account is saved to DB
           
           */
-          const accountData = {
+
+          let newAccount = await new this.virtualAccount({
             user_id: userData.message._id,
             active: true,
             pin: process.env.PIN,
             accountNumber: accountNumber,
             accountBalance: process.env.DEFAULT_BALANCE,
-          }
-          let newAccount = await new this.virtualAccount(accountData)
+          })
           const newCard = await new this.cards({
             cardToken: useCrypto({
               payLoad: { ...card, accountNumber },
@@ -111,42 +111,75 @@ class Cards {
       const { cardNumber, sendingCardId, cardPin, amount, description } =
         req.body
 
-      // get the sending card with the card id
-      const senderCard =
-        (await fetchAllCards(res.user.id))
-          .map((card) =>
-            JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-          )
-          .find((card) => card.card_id.toString() === sendingCardId) || {}
-
       //Verify Both cards to know if they exist
-      const [recipientCard, virtualAccount] = await Promise.all([
+      const [isRecipientValid, isSenderValid, userCards] = await Promise.all([
         verifyCard(cardNumber),
-        this.virtualAccount.find({ user_id: res.user.id }),
+        verifyCard(sendingCardId),
+        fetchAllCards(res.user.id),
       ])
 
-      if (!recipientCard.status || !Object.keys(senderCard).length) {
+      /*
+      
+      picks sender card and prepare for transaction
+
+      */
+      const senderCard = userCards
+        .map((card) =>
+          JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+        )
+        .find((card) => card.cardNumber.toString() === sendingCardId)
+
+      if (!isRecipientValid.status || !isSenderValid.status) {
         response(
-          !recipientCard.status ? recipientCard.message : 'Sender card invalid',
+          !isRecipientValid.status
+            ? isRecipientValid.message
+            : 'Sender card invalid',
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
+      } else if (
+        /*
+      
+      bloc only allows card owner to spend from card
+
+      */
+        !Object.keys(senderCard).length
+      ) {
+        response(
+          "You're not authorized to spend from this card",
+          false,
+          StatusCodes.UNAUTHORIZED,
+          res
+        )
       } else {
+        /* 
+        
+        gets virtual account attached to both cards
+        
+        */
+
+        const senderVirtualAccount = await this.virtualAccount.find({
+          accountNumber: isSenderValid.message.accountNumber,
+        })
+
         //Check the conditions of both cards if they can process transactions
-        //Check if user has suffcient balance to process transactions
+        //Check if user has sufficient balance to process transactions
 
         const [sender, recipient, isValidAmount] = await Promise.all([
-          cardConditionsCheck(senderCard),
-          cardConditionsCheck(recipientCard.message),
-          validateAmount({ accountBalance: virtualAccount.balance }, amount),
+          cardConditionsCheck(isSenderValid.message),
+          cardConditionsCheck(isRecipientValid.message),
+          validateAmount(
+            { accountBalance: senderVirtualAccount.accountBalance },
+            amount
+          ),
         ])
 
         if (
           !sender.status ||
           !recipient.status ||
           !!isValidAmount ||
-          sendingCard.pin !== cardPin
+          isSenderValid.message.pin !== cardPin
         ) {
           response(
             !recipient.status
@@ -170,13 +203,13 @@ class Cards {
           */
 
           senderData = generateTrxInfo(
-            senderCard.message,
+            isSenderValid.message,
             'debit',
             description,
             amount
           )
           recipientData = generateTrxInfo(
-            recipientCard.message,
+            isRecipientValid.message,
             'credit',
             description,
             amount
