@@ -38,8 +38,10 @@ const updateTransaction = async (
         user_id: user_id,
       })
 
-      transactionModel.save()
-      await updateBalance(_customer_, _type_, _accountNumber, _amount_)
+      await Promise.all([
+        transactionModel.save(),
+        updateBalance(_customer_, _type_, _accountNumber, _amount_),
+      ])
     } else {
       //Bloc processes card transactions
       //updates the transactions table accordingly as well as balance of the cards...//
@@ -47,14 +49,16 @@ const updateTransaction = async (
         transaction_id: transactionID.toUpperCase(),
         ...trx,
       })
-      cardTransaction.save()
-      await updateBalance(
-        _customer_,
-        trx.transaction_type,
-        trx.cardNumber,
-        _amount_,
-        { isCardTrx }
-      )
+
+      await Promise.all([
+        cardTransaction.save(),
+        updateBalance(
+          _customer_,
+          trx.transaction_type,
+          trx.accountNumber,
+          _amount_
+        ),
+      ])
     }
     return true
   } catch (error) {
