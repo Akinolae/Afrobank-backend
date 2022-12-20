@@ -3,7 +3,7 @@ const cardTrx = require('../../model/cardTransactions')
 const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { updateTransaction } = require('../../utils/queries')
+const { updateTransaction, updateCard } = require('../../utils/queries')
 const {
   useCrypto,
   verifyCard,
@@ -126,14 +126,7 @@ class Cards {
       We have to ensure that card belongs to the rightful owner before processing any transaction.
       */
 
-      const senderCard = userCards
-        .map((card) =>
-          JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-        )
-        .find(
-          (card) =>
-            card.cardNumber.toString() === isSenderValid.message.cardNumber
-        )
+      const senderCard = this.getCurrentCard(userCards, isSenderValid)
 
       if (!isRecipientValid.status || !isSenderValid.status) {
         response(
@@ -249,6 +242,75 @@ class Cards {
           ])
 
           response('Transfer success', true, StatusCodes.OK, res)
+        }
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  getCurrentCard = (userCards = [], user = {}) => {
+    return userCards
+      .map((card) =>
+        JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+      )
+      .find((card) => card.cardNumber.toString() === user.message.cardNumber)
+  }
+
+  updateCardStatus = async (req, res) => {
+    /*
+    Function activates and deactivates cards
+    */
+    try {
+      const { card, action } = req.query
+      if (!card || typeof card === undefined || !action) {
+        response(
+          !action ? 'Provide an action' : 'No card provided',
+          false,
+          StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        const [isCardValid, cards] = await Promise.all([
+          verifyCard(card),
+          fetchAllCards(res.user.id),
+        ])
+
+        let currentCard = this.getCurrentCard(cards, isCardValid)
+
+        if (!isCardValid.status || !Object.keys(currentCard)) {
+          response(
+            !isCardValid.status
+              ? 'Card invalid'
+              : "You're not authorized to do that",
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          /*
+          based on the user action the card status is updated accordingly
+          */
+
+          action === 'deactivate'
+            ? (currentCard.isActive = false)
+            : (currentCard.isActive = true)
+          await updateCard({
+            _id: isCardValid.message.id,
+            $set: {
+              cardToken: useCrypto({
+                payLoad: { ...currentCard },
+              }),
+            },
+          })
+          response(
+            action === 'deactivate'
+              ? 'Card deactivated successfully'
+              : 'Card activated successfully',
+            false,
+            StatusCodes.OK,
+            res
+          )
         }
       }
     } catch (error) {
