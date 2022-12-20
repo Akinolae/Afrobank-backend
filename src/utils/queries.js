@@ -79,6 +79,15 @@ const updatePassword = async (cutomer, accountNumber, password) => {
   }
 }
 
+const updateCard = async (config = {}) => {
+  try {
+    await cards.findOneAndUpdate(config)
+    return
+  } catch (error) {
+    throw error
+  }
+}
+
 const setNewPin = async (_customer_, accountNumber, pin) => {
   try {
     const user = await verifyAccountNumber(accountNumber)
@@ -244,6 +253,7 @@ module.exports = {
   newSchema,
   update2fa,
   addNewField,
+  updateCard,
   getAllUsers,
   updatePassword,
   update2faCodes,

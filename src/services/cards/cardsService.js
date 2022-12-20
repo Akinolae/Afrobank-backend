@@ -13,4 +13,7 @@ module.exports = {
   resetPin: (req, res) => {
     cards.changeCardPin(req, res)
   },
+  updateCardStatus: (req, res) => {
+    cards.updateCardStatus(req, res)
+  },
 }
