@@ -28,6 +28,8 @@ npm run dev
 5. Has 2FA feature for security with back up codes
 6. Card creation
 7. Card Transactions
+8. Dedicated account for cards
+9. Card status update
 ```
 
 
