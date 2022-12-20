@@ -126,14 +126,7 @@ class Cards {
       We have to ensure that card belongs to the rightful owner before processing any transaction.
       */
 
-      const senderCard = userCards
-        .map((card) =>
-          JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-        )
-        .find(
-          (card) =>
-            card.cardNumber.toString() === isSenderValid.message.cardNumber
-        )
+      const senderCard = this.getCurrentCard(userCards, isSenderValid)
 
       if (!isRecipientValid.status || !isSenderValid.status) {
         response(
@@ -256,6 +249,14 @@ class Cards {
     }
   }
 
+  getCurrentCard = (userCards = [], user = {}) => {
+    return userCards
+      .map((card) =>
+        JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+      )
+      .find((card) => card.cardNumber.toString() === user.message.cardNumber)
+  }
+
   updateCardStatus = async (req, res) => {
     /*
     Function activates and deactivates cards
@@ -275,14 +276,8 @@ class Cards {
           fetchAllCards(res.user.id),
         ])
 
-        let currentCard = cards
-          .map((card) =>
-            JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-          )
-          .find(
-            (card) =>
-              card.cardNumber.toString() === isCardValid.message.cardNumber
-          )
+        let currentCard = this.getCurrentCard(cards, isCardValid)
+
         if (!isCardValid.status || !Object.keys(currentCard)) {
           response(
             !isCardValid.status
