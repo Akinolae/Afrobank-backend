@@ -343,7 +343,7 @@ class Cards {
         currentCard.pin = pin
 
         await updateCard(
-          { _id: String(isCardValid.message.id) },
+          { _id: isCardValid.message.id },
           {
             cardToken: useCrypto({
               payLoad: { ...currentCard },
