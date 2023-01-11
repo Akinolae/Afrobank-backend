@@ -79,9 +79,9 @@ const updatePassword = async (cutomer, accountNumber, password) => {
   }
 }
 
-const updateCard = async (config = {}) => {
+const updateCard = async (config = {}, params = '') => {
   try {
-    await cards.findOneAndUpdate(config)
+    await cards.findOneAndUpdate(config, params)
     return
   } catch (error) {
     throw error
