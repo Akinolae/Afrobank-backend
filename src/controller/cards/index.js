@@ -261,11 +261,13 @@ class Cards {
     /*
     Function activates and deactivates cards
     */
+
+    const { card, action } = req.query
+    const validAction = !['deactivate', 'activate'].includes(action)
     try {
-      const { card, action } = req.query
-      if (!card || typeof card === undefined || !action) {
+      if (!card || typeof card === undefined || validAction) {
         response(
-          !action ? 'Provide an action' : 'No card provided',
+          validAction ? 'Provide a valid action' : 'No card provided',
           false,
           StatusCodes.NOT_FOUND,
           res
