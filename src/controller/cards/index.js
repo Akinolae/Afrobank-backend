@@ -295,14 +295,14 @@ class Cards {
           action === 'deactivate'
             ? (currentCard.isActive = false)
             : (currentCard.isActive = true)
-          await updateCard({
-            _id: isCardValid.message.id,
-            $set: {
+          await updateCard(
+            { _id: isCardValid.message.id },
+            {
               cardToken: useCrypto({
                 payLoad: { ...currentCard },
               }),
-            },
-          })
+            }
+          )
           response(
             action === 'deactivate'
               ? 'Card deactivated successfully'
@@ -321,17 +321,36 @@ class Cards {
   changeCardPin = async (req, res) => {
     try {
       const { pin, cardNumber } = req.body
-      const { userData } = await this.userVerification(res.user.email)
-      if (!userData.status) {
-        response('User not found', false, StatusCodes.NOT_FOUND, res)
-      } else {
-        const cards = (await fetchAllCards(userData.message._id))
-          .map((card) =>
-            JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-          )
-          .find((data) => data.cardNumber === cardNumber)
+      const [isCardValid, cards] = await Promise.all([
+        verifyCard(cardNumber),
+        fetchAllCards(res.user.id),
+      ])
 
-        console.log(cards)
+      let currentCard = this.getCurrentCard(cards, isCardValid)
+
+      if (!pin || !isCardValid.status || !Object.keys(currentCard)) {
+        response(
+          !pin
+            ? 'Pin is required'
+            : !isCardValid.status
+            ? 'Card invalid'
+            : "You're not authorized to do that",
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        currentCard.pin = pin
+
+        await updateCard(
+          { _id: isCardValid.message.id },
+          {
+            cardToken: useCrypto({
+              payLoad: { ...currentCard },
+            }),
+          }
+        )
+        response('Pin updated', false, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
