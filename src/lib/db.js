@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const nodemailer = require('nodemailer')
 const error = require('../utils/errorUtil')
-const { extractConfig } = require('./config')
+const { extractConfig } = require('../config/config')
 
 const dbConfig = async () => {
   const url = extractConfig('URI')
