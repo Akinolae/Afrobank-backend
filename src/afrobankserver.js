@@ -2,7 +2,7 @@ require('dotenv').config()
 const { response } = require('./controller/responseHandler')
 const cors = require('cors')
 const express = require('express')
-const { appConfig } = require('./config')
+const { appConfig } = require('./lib/db')
 
 // morgan only logs requests in development \\
 const app = express()
