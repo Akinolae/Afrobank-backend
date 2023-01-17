@@ -4,6 +4,7 @@ const { createExpiryDate } = require('./dateUtils')
 const createAccountNumber = require('./accountNumberUtil')
 const { createPin } = require('./pinUtils')
 const { nanoid } = require('nanoid')
+const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -17,7 +18,10 @@ const transactionHistory = async (accountNumber) => {
   try {
     const [data, trx] = await Promise.all([
       verifyAccountNumber(accountNumber),
-      transactions.find(),
+      dbActionGenerator(ACTIONS.FIND, {
+        collection: transactions,
+        data: [],
+      }),
     ])
 
     if (!data.status) return { status: false, response: data.message }
@@ -56,10 +60,10 @@ const updateBalance = async (customer, type = '', accountNumber, amount) => {
       currentBalance = +data.user.accountBalance - +amount
     }
 
-    await customer.findOneAndUpdate(
-      { accountNumber },
-      { $set: { accountBalance: currentBalance } }
-    )
+    await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
+      collection: customer,
+      data: [{ accountNumber }, { $set: { accountBalance: currentBalance } }],
+    })
   } catch (e) {
     throw e
   }

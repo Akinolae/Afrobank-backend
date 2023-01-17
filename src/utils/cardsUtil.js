@@ -1,8 +1,12 @@
 const cards = require('../model/cards')
+const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 
 const fetchAllCards = async (id) => {
   try {
-    return await cards.find({ ownerId: id })
+    return await dbActionGenerator(ACTIONS.FIND, {
+      collection: cards,
+      data: [{ ownerId: id }],
+    })
   } catch (error) {
     throw error
   }

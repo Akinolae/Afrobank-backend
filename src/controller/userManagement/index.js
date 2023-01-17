@@ -200,7 +200,6 @@ class UserManagement {
   getUsers = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
-      const resp = await getAllUsers()
 
       const isUserAdmin = !!userData.message && userData.message.isAdmin
 
@@ -214,6 +213,8 @@ class UserManagement {
           res
         )
       } else {
+        const resp = await getAllUsers()
+
         const allUsers = resp.message
           .filter((data) => data.account !== 'admin')
           .map((data) => ({
