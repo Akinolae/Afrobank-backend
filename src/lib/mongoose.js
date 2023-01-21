@@ -1,5 +1,6 @@
 const ACTIONS = {
   FIND: 'find',
+  FINDONE: 'findOne',
   CREATE: 'create',
   FINDONEANDUPDATE: 'findOneAndUpdate',
   UPDATEONE: 'updateOne',
@@ -8,14 +9,20 @@ const ACTIONS = {
 
 const dbActionGenerator = async (action = '', params = {}) => {
   try {
-    if (!action || !Object.keys(params).length) {
+    const isValidAction = Object.values(ACTIONS).includes(action)
+
+    if (!action || !isValidAction || !Object.keys(params).length) {
       throw new Error(
-        'action and params are required for DB update::CONFIGURATION_ERROR'
+        !isValidAction
+          ? `action must include either of ${Object.keys(ACTIONS).join(', ')}`
+          : 'action and params are required for DB update::CONFIGURATION_ERROR'
       )
     } else {
       switch (action) {
         case ACTIONS.FIND:
           return await params.collection.find(...params.data)
+        case ACTIONS.FINDONE:
+          return await params.collection.findOne(...params.data)
         case ACTIONS.CREATE:
           return await new params.collection(...params.data)
         case ACTIONS.FINDONEANDUPDATE:
