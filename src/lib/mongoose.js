@@ -14,7 +14,7 @@ const dbActionGenerator = async (action = '', params = {}) => {
     if (!action || !isValidAction || !Object.keys(params).length) {
       throw new Error(
         !isValidAction
-          ? `action must include either of ${Object.keys(ACTIONS)}`
+          ? `action must include either of ${Object.keys(ACTIONS).join(', ')}`
           : 'action and params are required for DB update::CONFIGURATION_ERROR'
       )
     } else {
