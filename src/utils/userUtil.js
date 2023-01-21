@@ -7,10 +7,14 @@ const encrypt = require('bcryptjs')
 const { response } = require('../controller/responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const CryptoJS = require('crypto-js')
+const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 
 const fetch_single_user = async (email) => {
   try {
-    const isAvailable = await customer.findOne({ email })
+    const isAvailable = await dbActionGenerator(ACTIONS.FINDONE, {
+      collection: customer,
+      data: [{ email }],
+    })
     const res =
       isAvailable === null || isAvailable === undefined
         ? { status: false, message: 'invalid email address or password' }
@@ -23,7 +27,14 @@ const fetch_single_user = async (email) => {
 
 const fetch_single_user_id = async (id) => {
   try {
-    const isAvailable = await customer.findOne({ _id: id })
+    const isAvailable = await dbActionGenerator(ACTIONS.FINDONE, {
+      collection: customer,
+      data: [
+        {
+          _id: id,
+        },
+      ],
+    })
     const res =
       isAvailable === null || isAvailable === undefined
         ? { status: false, message: 'invalid email address or password' }
@@ -36,7 +47,10 @@ const fetch_single_user_id = async (id) => {
 
 const verifyAccountNumber = async (accountNumber) => {
   try {
-    const isUserAvailable = await account.findOne({ accountNumber })
+    const isUserAvailable = await dbActionGenerator(ACTIONS.FINDONE, {
+      collection: account,
+      data: [{ accountNumber }],
+    })
     const response =
       isUserAvailable === null || isUserAvailable === 'undefined'
         ? { status: false, message: 'Unable to verify account number' }
@@ -61,7 +75,12 @@ const useCrypto = ({ payLoad = '', encrypt = true }) => {
 }
 const verifyCard = async (cardNumber) => {
   try {
-    const isUserAvailable = (await card.find({}))
+    const isUserAvailable = (
+      await dbActionGenerator(ACTIONS.FIND, {
+        collection: card,
+        data: [],
+      })
+    )
       .map((card) => ({
         id: card._id,
         ...JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false })),

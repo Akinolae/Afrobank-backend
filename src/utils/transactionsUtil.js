@@ -1,4 +1,4 @@
-const { verifyAccountNumber, verifyCard } = require('./userUtil')
+const { verifyAccountNumber } = require('./userUtil')
 const transactions = require('../model/transactions')
 const { createExpiryDate } = require('./dateUtils')
 const createAccountNumber = require('./accountNumberUtil')

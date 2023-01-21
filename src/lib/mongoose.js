@@ -1,5 +1,6 @@
 const ACTIONS = {
   FIND: 'find',
+  FINDONE: 'findOne',
   CREATE: 'create',
   FINDONEANDUPDATE: 'findOneAndUpdate',
   UPDATEONE: 'updateOne',
@@ -20,6 +21,8 @@ const dbActionGenerator = async (action = '', params = {}) => {
       switch (action) {
         case ACTIONS.FIND:
           return await params.collection.find(...params.data)
+        case ACTIONS.FINDONE:
+          return await params.collection.findOne(...params.data)
         case ACTIONS.CREATE:
           return await new params.collection(...params.data)
         case ACTIONS.FINDONEANDUPDATE:

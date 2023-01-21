@@ -20,7 +20,6 @@ const generateRandomEmail = () => {
 }
 
 const sendEmail = (recipient, config) => {
-  console.log({ recipient, config })
   try {
     transporter.sendMail(
       {
