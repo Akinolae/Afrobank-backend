@@ -16,7 +16,7 @@ const {
   generateTrxInfo,
   createAccountNumber,
 } = require('../../utils')
-
+const {dbActionGenerator, ACTIONS} = require("../../lib/mongoose")
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
 //2. @gettingUserCards ~~~ only authenticated user can view his/her cards
@@ -34,7 +34,7 @@ class Cards {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
         const cards = (await fetchAllCards(userData.message._id)).length
-        if (cards >= 2) {
+        if (cards >= 3) {
           response(
             'You can only create one card at a time',
             false,
@@ -62,19 +62,41 @@ class Cards {
           
           */
 
-          let newAccount = await new this.virtualAccount({
-            user_id: userData.message._id,
-            active: true,
-            pin: process.env.PIN,
-            accountNumber: accountNumber,
-            accountBalance: process.env.DEFAULT_BALANCE,
-          })
-          const newCard = await new this.cards({
-            cardToken: useCrypto({
-              payLoad: { ...card, accountNumber },
-            }),
-            ownerId: userData.message._id,
-          })
+          const info = [
+            {
+              collection: this.virtualAccount,
+              data: [
+                {
+                  user_id: userData.message._id,
+                  active: true,
+                  pin: process.env.PIN,
+                  accountNumber: accountNumber,
+                  accountBalance: process.env.DEFAULT_BALANCE,
+                },
+              ],
+            },
+            {
+              collection: this.cards,
+              data: [
+                {
+                  cardToken: useCrypto({
+                    payLoad: { ...card, accountNumber },
+                  }),
+                  ownerId: userData.message._id,
+                },
+              ],
+            },
+          ]
+
+          const [newAccount, newCard] = await Promise.all([
+            ...info.map(({ collection, data }) =>
+              dbActionGenerator(ACTIONS.CREATE, {
+                collection: collection,
+                data: data,
+              })
+            ),
+          ])
+    
           await Promise.all([newCard.save(), newAccount.save()])
 
           response('Card creation successful', true, StatusCodes.OK, res)
@@ -154,9 +176,16 @@ class Cards {
         gets virtual account attached to sender card
         */
 
-        const senderVirtualAccount = await this.virtualAccount.find({
-          accountNumber: isSenderValid.message.accountNumber,
+        const senderVirtualAccount = await dbActionGenerator(ACTIONS.FIND, {
+          collection: this.virtualAccount,
+          data: [
+            {
+              accountNumber: isSenderValid.message.accountNumber,
+            },
+          ],
         })
+        
+        
 
         /* 
         Check the conditions of both cards if they can accept or make transactions
@@ -261,11 +290,13 @@ class Cards {
     /*
     Function activates and deactivates cards
     */
+
+    const { card, action } = req.query
+    const validAction = !['deactivate', 'activate'].includes(action)
     try {
-      const { card, action } = req.query
-      if (!card || typeof card === undefined || !action) {
+      if (!card || typeof card === undefined || validAction) {
         response(
-          !action ? 'Provide an action' : 'No card provided',
+          validAction ? 'Provide a valid action' : 'No card provided',
           false,
           StatusCodes.NOT_FOUND,
           res
@@ -295,14 +326,14 @@ class Cards {
           action === 'deactivate'
             ? (currentCard.isActive = false)
             : (currentCard.isActive = true)
-          await updateCard({
-            _id: isCardValid.message.id,
-            $set: {
+          await updateCard(
+            { _id: isCardValid.message.id },
+            {
               cardToken: useCrypto({
                 payLoad: { ...currentCard },
               }),
-            },
-          })
+            }
+          )
           response(
             action === 'deactivate'
               ? 'Card deactivated successfully'
@@ -321,17 +352,36 @@ class Cards {
   changeCardPin = async (req, res) => {
     try {
       const { pin, cardNumber } = req.body
-      const { userData } = await this.userVerification(res.user.email)
-      if (!userData.status) {
-        response('User not found', false, StatusCodes.NOT_FOUND, res)
-      } else {
-        const cards = (await fetchAllCards(userData.message._id))
-          .map((card) =>
-            JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-          )
-          .find((data) => data.cardNumber === cardNumber)
+      const [isCardValid, cards] = await Promise.all([
+        verifyCard(cardNumber),
+        fetchAllCards(res.user.id),
+      ])
 
-        console.log(cards)
+      let currentCard = this.getCurrentCard(cards, isCardValid)
+
+      if (!pin || !isCardValid.status || !Object.keys(currentCard)) {
+        response(
+          !pin
+            ? 'Pin is required'
+            : !isCardValid.status
+            ? 'Card invalid'
+            : "You're not authorized to do that",
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        currentCard.pin = pin
+
+        await updateCard(
+          { _id: isCardValid.message.id },
+          {
+            cardToken: useCrypto({
+              payLoad: { ...currentCard },
+            }),
+          }
+        )
+        response('Pin updated', false, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
