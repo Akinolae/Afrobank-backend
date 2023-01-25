@@ -380,7 +380,7 @@ class Cards {
             }),
           }
         )
-        response('Pin updated', false, StatusCodes.OK, res)
+        response('Pin updated', true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
@@ -399,13 +399,14 @@ class Cards {
           res
         )
       } else {
-        const cardTrx = (await dbActionGenerator(ACTIONS.FIND, {
-          collection: this.cardTrx,
-          data: [],
-        })).filter((trx) => trx.cardNumber === isCardValid.message.cardNumber)
-        console.log(
-          cardTrx
-        )
+        const cardTrx = (
+          await dbActionGenerator(ACTIONS.FIND, {
+            collection: this.cardTrx,
+            data: [],
+          })
+        ).filter((trx) => trx.cardNumber === isCardValid.message.cardNumber)
+
+        response(cardTrx, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
