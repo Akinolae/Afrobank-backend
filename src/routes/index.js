@@ -36,6 +36,7 @@ const {
   sendMoney,
   resetPin,
   updateCardStatus,
+  fetchCardTransactions
 } = require('../services/cards/cardsService')
 const { verifyUser } = require('../utils/userUtil')
 
@@ -62,6 +63,7 @@ router.post('/validate2fa', verifyUser, validate2fa)
 router.patch(`/reset-card-pin`, verifyUser, resetPin)
 router.patch(`/activate`, verifyUser, activateAccount)
 router.patch(`/new2FAcodes`, verifyUser, requestCodes)
+router.get(`/card-transactions`, verifyUser, fetchCardTransactions)
 router.get('/notifications/:id', fetchAllNotifications)
 router.get(`/history`, verifyUser, getTransactionHistory)
 router.patch(`/deactivatel`, verifyUser, activateAccount)

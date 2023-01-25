@@ -16,16 +16,17 @@ const {
   generateTrxInfo,
   createAccountNumber,
 } = require('../../utils')
-const {dbActionGenerator, ACTIONS} = require("../../lib/mongoose")
+const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
 //2. @gettingUserCards ~~~ only authenticated user can view his/her cards
 //3. @sendMoney ~~~ only authenticared users can send money from cards
 
 class Cards {
-  constructor(_cards_, _virtualAccount_) {
+  constructor(_cards_, _virtualAccount_, _cardTrx_) {
     this.cards = _cards_
     this.virtualAccount = _virtualAccount_
+    this.cardTrx = _cardTrx_
   }
   createCard = async (req, res) => {
     try {
@@ -96,7 +97,7 @@ class Cards {
               })
             ),
           ])
-    
+
           await Promise.all([newCard.save(), newAccount.save()])
 
           response('Card creation successful', true, StatusCodes.OK, res)
@@ -184,8 +185,6 @@ class Cards {
             },
           ],
         })
-        
-        
 
         /* 
         Check the conditions of both cards if they can accept or make transactions
@@ -381,7 +380,33 @@ class Cards {
             }),
           }
         )
-        response('Pin updated', false, StatusCodes.OK, res)
+        response('Pin updated', true, StatusCodes.OK, res)
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  getCardTrx = async (req, res) => {
+    const { no } = req.query
+    const isCardValid = await verifyCard(no)
+    try {
+      if (!no || !isCardValid.status) {
+        response(
+          !no ? 'no card provided' : 'Card invalid',
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        const cardTrx = (
+          await dbActionGenerator(ACTIONS.FIND, {
+            collection: this.cardTrx,
+            data: [],
+          })
+        ).filter((trx) => trx.cardNumber === isCardValid.message.cardNumber)
+
+        response(cardTrx, true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
@@ -389,7 +414,7 @@ class Cards {
   }
 }
 
-const userCards = new Cards(cards, virtualAccount)
+const userCards = new Cards(cards, virtualAccount, cardTrx)
 Object.freeze(userCards)
 
 module.exports = userCards

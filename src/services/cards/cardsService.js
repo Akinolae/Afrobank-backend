@@ -16,4 +16,7 @@ module.exports = {
   updateCardStatus: (req, res) => {
     cards.updateCardStatus(req, res)
   },
+  fetchCardTransactions: (req, res) => {
+    cards.getCardTrx(req, res)
+  }
 }
