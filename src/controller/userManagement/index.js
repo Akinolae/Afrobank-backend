@@ -37,6 +37,7 @@ const {
   fetch_single_user,
   verifyAccountNumber,
 } = require('../../utils/userUtil')
+const {ACTIONS, dbActionGenerator} = require("../../lib/mongoose")
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -68,12 +69,13 @@ class UserManagement {
           password: hashedPassword,
         }
 
-        let user_model = await new this.customer(user)
+        let user_model = await dbActionGenerator(ACTIONS.CREATE, {
+          collection: this.customer,
+          data:[user]
+        })
         await user_model.save()
         response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
-        // await this.createPushNotification(accountNumber, user_reg.welcome_text)
       } catch (err) {
-        console.log(err)
         response(
           err.message.includes('duplicate')
             ? `user already exists`
