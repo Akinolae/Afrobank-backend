@@ -1,9 +1,14 @@
+//This scripts section basically prepares the app to run
+// The provider is needed to perform major transactions across the app
+// Hence, the need to fetch all endpoints/resources of the selected provider as well ass the banks.
+
 require('dotenv').config()
 const fs = require('fs')
 const { exec } = require('child_process')
 const { default: axios } = require('axios')
 const { extractConfig } = require('../src/config/config')
 
+// Gets all the required resources according to the provider specified
 const getCurrentProviderConfig = () => {
   const providers = {
     payStack: 'payStack',
@@ -30,6 +35,7 @@ const getCurrentProviderConfig = () => {
   return data
 }
 
+// shows the existing branch
 exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
   if (!!err) {
     throw err
@@ -38,6 +44,7 @@ exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
   }
 })
 
+// fetches banks according to the provider specified
 const fetchBanks = async () => {
   let data
 
@@ -71,6 +78,7 @@ const writeToFile = (params = {}) => {
   )
 }
 
+// Creates files that stores all the required credentials to make the app run smoothly
 const createFile = async () => {
   const data = [
     {
