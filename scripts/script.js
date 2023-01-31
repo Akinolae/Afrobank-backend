@@ -13,6 +13,7 @@ exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
     console.log(`working branch:::${branch}`)
   }
 })
+
 const logInfo = async () => {
   let data
   console.log(`fetching banks from ${process.env.PROVIDER}`)
@@ -32,7 +33,7 @@ const logInfo = async () => {
   return data
 }
 
-const get = async () => {
+const fetch = async () => {
   if (process.env.OS.toLowerCase().includes('windows')) {
     if (!fs.existsSync('./src/lib/banks.json')) {
       fs.appendFile(
@@ -52,4 +53,4 @@ const get = async () => {
   }
 }
 
-get()
+fetch()
