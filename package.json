@@ -7,14 +7,15 @@
     "node": "14.15.5"
   },
   "scripts": {
-    "dev": " nodemon ./src/afrobankserver.js",
+    "dev": "npm run pre-launch &&  nodemon ./src/afrobankserver.js ",
     "start": "node ./src/afrobankserver.js",
-    "cleanup": "rm -rf node_modules && npm run install"
+    "cleanup": "rm -rf node_modules && npm run install",
+    "pre-launch": "node ./scripts/index.js"
   },
   "author": "Akinola Makinde <https://github.com/Akinolae>",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.2",
+    "axios": "^1.2.6",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "creditcard-generator": "0.0.7",
