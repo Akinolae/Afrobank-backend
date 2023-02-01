@@ -7,11 +7,11 @@ const { v4: uuidv4 } = require('uuid')
 const trxInit = async (params = {}) => {
   const { account_number, bank_name, amount } = params
 
-  const getBankCode = banks.filter((bank) => bank.bank_name === bank_name)
+  const { bank_code } = banks.find((bank) => bank.bank_name === bank_name)
 
   try {
     const { data } = await axios.get(
-      `${providerEndpoints.resolveAccount}?account_number=${account_number}&bank_code=${getBankCode[0].bank_code}`,
+      `${providerEndpoints.resolveAccount}?account_number=${account_number}&bank_code=${bank_code}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
@@ -23,7 +23,7 @@ const trxInit = async (params = {}) => {
       type: 'nuban',
       name: data.data.account_name,
       account_number: account_number,
-      bank_code: getBankCode[0].bank_code,
+      bank_code: bank_code,
       currency: 'NGN',
     }
 
