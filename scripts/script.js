@@ -20,6 +20,9 @@ const getCurrentProviderConfig = () => {
     case providers.payStack:
       data = {
         fetchBanksUrl: 'https://api.paystack.co/bank?currency=NGN',
+        transferRecipient: 'https://api.paystack.co/transferrecipient',
+        transfer: 'https://api.paystack.co/transfer',
+        resolveAccount: 'https://api.paystack.co/bank/resolve',
       }
       break
     case providers.flutterWave:
