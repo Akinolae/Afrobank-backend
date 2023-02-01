@@ -74,7 +74,6 @@ class Transactions {
         }
       }
     } catch (error) {
-      console.log(error.response)
       response(
         error.message || 'An error occured',
         false,
