@@ -1,9 +1,11 @@
+require('dotenv').config()
 const providerEndpoints = require('./providerEndpoints.json')
 const banks = require('./banks.json')
 const { default: axios } = require('axios')
+const { v4: uuidv4 } = require('uuid')
 
 const trxInit = async (params = {}) => {
-  const { account_number, bank_name } = params
+  const { account_number, bank_name, amount } = params
 
   const getBankCode = banks.filter((bank) => bank.bank_name === bank_name)
 
@@ -12,7 +14,7 @@ const trxInit = async (params = {}) => {
       `${providerEndpoints.resolveAccount}?account_number=${account_number}&bank_code=${getBankCode[0].bank_code}`,
       {
         headers: {
-          Authorization: `Bearer sk_test_6c31890acb4f486353df6ae065ec3e3046adad42`,
+          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
         },
       }
     )
@@ -30,7 +32,7 @@ const trxInit = async (params = {}) => {
       trxDetails,
       {
         headers: {
-          Authorization: `Bearer sk_test_6c31890acb4f486353df6ae065ec3e3046adad42`,
+          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
         },
       }
     )
@@ -38,18 +40,16 @@ const trxInit = async (params = {}) => {
     const ref = {
       source: 'balance',
       reason: 'Savings',
-      amount: 30000,
-      reference: 'your-unique-reference',
+      amount: amount,
+      reference: uuidv4(),
       recipient: res.data.data.recipient_code,
     }
 
-    console.log(
-      await axios.post(providerEndpoints.transfer, ref, {
-        headers: {
-          Authorization: `Bearer sk_test_6c31890acb4f486353df6ae065ec3e3046adad42`,
-        },
-      })
-    )
+    await axios.post(providerEndpoints.transfer, ref, {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
+      },
+    })
   } catch (error) {
     throw error
   }
