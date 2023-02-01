@@ -13,7 +13,6 @@ const {
   fetch_single_user,
   verifyAccountNumber,
 } = require('../../utils/userUtil')
-
 class Transactions {
   constructor(_customer_, _transactions_) {
     this.customer = _customer_
@@ -27,30 +26,29 @@ class Transactions {
       verifyAccountNumber(req.body.sender),
       verifyAccountNumber(req.body.recipient),
     ])
-
-    const pinValidation = await decryptPassword(
-      req.body.pin,
-      senderDetails.status ? senderDetails.user.pin : ''
-    )
-
-    const hasError =
-      !!joi_error.error || !senderDetails.status || !recipientDetails.status
-
-    if (hasError) {
-      response(
-        !!joi_error.error
-          ? joi_error.error.details[0].message
-          : !senderDetails.status
-          ? senderDetails.message
-          : !recipientDetails.status
-          ? recipientDetails.message
-          : transfer.single_user,
-        false,
-        StatusCodes.UNPROCESSABLE_ENTITY,
-        res
+    try {
+      const pinValidation = await decryptPassword(
+        req.body.pin,
+        senderDetails.status ? senderDetails.user.pin : ''
       )
-    } else {
-      try {
+
+      const hasError =
+        !!joi_error.error || !senderDetails.status || !recipientDetails.status
+
+      if (hasError) {
+        response(
+          !!joi_error.error
+            ? joi_error.error.details[0].message
+            : !senderDetails.status
+            ? senderDetails.message
+            : !recipientDetails.status
+            ? recipientDetails.message
+            : transfer.single_user,
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
         const valRes = validateAmount(senderDetails.user, req.body.amount)
 
         if (!pinValidation || !!valRes) {
@@ -74,14 +72,14 @@ class Transactions {
 
           this.completeTransfer(transactionData, res)
         }
-      } catch (error) {
-        response(
-          error.message || 'An error occured',
-          false,
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          res
-        )
       }
+    } catch (error) {
+      response(
+        error.message || 'An error occured',
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        res
+      )
     }
   }
 
