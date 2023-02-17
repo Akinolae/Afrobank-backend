@@ -39,13 +39,15 @@ const getCurrentProviderConfig = () => {
 }
 
 // shows the existing branch
-exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
-  if (!!err) {
-    throw err
-  } else {
-    console.log(`working branch:::${stdout}`)
-  }
-})
+if (process.env.NODE_ENV === 'development') {
+  exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
+    if (!!err) {
+      throw err
+    } else {
+      console.log(`working branch:::${stdout}`)
+    }
+  })
+}
 
 // fetches banks according to the provider specified
 const fetchBanks = async () => {
