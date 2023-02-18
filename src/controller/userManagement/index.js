@@ -37,7 +37,7 @@ const {
   fetch_single_user,
   verifyAccountNumber,
 } = require('../../utils/userUtil')
-const {ACTIONS, dbActionGenerator} = require("../../lib/mongoose")
+const { ACTIONS, dbActionGenerator } = require('../../lib/mongoose')
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -71,7 +71,7 @@ class UserManagement {
 
         let user_model = await dbActionGenerator(ACTIONS.CREATE, {
           collection: this.customer,
-          data:[user]
+          data: [user],
         })
         await user_model.save()
         response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
@@ -238,7 +238,9 @@ class UserManagement {
   }
 
   // #5
-  setPin = async (pin, res) => {
+  setPin = async (req, res) => {
+    const { pin, accountNumber } = req.body
+
     try {
       const { userData } = await this.userVerification(res.user.email)
       const invalidPin = !pin || pin.length !== 4
@@ -252,7 +254,7 @@ class UserManagement {
           res
         )
       } else {
-        await setNewPin(this.customer, userData.message.accountNumber, pin)
+        await setNewPin(this.virtualAccount, accountNumber, pin)
         response(pinReset.message, true, StatusCodes.OK, res)
       }
     } catch (e) {
