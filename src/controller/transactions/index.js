@@ -27,13 +27,11 @@ class Transactions {
       verifyAccountNumber(req.body.recipient),
     ])
     try {
-      const pinValidation = await decryptPassword(
-        req.body.pin,
-        senderDetails.status ? senderDetails.user.pin : ''
-      )
-
       const hasError =
-        !!joi_error.error || !senderDetails.status || !recipientDetails.status
+        !!joi_error.error ||
+        !senderDetails.status ||
+        !recipientDetails.status ||
+        senderDetails.user.pin === null
 
       if (hasError) {
         response(
@@ -43,6 +41,8 @@ class Transactions {
             ? senderDetails.message
             : !recipientDetails.status
             ? recipientDetails.message
+            : senderDetails.user.pin === null
+            ? 'Please create a pin to proceed'
             : transfer.single_user,
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
@@ -50,6 +50,10 @@ class Transactions {
         )
       } else {
         const valRes = validateAmount(senderDetails.user, req.body.amount)
+        const pinValidation = await decryptPassword(
+          req.body.pin,
+          senderDetails.status ? senderDetails.user.pin : ''
+        )
 
         if (!pinValidation || !!valRes) {
           response(

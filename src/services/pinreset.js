@@ -2,8 +2,7 @@ const { user } = require('../controller/userManagement')
 
 module.exports = {
   createPin: (req, res) => {
-    const { pin } = req.body
-    user.setPin(pin, res)
+    user.setPin(req, res)
   },
   pinReset: (req, res) => {
     const { accountNumber, pin } = req.body
