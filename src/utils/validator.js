@@ -88,8 +88,8 @@ const transfer = {
   insufficient_balance: 'Insufficient balance.',
   invalid_amount: 'please enter a valid amount',
   low_amount_error: 'you can only send ₦ 100 or more',
-  success_message: (accountName, amount) => {
-    return `Transfer of ₦${amount} to ${accountName} was successful`
+  success_message: (amount) => {
+    return `Transfer of ₦${amount} was successful`
   },
   single_user: 'Cash transfer must involve two parties',
 }

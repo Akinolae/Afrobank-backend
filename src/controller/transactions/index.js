@@ -26,6 +26,7 @@ class Transactions {
       verifyAccountNumber(req.body.sender),
       verifyAccountNumber(req.body.recipient),
     ])
+
     try {
       const hasError =
         !!joi_error.error ||
@@ -125,12 +126,7 @@ class Transactions {
 
         !!sender &&
           !!recipient &&
-          response(
-            transfer.success_message(recipientName, amount),
-            true,
-            StatusCodes.OK,
-            res
-          )
+          response(transfer.success_message(amount), true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
