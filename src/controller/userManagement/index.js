@@ -243,10 +243,24 @@ class UserManagement {
 
     try {
       const { userData } = await this.userVerification(res.user.email)
+
+      const accounts = (
+        await dbActionGenerator(ACTIONS.FIND, {
+          collection: this.virtualAccount,
+          data: [],
+        })
+      )
+        .filter((account) => account.user_id === res.user.id)
+        .some((acc) => acc.accountNumber === +accountNumber)
+
       const invalidPin = !pin || pin.length !== 4
-      if (!userData.status || invalidPin) {
+      if (!userData.status || invalidPin || !accounts) {
         response(
-          invalidPin ? 'Please provide a valid pin code' : userData.message,
+          invalidPin
+            ? 'Please provide a valid pin code'
+            : !accounts
+            ? 'Please check account number and try again'
+            : userData.message,
           false,
           !userData.status
             ? StatusCodes.NOT_FOUND
