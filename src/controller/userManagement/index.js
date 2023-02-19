@@ -95,8 +95,12 @@ class UserManagement {
         response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
       } else {
         if (
-          (await this.virtualAccount.find({ user_id: userData.message._id }))
-            .length >= 1
+          (
+            await dbActionGenerator(ACTIONS.FIND, {
+              collection: this.virtualAccount,
+              data: [{ user_id: userData.message._id }],
+            })
+          ).length >= 1
         ) {
           response(
             'User has an existing account',
@@ -116,7 +120,10 @@ class UserManagement {
             accountNumber: accountNumber,
             accountBalance: process.env.DEFAULT_BALANCE,
           }
-          let accountModel = await new this.virtualAccount(accountData)
+          let accountModel = await dbActionGenerator(ACTIONS.CREATE, {
+            collection: this.virtualAccount,
+            data: [accountData],
+          })
           await accountModel.save()
           response(
             'Account number generated successfully',
