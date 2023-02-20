@@ -100,7 +100,7 @@ class UserManagement {
           (
             await dbActionGenerator(ACTIONS.FIND, {
               collection: this.virtualAccount,
-              data: [{ user_id: userData.message._id }],
+              data: [{ user_id: userData.message.user_id }],
             })
           ).length >= 1
         ) {
