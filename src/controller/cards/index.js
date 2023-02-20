@@ -34,7 +34,7 @@ class Cards {
       if (!userData.status) {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
-        const cards = (await fetchAllCards(userData.message._id)).length
+        const cards = (await fetchAllCards(userData.message.user_id)).length
         if (cards >= 3) {
           response(
             'You can only create one card at a time',
@@ -68,7 +68,7 @@ class Cards {
               collection: this.virtualAccount,
               data: [
                 {
-                  user_id: userData.message._id,
+                  user_id: userData.message.user_id,
                   active: true,
                   pin: process.env.PIN,
                   accountNumber: accountNumber,
@@ -83,7 +83,7 @@ class Cards {
                   cardToken: useCrypto({
                     payLoad: { ...card, accountNumber },
                   }),
-                  ownerId: userData.message._id,
+                  ownerId: userData.message.user_id,
                 },
               ],
             },
@@ -114,9 +114,8 @@ class Cards {
       if (!userData.status) {
         response('User not found', false, StatusCodes.NOT_FOUND, res)
       } else {
-        const cards = (await fetchAllCards(userData.message._id)).map((card) =>
-          JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-        )
+        const cards = await fetchAllCards(userData.message.user_id)
+
         response(cards, true, StatusCodes.OK, res)
       }
     } catch (error) {

@@ -38,6 +38,7 @@ const {
   verifyAccountNumber,
 } = require('../../utils/userUtil')
 const { ACTIONS, dbActionGenerator } = require('../../lib/mongoose')
+const { v4: uuidv4 } = require('uuid')
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -67,6 +68,7 @@ class UserManagement {
           phoneNumber,
           gender,
           password: hashedPassword,
+          user_id: uuidv4(),
         }
 
         let user_model = await dbActionGenerator(ACTIONS.CREATE, {
@@ -92,7 +94,7 @@ class UserManagement {
     try {
       const { userData } = await this.userVerification(res.user.email)
       if (!userData.status) {
-        response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
+        response('Unable to fetch user', false, StatusCodes.UNAUTHORIZED, res)
       } else {
         if (
           (
@@ -114,7 +116,7 @@ class UserManagement {
           })
 
           const accountData = {
-            user_id: userData.message._id,
+            user_id: userData.message.user_id,
             active: true,
             pin: process.env.PIN,
             accountNumber: accountNumber,
@@ -166,6 +168,7 @@ class UserManagement {
             const token = generateUserAccessToken({
               id: message.id,
               email: message.email,
+              user_id: message.user_id,
             })
             await newSchema({
               model: this.customer,
@@ -210,7 +213,7 @@ class UserManagement {
     try {
       const { userData } = await this.userVerification(res.user.email)
 
-      const isUserAdmin = !!userData.message && userData.message.isAdmin
+      const isUserAdmin = !!userData.message?.isAdmin
 
       if (!userData.status || !isUserAdmin) {
         response(
@@ -257,10 +260,11 @@ class UserManagement {
           data: [],
         })
       )
-        .filter((account) => account.user_id === res.user.id)
+        .filter((account) => account.user_id === res.user.user_id)
         .some((acc) => acc.accountNumber === +accountNumber)
 
-      const invalidPin = !pin || pin.length !== 4
+      const invalidPin = !pin || pin.length !== 4 || typeof pin !== 'number'
+
       if (!userData.status || invalidPin || !accounts) {
         response(
           invalidPin
@@ -474,12 +478,11 @@ class UserManagement {
         )
       } else {
         const codes = userData.message['2faCodes']
-        let responseValue = await validate2FA(codes, code)
-        const isAvailable = responseValue.some(
+        let responseValue = (await validate2FA(codes, code)).some(
           ({ isValid }) => isValid === true
         )
 
-        if (isAvailable) {
+        if (responseValue) {
           await update2fa(userData.message.email, false, [])
           response('2fa disabled successfully', true, StatusCodes.OK, res)
         } else {

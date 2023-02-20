@@ -1,12 +1,19 @@
 const cards = require('../model/cards')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
+const { useCrypto } = require('./userUtil')
 
 const fetchAllCards = async (id) => {
   try {
-    return await dbActionGenerator(ACTIONS.FIND, {
-      collection: cards,
-      data: [{ ownerId: id }],
-    })
+    return (
+      await dbActionGenerator(ACTIONS.FIND, {
+        collection: cards,
+        data: [],
+      })
+    )
+      .map((card) =>
+        JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
+      )
+      .filter((card) => card.ownerId === id)
   } catch (error) {
     throw error
   }
