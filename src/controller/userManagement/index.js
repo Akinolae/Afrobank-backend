@@ -263,15 +263,8 @@ class UserManagement {
         .filter((account) => account.user_id === res.user.user_id)
         .some((acc) => acc.accountNumber === +accountNumber)
 
-      console.log({
-        accs: await dbActionGenerator(ACTIONS.FIND, {
-          collection: this.virtualAccount,
-          data: [],
-        }),
-        user: res.user,
-      })
+      const invalidPin = !pin || pin.length !== 4 || typeof pin !== 'number'
 
-      const invalidPin = !pin || pin.length !== 4
       if (!userData.status || invalidPin || !accounts) {
         response(
           invalidPin
