@@ -2,6 +2,7 @@ require('dotenv').config()
 
 const model = require('../../model/customer')
 const transactions = require('../../model/transactions')
+const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { validateAmount } = require('../../utils')
@@ -14,9 +15,10 @@ const {
   verifyAccountNumber,
 } = require('../../utils/userUtil')
 class Transactions {
-  constructor(_customer_, _transactions_) {
+  constructor(_customer_, _transactions_, _virtualAccount_) {
     this.customer = _customer_
     this.transactions = _transactions_
+    this.virtualAccount = _virtualAccount_
   }
 
   transfer = async (req, res) => {
@@ -71,8 +73,8 @@ class Transactions {
             senderName: `${senderDetails.user.firstName} ${senderDetails.user.lastName}`,
             amount: req.body.amount,
             type: 'debit',
-            sender_id: senderDetails.user._id,
-            recipient_id: recipientDetails.user._id,
+            sender_id: senderDetails.user.user_id,
+            recipient_id: recipientDetails.user.user_id,
           }
 
           this.completeTransfer(transactionData, res)
@@ -141,7 +143,7 @@ class Transactions {
     user_id
   ) => {
     return await updateTransaction(
-      this.customer,
+      this.virtualAccount,
       this.transactions,
       type,
       accountNumber,
@@ -209,7 +211,7 @@ class Transactions {
   }
 }
 
-const userTransactions = new Transactions(model, transactions)
+const userTransactions = new Transactions(model, transactions, virtualAccount)
 Object.freeze(userTransactions)
 
 module.exports = userTransactions

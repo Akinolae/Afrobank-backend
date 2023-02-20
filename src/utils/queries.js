@@ -3,11 +3,11 @@ const cards = require('../model/cards')
 const cardTrx = require('../model/cardTransactions')
 const customer = require('../model/customer')
 const transactions = require('../model/transactions')
-const { nanoid } = require('nanoid')
 const { pinReset } = require('./validator')
 const { updateBalance } = require('../utils/')
 const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
+const { v4: uuidv4 } = require('uuid')
 
 // updates transactions db for both card and normal transactions ...//
 const updateTransaction = async (
@@ -24,9 +24,7 @@ const updateTransaction = async (
 
   //generates transaction id for every transaction
 
-  const transactionID = `${nanoid()}|${
-    _type_ || trx.transaction_type
-  }|${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}|${_amount_}`
+  const transaction_id = uuidv4()
   try {
     //Bloc processes only non card transactions
     if (isCardTrx === undefined || !isCardTrx) {
@@ -34,7 +32,7 @@ const updateTransaction = async (
         collection: transactions,
         data: [
           {
-            transaction_id: transactionID.toUpperCase(),
+            transaction_id,
             transaction_type: _type_,
             amount: _amount_,
             description: _description_,
@@ -53,7 +51,7 @@ const updateTransaction = async (
       //updates the transactions table accordingly as well as balance of the cards...//
       let cardTransaction = await dbActionGenerator(ACTIONS.CREATE, {
         collection: transactions,
-        data: [{ transaction_id: transactionID.toUpperCase(), ...trx }],
+        data: [{ transaction_id, ...trx }],
       })
 
       await Promise.all([

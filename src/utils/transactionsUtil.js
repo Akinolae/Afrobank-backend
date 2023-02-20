@@ -3,8 +3,8 @@ const transactions = require('../model/transactions')
 const { createExpiryDate } = require('./dateUtils')
 const createAccountNumber = require('./accountNumberUtil')
 const { createPin } = require('./pinUtils')
-const { nanoid } = require('nanoid')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
+const { v4: uuidv4 } = require('uuid')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -84,11 +84,11 @@ const generateCard = async (params) => {
         cardNumber,
         created: new Date(),
         expiryDate: createExpiryDate(new Date(), 2),
-        ownerId: params.message._id,
+        ownerId: params.message.user_id,
         pin: createPin(),
         CVV: createPin(3),
         isActive: true,
-        card_id: nanoid(),
+        card_id: uuidv4(),
       }
     }
     return info
