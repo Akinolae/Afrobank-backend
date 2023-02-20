@@ -213,7 +213,7 @@ class UserManagement {
     try {
       const { userData } = await this.userVerification(res.user.email)
 
-      const isUserAdmin = !!userData.message && userData.message.isAdmin
+      const isUserAdmin = !!userData.message?.isAdmin
 
       if (!userData.status || !isUserAdmin) {
         response(
