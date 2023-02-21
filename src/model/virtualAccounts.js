@@ -6,6 +6,11 @@ const Account = new mongoose.Schema({
     default: null,
     required: true,
   },
+  account_id: {
+    type: String,
+    default: null,
+    required: true,
+  },
   active: {
     type: Boolean,
     allowNull: false,

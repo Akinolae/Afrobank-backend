@@ -17,6 +17,8 @@ const {
   createAccountNumber,
 } = require('../../utils')
 const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
+const { v4: uuidv4 } = require('uuid')
+
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
 //2. @gettingUserCards ~~~ only authenticated user can view his/her cards
@@ -70,6 +72,7 @@ class Cards {
                 {
                   user_id: userData.message.user_id,
                   active: true,
+                  account_id: uuidv4(),
                   pin: process.env.PIN,
                   accountNumber: accountNumber,
                   accountBalance: process.env.DEFAULT_BALANCE,
@@ -83,7 +86,6 @@ class Cards {
                   cardToken: useCrypto({
                     payLoad: { ...card, accountNumber },
                   }),
-                  ownerId: userData.message.user_id,
                 },
               ],
             },

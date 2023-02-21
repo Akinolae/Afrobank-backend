@@ -16,21 +16,17 @@ const sumAmount = (transactions) => {
 
 const transactionHistory = async (accountNumber) => {
   try {
-    const [data, trx] = await Promise.all([
-      verifyAccountNumber(accountNumber),
-      dbActionGenerator(ACTIONS.FIND, {
-        collection: transactions,
-        data: [],
-      }),
-    ])
+    const data = await verifyAccountNumber(accountNumber)
+    const trx = await dbActionGenerator(ACTIONS.FIND, {
+      collection: transactions,
+      data: [{ account_id: data.user.account_id }],
+    })
 
     if (!data.status) return { status: false, response: data.message }
     else {
-      const userTransactions = trx
-        .filter((user) => user.user_id.toString() === data.user._id.toString())
-        .sort(
-          (a, b) => new Date(b.transaction_date) - new Date(a.transaction_date)
-        )
+      const userTransactions = trx.sort(
+        (a, b) => new Date(b.transaction_date) - new Date(a.transaction_date)
+      )
       return { status: true, response: userTransactions }
     }
   } catch (error) {

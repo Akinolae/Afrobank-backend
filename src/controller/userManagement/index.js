@@ -100,7 +100,7 @@ class UserManagement {
           (
             await dbActionGenerator(ACTIONS.FIND, {
               collection: this.virtualAccount,
-              data: [{ user_id: userData.message._id }],
+              data: [{ user_id: userData.message.user_id }],
             })
           ).length >= 1
         ) {
@@ -118,6 +118,7 @@ class UserManagement {
           const accountData = {
             user_id: userData.message.user_id,
             active: true,
+            account_id: uuidv4(),
             pin: process.env.PIN,
             accountNumber: accountNumber,
             accountBalance: process.env.DEFAULT_BALANCE,
@@ -263,7 +264,7 @@ class UserManagement {
         .filter((account) => account.user_id === res.user.user_id)
         .some((acc) => acc.accountNumber === +accountNumber)
 
-      const invalidPin = !pin || pin.length !== 4 || typeof pin !== 'number'
+      const invalidPin = !pin || pin.length !== 4
 
       if (!userData.status || invalidPin || !accounts) {
         response(

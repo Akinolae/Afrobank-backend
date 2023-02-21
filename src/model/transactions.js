@@ -9,6 +9,11 @@ const transactionSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  account_id: {
+    type: String,
+    default: null,
+    required: true,
+  },
   transaction_type: {
     type: String,
     default: null,
