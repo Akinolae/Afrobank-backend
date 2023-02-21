@@ -18,6 +18,7 @@ const updateTransaction = async (
   _amount_,
   _description_,
   user_id,
+  accountDetails,
   { isCardTrx, trx } = {}
 ) => {
   const date = new Date()
@@ -38,6 +39,7 @@ const updateTransaction = async (
             description: _description_,
             transaction_date: date,
             user_id: user_id,
+            account_id: accountDetails.user.account_id,
           },
         ],
       })

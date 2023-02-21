@@ -9,11 +9,7 @@ const { validateAmount } = require('../../utils')
 const { updateTransaction } = require('../../utils/queries')
 const { transactionHistory } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
-const {
-  decryptPassword,
-  fetch_single_user,
-  verifyAccountNumber,
-} = require('../../utils/userUtil')
+const { decryptPassword, verifyAccountNumber } = require('../../utils/userUtil')
 class Transactions {
   constructor(_customer_, _transactions_, _virtualAccount_) {
     this.customer = _customer_
@@ -75,6 +71,8 @@ class Transactions {
             type: 'debit',
             sender_id: senderDetails.user.user_id,
             recipient_id: recipientDetails.user.user_id,
+            senderDetails,
+            recipientDetails,
           }
 
           this.completeTransfer(transactionData, res)
@@ -100,6 +98,8 @@ class Transactions {
       senderName,
       sender_id,
       recipient_id,
+      senderDetails,
+      recipientDetails,
     } = payload
 
     if (!type) {
@@ -115,14 +115,16 @@ class Transactions {
             senderAccountNumber,
             amount,
             senderDesc,
-            sender_id
+            sender_id,
+            senderDetails
           ),
           this.updateTransactionHistory(
             'credit',
             recipientAccountNumber,
             amount,
             recipientDesc,
-            recipient_id
+            recipient_id,
+            recipientDetails
           ),
         ])
 
@@ -140,7 +142,8 @@ class Transactions {
     accountNumber,
     amount,
     description,
-    user_id
+    user_id,
+    accountDetails
   ) => {
     return await updateTransaction(
       this.virtualAccount,
@@ -149,14 +152,14 @@ class Transactions {
       accountNumber,
       amount,
       description,
-      user_id
+      user_id,
+      accountDetails
     )
   }
 
   getTransactionHistory = async (req, res) => {
     try {
-      const { message } = await fetch_single_user(res.user.email)
-      const data = await transactionHistory(message.accountNumber)
+      const data = await transactionHistory(req.query?.account)
 
       !data.status
         ? response(data.response, false, StatusCodes.NOT_FOUND, res)
