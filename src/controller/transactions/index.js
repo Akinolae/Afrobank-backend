@@ -107,8 +107,8 @@ class Transactions {
     }
     try {
       if (type === 'debit') {
-        const senderDesc = `TRX-INTERNAL/${recipientName}`
-        const recipientDesc = `TRX-INTERNAL/${senderName}`
+        const senderDesc = `TRX-INTERNAL/${recipientName ?? ''}`
+        const recipientDesc = `TRX-INTERNAL/${senderName ?? ''}`
         const [sender, recipient] = await Promise.all([
           this.updateTransactionHistory(
             type,
@@ -159,7 +159,7 @@ class Transactions {
 
   getTransactionHistory = async (req, res) => {
     try {
-      const data = await transactionHistory(req.query?.account)
+      const data = await transactionHistory(req.query?.account, res.user)
 
       !data.status
         ? response(data.response, false, StatusCodes.NOT_FOUND, res)
@@ -203,11 +203,9 @@ class Transactions {
   getBalance = async (accountNumber, res) => {
     try {
       const data = await verifyAccountNumber(accountNumber)
-      if (data.status) {
-        response(data.user.accountBalance, true, StatusCodes.OK, res)
-      } else {
-        response(data.message, false, StatusCodes.NOT_FOUND, res)
-      }
+      data.status
+        ? response(data.user.accountBalance, true, StatusCodes.OK, res)
+        : response(data.message, false, StatusCodes.NOT_FOUND, res)
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
