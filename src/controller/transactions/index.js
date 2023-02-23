@@ -189,7 +189,7 @@ class Transactions {
           !!resp
             ? response(resp, true, StatusCodes.OK, res)
             : response(
-                'invalid transaction id',
+                'transaction not found',
                 false,
                 StatusCodes.NOT_FOUND,
                 res
