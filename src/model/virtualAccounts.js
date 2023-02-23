@@ -33,6 +33,7 @@ const Account = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
+    default: Date.now,
     allowNull: false,
   },
 })

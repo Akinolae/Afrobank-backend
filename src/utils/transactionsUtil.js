@@ -1,10 +1,10 @@
-const { verifyAccountNumber } = require('./userUtil')
 const transactions = require('../model/transactions')
-const { createExpiryDate } = require('./dateUtils')
-const createAccountNumber = require('./accountNumberUtil')
 const { createPin } = require('./pinUtils')
-const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
+const createAccountNumber = require('./accountNumberUtil')
+const { createExpiryDate } = require('./dateUtils')
+const { verifyAccountNumber } = require('./userUtil')
+const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -14,21 +14,24 @@ const sumAmount = (transactions) => {
   return transactions.reduce((a, b) => Number(a) + (Number(b.amount) || 0), 0)
 }
 
-const transactionHistory = async (accountNumber) => {
+const transactionHistory = async (accountNumber, res) => {
   try {
     const data = await verifyAccountNumber(accountNumber)
-    const trx = await dbActionGenerator(ACTIONS.FIND, {
-      collection: transactions,
-      data: [{ account_id: data.user.account_id }],
-    })
 
-    if (!data.status) return { status: false, response: data.message }
-    else {
-      const userTransactions = trx.sort(
+    if (!data.status) throw data.message
+
+    const trx = (
+      await dbActionGenerator(ACTIONS.FIND, {
+        collection: transactions,
+        data: [{ user_id: res.user_id }],
+      })
+    )
+      .filter((account) => account.account_id === data.user.account_id)
+      .sort(
         (a, b) => new Date(b.transaction_date) - new Date(a.transaction_date)
       )
-      return { status: true, response: userTransactions }
-    }
+
+    return { status: true, response: trx }
   } catch (error) {
     throw error
   }
@@ -37,9 +40,9 @@ const transactionHistory = async (accountNumber) => {
 const fetchAllNotifications = async (accountNumber) => {
   try {
     const data = await verifyAccountNumber(accountNumber)
-    return !data.status
-      ? { status: false, response: data.message }
-      : { status: true, response: data.user.notifications }
+    if (!data.status) throw data.message
+
+    return { status: true, response: data.user.notifications }
   } catch (error) {
     throw error
   }
@@ -50,11 +53,9 @@ const updateBalance = async (customer, type = '', accountNumber, amount) => {
 
   let currentBalance = 0
   try {
-    if (type.toLowerCase() === 'credit') {
-      currentBalance += +data.user.accountBalance + +amount
-    } else {
-      currentBalance = +data.user.accountBalance - +amount
-    }
+    type.toLowerCase() === 'credit'
+      ? (currentBalance += +data.user.accountBalance + +amount)
+      : (currentBalance = +data.user.accountBalance - +amount)
 
     await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
       collection: customer,
@@ -70,23 +71,22 @@ const generateCard = async (params) => {
 
   try {
     if (typeof params !== 'object') throw 'Transaction info should be an object'
-    else {
-      const cardNumber = await createAccountNumber(
-        { type: 'Card', isCard: true },
-        16
-      )
+    const cardNumber = await createAccountNumber(
+      { type: 'Card', isCard: true },
+      16
+    )
 
-      info = {
-        cardNumber,
-        created: new Date(),
-        expiryDate: createExpiryDate(new Date(), 2),
-        ownerId: params.message.user_id,
-        pin: createPin(),
-        CVV: createPin(3),
-        isActive: true,
-        card_id: uuidv4(),
-      }
+    info = {
+      cardNumber,
+      created: new Date(),
+      expiryDate: createExpiryDate(new Date(), 2),
+      ownerId: params.message.user_id,
+      pin: createPin(),
+      CVV: createPin(3),
+      isActive: true,
+      card_id: uuidv4(),
     }
+
     return info
   } catch (error) {
     throw error
@@ -101,7 +101,7 @@ const generateTrxInfo = (userInfo, trxType, description, amount) => {
     user_id: userInfo.ownerId,
     transaction_date: new Date(),
     description: !!description
-      ? `AFROBANK-CARD||TRX-${description}`
+      ? `AFROBANK-CARD||TRX-${description ?? ''}`
       : 'AFROBANK-CARD||TRX',
     amount,
   }
