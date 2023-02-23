@@ -279,11 +279,9 @@ class Cards {
   }
 
   getCurrentCard = (userCards = [], user = {}) => {
-    return userCards
-      .map((card) =>
-        JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
-      )
-      .find((card) => card.cardNumber.toString() === user.message.cardNumber)
+    return userCards.find(
+      (card) => card.cardNumber.toString() === user.message.cardNumber
+    )
   }
 
   updateCardStatus = async (req, res) => {
@@ -304,7 +302,7 @@ class Cards {
       } else {
         const [isCardValid, cards] = await Promise.all([
           verifyCard(card),
-          fetchAllCards(res.user.id),
+          fetchAllCards(res.user.user_id),
         ])
 
         let currentCard = this.getCurrentCard(cards, isCardValid)
@@ -338,7 +336,7 @@ class Cards {
             action === 'deactivate'
               ? 'Card deactivated successfully'
               : 'Card activated successfully',
-            false,
+            true,
             StatusCodes.OK,
             res
           )

@@ -169,14 +169,22 @@ class Transactions {
     }
   }
 
-  getSingleTransaction = async (accountNumber, transaction_Id, res) => {
+  getSingleTransaction = async (req, res) => {
+    const { accountNumber, transaction_id } = req.query
     try {
-      if (!!accountNumber && !!transaction_Id) {
-        const data = await transactionHistory(accountNumber)
-        if (!!data.status) {
+      if (!accountNumber || !transaction_id) {
+        response(
+          'requires account number and transaction id',
+          false,
+          StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        const data = await transactionHistory(+accountNumber, res.user)
+
+        if (data.status) {
           const resp = data.response.find(
-            (trx) =>
-              trx.transaction_id.toLowerCase() === transaction_Id.toLowerCase()
+            (trx) => trx.transaction_id === transaction_id
           )
           !!resp
             ? response(resp, true, StatusCodes.OK, res)
@@ -187,13 +195,6 @@ class Transactions {
                 res
               )
         }
-      } else {
-        response(
-          'requires account number and transaction id',
-          false,
-          StatusCodes.NOT_FOUND,
-          res
-        )
       }
     } catch (error) {
       response(error.message, false, StatusCodes.BAD_REQUEST, res)
