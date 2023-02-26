@@ -13,7 +13,6 @@ const authSchema = joi.object({
     .email({ tlds: { allow: ['com'] } })
     .required(),
   phoneNumber: joi.string().trim().required(),
-  gender: joi.any().valid('male', 'female'),
   password: joi.string().min(8).max(16).trim().required(),
 })
 
