@@ -46,10 +46,6 @@ const customer = new mongoose.Schema({
     type: String,
     required: true,
   },
-  gender: {
-    type: String,
-    required: true,
-  },
   '2faEnabled': {
     type: Boolean,
     default: false,

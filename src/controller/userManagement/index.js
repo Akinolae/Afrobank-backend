@@ -48,7 +48,7 @@ class UserManagement {
 
   // #1
   register = async (params, res) => {
-    const { firstName, lastName, email, phoneNumber, gender, password } = params
+    const { firstName, lastName, email, phoneNumber, password } = params
     const joi_validate = authSchema.validate(params)
     if (!!joi_validate.error) {
       response(
@@ -66,7 +66,6 @@ class UserManagement {
           lastName,
           email,
           phoneNumber,
-          gender,
           password: hashedPassword,
           user_id: uuidv4(),
         }
