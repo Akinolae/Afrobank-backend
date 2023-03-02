@@ -36,6 +36,7 @@ const {
   generate2FAcodes,
   fetch_single_user,
   verifyAccountNumber,
+  verifyUserAccessToken,
 } = require('../../utils/userUtil')
 const { ACTIONS, dbActionGenerator } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
@@ -592,6 +593,33 @@ class UserManagement {
         : response(userData, true, StatusCodes.OK, res)
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  // #19
+  verifyToken = async (req, res) => {
+    const { token } = req.body
+    try {
+      if (!token) {
+        response(
+          'no token provided',
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      }
+      const resp = !!Object.keys(verifyUserAccessToken(token)).length
+
+      response(resp, true, StatusCodes.OK, res)
+    } catch (error) {
+      const err = error.includes('invalid') || error.includes('malformed')
+
+      response(
+        err ? 'Invalid token' : error || error.message,
+        false,
+        StatusCodes.UNAUTHORIZED,
+        res
+      )
     }
   }
 }

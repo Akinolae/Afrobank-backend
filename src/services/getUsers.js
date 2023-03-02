@@ -10,4 +10,7 @@ module.exports = {
   getProfile: (req, res) => {
     user.getProfile(req, res)
   },
+  verifyToken: (req, res) => {
+    user.verifyToken(req, res)
+  },
 }
