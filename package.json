@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "npm run pre-launch &&  nodemon ./src/afrobankserver.js ",
     "start": "npm run pre-launch && node ./src/afrobankserver.js",
-    "cleanup": "rm -rf node_modules && npm run install",
-    "pre-launch": "node ./scripts/script.js"
+    "cleanup": "rm -rf node_modules && npm install",
+    "pre-launch": "bash ./scripts/script.sh"
   },
   "author": "Akinola Makinde <https://github.com/Akinolae>",
   "license": "ISC",
