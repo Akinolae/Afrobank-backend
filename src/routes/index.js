@@ -6,7 +6,12 @@ const { addNewFieldToDb } = require('../services/dbUpdate')
 const { validateAccount } = require('../services/accountValidation')
 const { getAccountBalance } = require('../services/getBalance')
 const { pinReset, createPin } = require('../services/pinreset')
-const { getUser, getAllUsers, getProfile } = require('../services/getUsers')
+const {
+  getUser,
+  getAllUsers,
+  getProfile,
+  verifyToken,
+} = require('../services/getUsers')
 const {
   activateAccount,
   generateAccountNumber,
@@ -43,6 +48,7 @@ const { verifyUser } = require('../utils/userUtil')
 router.post(`/login`, localLogin)
 router.post(`/pinreset`, pinReset)
 router.post(`/register`, register)
+router.post(`/verify-token`, verifyToken)
 router.get(`/user/:email`, getUser)
 router.post('/newField', addNewFieldToDb)
 router.post('/validate', validateAccount)

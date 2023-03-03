@@ -4,7 +4,6 @@
 
 require('dotenv').config()
 const fs = require('fs')
-const { exec } = require('child_process')
 const { default: axios } = require('axios')
 const { extractConfig } = require('../src/config/config')
 
