@@ -11,6 +11,7 @@ const {
   getAllUsers,
   getProfile,
   verifyToken,
+  getNewToken,
 } = require('../services/getUsers')
 const {
   activateAccount,
@@ -52,6 +53,7 @@ router.post(`/verify-token`, verifyToken)
 router.get(`/user/:email`, getUser)
 router.post('/newField', addNewFieldToDb)
 router.post('/validate', validateAccount)
+router.get(`/new-token`, getNewToken)
 router.post(`/sendOtp`, verifyUser, sendOtp)
 router.patch(`/forgotPassword`, forgotPassword)
 router.post(`/transfer/`, verifyUser, transfer)

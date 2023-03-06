@@ -13,4 +13,7 @@ module.exports = {
   verifyToken: (req, res) => {
     user.verifyToken(req, res)
   },
+  getNewToken: (req, res) => {
+    user.getNewToken(req, res)
+  },
 }
