@@ -622,6 +622,42 @@ class UserManagement {
       )
     }
   }
+
+  // #20
+  getNewToken = async (req, res) => {
+    const { email } = req.query
+    const { userData } = await this.userVerification(email)
+    try {
+      if (!userData.status) {
+        response(
+          'Invalid email address provided',
+          false,
+          StatusCodes.NOT_FOUND,
+          res
+        )
+      } else {
+        const token = generateUserAccessToken({
+          id: userData.message.id,
+          email: userData.message.email,
+          user_id: userData.message.user_id,
+        })
+
+        await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
+          collection: this.customer,
+          data: [
+            { email: userData.message.email },
+            {
+              token: token,
+            },
+          ],
+        })
+
+        response('token updated', true, StatusCodes.OK, res)
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
 }
 
 const user = new UserManagement(model, virtualAccount)
