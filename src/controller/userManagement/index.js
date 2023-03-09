@@ -528,9 +528,9 @@ class UserManagement {
             res
           )
         } else {
-          const newCodes = responseValue.map(({ isValid, data }) =>
-            !isValid ? data : ''
-          )
+          const newCodes = responseValue
+            .map(({ isValid, data }) => (!isValid ? data : ''))
+            .filter((code) => !!code)
           await update2faCodes(userData.message.email, newCodes)
           response('validated', true, StatusCodes.OK, res)
         }
@@ -581,8 +581,9 @@ class UserManagement {
 
   // #18
   getProfile = async (req, res) => {
+    const { email } = req.query
     try {
-      const { userData } = await this.userVerification(res.user.email)
+      const { userData } = await this.userVerification(email)
       !userData.status
         ? response(
             'Invalid email address provided',
