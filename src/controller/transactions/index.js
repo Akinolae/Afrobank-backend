@@ -1,5 +1,4 @@
 require('dotenv').config()
-
 const model = require('../../model/customer')
 const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
@@ -25,72 +24,59 @@ class Transactions {
 
     try {
       const hasError =
-        !!joi_error.error ||
-        !senderDetails.status ||
-        !recipientDetails.status ||
-        senderDetails.user.pin === null
+        !!joi_error.error || !senderDetails.status || !recipientDetails.status
 
       if (hasError) {
-        response(
+        throw response(
           !!joi_error.error
             ? joi_error.error.details[0].message
             : !senderDetails.status
             ? senderDetails.message
             : !recipientDetails.status
             ? recipientDetails.message
-            : senderDetails.user.pin === null
-            ? 'Please create a pin to proceed'
             : transfer.single_user,
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else {
-        let senderData, recipientData
-        const senderDesc = `TRX-INTERNAL`
-        const recipientDesc = `TRX-INTERNAL`
-
-        senderData = {
-          type: 'debit',
-          accountNumber: senderDetails.user.accountNumber,
-          amount: req.body.amount,
-          description: senderDesc,
-          user_id: senderDetails.user.user_id,
-          accountDetails: senderDetails,
-        }
-
-        recipientData = {
-          type: 'credit',
-          accountNumber: recipientDetails.user.accountNumber,
-          amount: req.body.amount,
-          description: recipientDesc,
-          user_id: recipientDetails.user.user_id,
-          accountDetails: recipientDetails,
-        }
-
-        try {
-          await trxCore({
-            user: senderDetails.user,
-            trxPin: req.body.pin,
-            amount: req.body.amount,
-            trxData: [senderData, recipientData],
-          })
-
-          response(
-            transfer.success_message(req.body.amount),
-            true,
-            StatusCodes.OK,
-            res
-          )
-        } catch (error) {
-          response(error, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
-        }
       }
-    } catch (error) {
+
+      const senderData = {
+        type: 'debit',
+        accountNumber: senderDetails.user.accountNumber,
+        amount: req.body.amount,
+        description: `TRX-INTERNAL`,
+        user_id: senderDetails.user.user_id,
+        accountDetails: senderDetails,
+      }
+
+      const recipientData = {
+        type: 'credit',
+        accountNumber: recipientDetails.user.accountNumber,
+        amount: req.body.amount,
+        description: `TRX-INTERNAL`,
+        user_id: recipientDetails.user.user_id,
+        accountDetails: recipientDetails,
+      }
+
+      await trxCore({
+        user: senderDetails.user,
+        trxPin: req.body.pin,
+        amount: req.body.amount,
+        trxData: [senderData, recipientData],
+      })
+
       response(
-        error.message || 'An error occured',
+        transfer.success_message(req.body.amount),
+        true,
+        StatusCodes.OK,
+        res
+      )
+    } catch (error) {
+      throw response(
+        error || error.message || 'An error occured',
         false,
-        StatusCodes.INTERNAL_SERVER_ERROR,
+        StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
     }
@@ -100,11 +86,12 @@ class Transactions {
     try {
       const data = await transactionHistory(req.query?.account, res.user)
 
-      !data.status
-        ? response(data.response, false, StatusCodes.NOT_FOUND, res)
-        : response(data.response, true, StatusCodes.OK, res)
+      if (data.status) {
+        throw response(data.response, false, StatusCodes.NOT_FOUND, res)
+      }
+      response(data.response, true, StatusCodes.OK, res)
     } catch (error) {
-      response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      throw response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
@@ -112,7 +99,7 @@ class Transactions {
     const { accountNumber, transaction_id } = req.query
     try {
       if (!accountNumber || !transaction_id) {
-        response(
+        throw response(
           'requires account number and transaction id',
           false,
           StatusCodes.NOT_FOUND,
@@ -136,7 +123,7 @@ class Transactions {
         }
       }
     } catch (error) {
-      response(error.message, false, StatusCodes.BAD_REQUEST, res)
+      throw response(error.message, false, StatusCodes.BAD_REQUEST, res)
     }
   }
 

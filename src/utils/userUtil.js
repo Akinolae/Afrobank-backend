@@ -157,6 +157,9 @@ const hashPassword = async (password, length = 15) => {
 }
 
 const decryptPassword = async (password1, password2) => {
+  if (!password2 || password2 === null) {
+    throw 'Please create a pin to proceed'
+  }
   const decrypt = await encrypt.compare(password1, password2)
   return decrypt
 }
