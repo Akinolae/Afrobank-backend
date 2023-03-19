@@ -68,29 +68,25 @@ class Transactions {
           accountDetails: recipientDetails,
         }
 
-        try {
-          await trxCore({
-            user: senderDetails.user,
-            trxPin: req.body.pin,
-            amount: req.body.amount,
-            trxData: [senderData, recipientData],
-          })
+        await trxCore({
+          user: senderDetails.user,
+          trxPin: req.body.pin,
+          amount: req.body.amount,
+          trxData: [senderData, recipientData],
+        })
 
-          response(
-            transfer.success_message(req.body.amount),
-            true,
-            StatusCodes.OK,
-            res
-          )
-        } catch (error) {
-          response(error, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
-        }
+        response(
+          transfer.success_message(req.body.amount),
+          true,
+          StatusCodes.OK,
+          res
+        )
       }
     } catch (error) {
       response(
         error.message || 'An error occured',
         false,
-        StatusCodes.INTERNAL_SERVER_ERROR,
+        StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
     }

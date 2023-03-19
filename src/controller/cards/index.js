@@ -204,22 +204,15 @@ class Cards {
             amount
           )
 
-          try {
-            await trxCore({
-              user: isSenderValid.message,
-              trxPin: cardPin,
-              amount,
-              isCard: true,
-              trxData: [senderData, recipientData],
-            })
+          await trxCore({
+            user: isSenderValid.message,
+            trxPin: cardPin,
+            amount,
+            isCard: true,
+            trxData: [senderData, recipientData],
+          })
 
-            response('Transfer success', true, StatusCodes.OK, res)
-          } catch (error) {
-            response(error, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
-          }
-          /* 
-          SenderData && RecipientData auto generates transaction information to be added to the DB          
-          */
+          response('Transfer success', true, StatusCodes.OK, res)
         }
       }
     } catch (error) {
