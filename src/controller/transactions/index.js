@@ -27,7 +27,7 @@ class Transactions {
         !!joi_error.error || !senderDetails.status || !recipientDetails.status
 
       if (hasError) {
-        response(
+        throw response(
           !!joi_error.error
             ? joi_error.error.details[0].message
             : !senderDetails.status
@@ -39,7 +39,6 @@ class Transactions {
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-        return
       }
 
       const senderData = {
@@ -74,7 +73,7 @@ class Transactions {
         res
       )
     } catch (error) {
-      response(
+      throw response(
         error || error.message || 'An error occured',
         false,
         StatusCodes.UNPROCESSABLE_ENTITY,
@@ -87,11 +86,12 @@ class Transactions {
     try {
       const data = await transactionHistory(req.query?.account, res.user)
 
-      !data.status
-        ? response(data.response, false, StatusCodes.NOT_FOUND, res)
-        : response(data.response, true, StatusCodes.OK, res)
+      if (data.status) {
+        throw response(data.response, false, StatusCodes.NOT_FOUND, res)
+      }
+      response(data.response, true, StatusCodes.OK, res)
     } catch (error) {
-      response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      throw response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
@@ -99,7 +99,7 @@ class Transactions {
     const { accountNumber, transaction_id } = req.query
     try {
       if (!accountNumber || !transaction_id) {
-        response(
+        throw response(
           'requires account number and transaction id',
           false,
           StatusCodes.NOT_FOUND,
@@ -123,7 +123,7 @@ class Transactions {
         }
       }
     } catch (error) {
-      response(error.message, false, StatusCodes.BAD_REQUEST, res)
+      throw response(error.message, false, StatusCodes.BAD_REQUEST, res)
     }
   }
 

@@ -35,26 +35,26 @@ class Cards {
     try {
       const { userData } = await this.userVerification(res.user.email)
       if (!userData.status) {
-        response('User not found', false, StatusCodes.NOT_FOUND, res)
+        throw response('User not found', false, StatusCodes.NOT_FOUND, res)
+      }
+      const cards = (await fetchAllCards(userData.message.user_id)).length
+      if (cards >= 3) {
+        response(
+          'You can only create one card at a time',
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
       } else {
-        const cards = (await fetchAllCards(userData.message.user_id)).length
-        if (cards >= 3) {
-          response(
-            'You can only create one card at a time',
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
-        } else {
-          // Generates a new card for users
-          const [card, accountNumber] = await Promise.all([
-            generateCard(userData),
-            createAccountNumber({
-              type: 'accountNumber',
-            }),
-          ])
+        // Generates a new card for users
+        const [card, accountNumber] = await Promise.all([
+          generateCard(userData),
+          createAccountNumber({
+            type: 'accountNumber',
+          }),
+        ])
 
-          /* 
+        /* 
           
           For every new card created a new account number is generated
           Makes it easier to transact with the new cards as well as track 
@@ -66,45 +66,44 @@ class Cards {
           
           */
 
-          const info = [
-            {
-              collection: this.virtualAccount,
-              data: [
-                {
-                  user_id: userData.message.user_id,
-                  active: true,
-                  account_id: uuidv4(),
-                  pin: process.env.PIN,
-                  accountNumber: accountNumber,
-                  accountBalance: process.env.DEFAULT_BALANCE,
-                },
-              ],
-            },
-            {
-              collection: this.cards,
-              data: [
-                {
-                  cardToken: useCrypto({
-                    payLoad: { ...card, accountNumber },
-                  }),
-                },
-              ],
-            },
-          ]
+        const info = [
+          {
+            collection: this.virtualAccount,
+            data: [
+              {
+                user_id: userData.message.user_id,
+                active: true,
+                account_id: uuidv4(),
+                pin: process.env.PIN,
+                accountNumber: accountNumber,
+                accountBalance: process.env.DEFAULT_BALANCE,
+              },
+            ],
+          },
+          {
+            collection: this.cards,
+            data: [
+              {
+                cardToken: useCrypto({
+                  payLoad: { ...card, accountNumber },
+                }),
+              },
+            ],
+          },
+        ]
 
-          const [newAccount, newCard] = await Promise.all([
-            ...info.map(({ collection, data }) =>
-              dbActionGenerator(ACTIONS.CREATE, {
-                collection: collection,
-                data: data,
-              })
-            ),
-          ])
+        const [newAccount, newCard] = await Promise.all([
+          ...info.map(({ collection, data }) =>
+            dbActionGenerator(ACTIONS.CREATE, {
+              collection: collection,
+              data: data,
+            })
+          ),
+        ])
 
-          await Promise.all([newCard.save(), newAccount.save()])
+        await Promise.all([newCard.save(), newAccount.save()])
 
-          response('Card creation successful', true, StatusCodes.OK, res)
-        }
+        response('Card creation successful', true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
@@ -115,14 +114,18 @@ class Cards {
     try {
       const { userData } = await this.userVerification(res.user.email)
       if (!userData.status) {
-        response('User not found', false, StatusCodes.NOT_FOUND, res)
-      } else {
-        const cards = await fetchAllCards(userData.message.user_id)
-
-        response(cards, true, StatusCodes.OK, res)
+        throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
+      const cards = await fetchAllCards(userData.message.user_id)
+
+      response(cards, true, StatusCodes.OK, res)
     } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      throw response(
+        error.message,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        res
+      )
     }
   }
 
@@ -145,7 +148,7 @@ class Cards {
       const senderCard = this.getCurrentCard(userCards, isSenderValid)
 
       if (!isRecipientValid.status || !isSenderValid.status) {
-        response(
+        throw response(
           !isRecipientValid.status
             ? isRecipientValid.message
             : 'Sender card invalid',
@@ -153,18 +156,17 @@ class Cards {
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-        return
       }
 
       if (!Object.keys(senderCard).length) {
-        response(
+        throw response(
           "You're not authorized to spend from this card",
           false,
           StatusCodes.UNAUTHORIZED,
           res
         )
-        return
       }
+
       const [sender, recipient, senderVirtualAccount, recipientVirtualAccount] =
         await Promise.all([
           cardConditionsCheck(isSenderValid.message),
@@ -181,40 +183,44 @@ class Cards {
         ])
 
       if (!sender.status || !recipient.status) {
-        response(
+        throw response(
           !recipient.status ? recipient.message : sender.message,
           false,
           StatusCodes.UNAUTHORIZED,
           res
         )
-      } else {
-        let senderData, recipientData
-
-        senderData = generateTrxInfo(
-          senderVirtualAccount,
-          'debit',
-          description,
-          amount
-        )
-        recipientData = generateTrxInfo(
-          recipientVirtualAccount,
-          'credit',
-          description,
-          amount
-        )
-
-        await trxCore({
-          user: isSenderValid.message,
-          trxPin: cardPin,
-          amount,
-          isCard: true,
-          trxData: [senderData, recipientData],
-        })
-
-        response('Transfer success', true, StatusCodes.OK, res)
       }
+      let senderData, recipientData
+
+      senderData = generateTrxInfo(
+        senderVirtualAccount,
+        'debit',
+        description,
+        amount
+      )
+      recipientData = generateTrxInfo(
+        recipientVirtualAccount,
+        'credit',
+        description,
+        amount
+      )
+
+      await trxCore({
+        user: isSenderValid.message,
+        trxPin: cardPin,
+        amount,
+        isCard: true,
+        trxData: [senderData, recipientData],
+      })
+
+      response('Transfer success', true, StatusCodes.OK, res)
     } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      throw response(
+        error.message,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        res
+      )
     }
   }
 
@@ -233,55 +239,54 @@ class Cards {
     const validAction = !['deactivate', 'activate'].includes(action)
     try {
       if (!card || typeof card === undefined || validAction) {
-        response(
+        throw response(
           validAction ? 'Provide a valid action' : 'No card provided',
           false,
           StatusCodes.NOT_FOUND,
           res
         )
-      } else {
-        const [isCardValid, cards] = await Promise.all([
-          verifyCard(card),
-          fetchAllCards(res.user.user_id),
-        ])
+      }
 
-        let currentCard = this.getCurrentCard(cards, isCardValid)
+      const [isCardValid, cards] = await Promise.all([
+        verifyCard(card),
+        fetchAllCards(res.user.user_id),
+      ])
 
-        if (!isCardValid.status || !Object.keys(currentCard)) {
-          response(
-            !isCardValid.status
-              ? 'Card invalid'
-              : "You're not authorized to do that",
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
-        } else {
-          /*
+      let currentCard = this.getCurrentCard(cards, isCardValid)
+
+      if (!isCardValid.status || !Object.keys(currentCard)) {
+        throw response(
+          !isCardValid.status
+            ? 'Card invalid'
+            : "You're not authorized to do that",
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      }
+      /*
           based on the user action the card status is updated accordingly
           */
 
-          action === 'deactivate'
-            ? (currentCard.isActive = false)
-            : (currentCard.isActive = true)
-          await updateCard(
-            { _id: isCardValid.message.id },
-            {
-              cardToken: useCrypto({
-                payLoad: { ...currentCard },
-              }),
-            }
-          )
-          response(
-            action === 'deactivate'
-              ? 'Card deactivated successfully'
-              : 'Card activated successfully',
-            true,
-            StatusCodes.OK,
-            res
-          )
+      action === 'deactivate'
+        ? (currentCard.isActive = false)
+        : (currentCard.isActive = true)
+      await updateCard(
+        { _id: isCardValid.message.id },
+        {
+          cardToken: useCrypto({
+            payLoad: { ...currentCard },
+          }),
         }
-      }
+      )
+      response(
+        action === 'deactivate'
+          ? 'Card deactivated successfully'
+          : 'Card activated successfully',
+        true,
+        StatusCodes.OK,
+        res
+      )
     } catch (error) {
       response(
         error || error.message || 'An error occured',
@@ -303,7 +308,7 @@ class Cards {
       let currentCard = this.getCurrentCard(cards, isCardValid)
 
       if (!pin || !isCardValid.status || !Object.keys(currentCard)) {
-        response(
+        throw response(
           !pin
             ? 'Pin is required'
             : !isCardValid.status
@@ -313,21 +318,25 @@ class Cards {
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else {
-        currentCard.pin = pin
-
-        await updateCard(
-          { _id: isCardValid.message.id },
-          {
-            cardToken: useCrypto({
-              payLoad: { ...currentCard },
-            }),
-          }
-        )
-        response('Pin updated', true, StatusCodes.OK, res)
       }
+      currentCard.pin = pin
+
+      await updateCard(
+        { _id: isCardValid.message.id },
+        {
+          cardToken: useCrypto({
+            payLoad: { ...currentCard },
+          }),
+        }
+      )
+      response('Pin updated', true, StatusCodes.OK, res)
     } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      throw response(
+        error.message,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        res
+      )
     }
   }
 
@@ -336,24 +345,28 @@ class Cards {
     const isCardValid = await verifyCard(no)
     try {
       if (!no || !isCardValid.status) {
-        response(
+        throw response(
           !no ? 'no card provided' : 'Card invalid',
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else {
-        const cardTrx = (
-          await dbActionGenerator(ACTIONS.FIND, {
-            collection: this.cardTrx,
-            data: [],
-          })
-        ).filter((trx) => trx.cardNumber === isCardValid.message.cardNumber)
-
-        response(cardTrx, true, StatusCodes.OK, res)
       }
+      const cardTrx = (
+        await dbActionGenerator(ACTIONS.FIND, {
+          collection: this.cardTrx,
+          data: [],
+        })
+      ).filter((trx) => trx.cardNumber === isCardValid.message.cardNumber)
+
+      response(cardTrx, true, StatusCodes.OK, res)
     } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      throw response(
+        error.message,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        res
+      )
     }
   }
 }
