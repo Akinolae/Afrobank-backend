@@ -7,7 +7,7 @@ const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { validateAmount } = require('../../utils')
 const { updateTransaction } = require('../../utils/queries')
-const { transactionHistory } = require('../../utils/transactionsUtil')
+const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const { decryptPassword, verifyAccountNumber } = require('../../utils/userUtil')
 class Transactions {
@@ -48,20 +48,13 @@ class Transactions {
           res
         )
       } else {
-        const valRes = validateAmount(senderDetails.user, req.body.amount)
-        const pinValidation = await decryptPassword(
-          req.body.pin,
-          senderDetails.status ? senderDetails.user.pin : ''
-        )
+        try {
+          await trxCore({
+            user: senderDetails.user,
+            trxPin: req.body.pin,
+            amount: req.body.amount,
+          })
 
-        if (!pinValidation || !!valRes) {
-          response(
-            !pinValidation ? transfer.pinError : valRes,
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
-        } else {
           const transactionData = {
             senderAccountNumber: senderDetails.user.accountNumber,
             recipientAccountNumber: recipientDetails.user.accountNumber,
@@ -76,6 +69,8 @@ class Transactions {
           }
 
           this.completeTransfer(transactionData, res)
+        } catch (error) {
+          response(error, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
         }
       }
     } catch (error) {

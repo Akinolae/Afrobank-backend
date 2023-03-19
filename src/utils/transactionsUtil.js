@@ -3,8 +3,9 @@ const { createPin } = require('./pinUtils')
 const { v4: uuidv4 } = require('uuid')
 const createAccountNumber = require('./accountNumberUtil')
 const { createExpiryDate } = require('./dateUtils')
-const { verifyAccountNumber } = require('./userUtil')
+const { verifyAccountNumber, decryptPassword } = require('./userUtil')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
+const validateAmount = require('./amountValidator')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -123,7 +124,21 @@ const calc_account_balance = async (accountNumber) => {
   }
 }
 
+const trxCore = async (params) => {
+  const { user, trxPin, amount } = params
+
+  const [isPinValid, isAmmountValid] = await Promise.all([
+    decryptPassword(trxPin, user.pin),
+    validateAmount(user, amount),
+  ])
+
+  if (!isPinValid) throw 'Invalid pin provided'
+
+  if (!!isAmmountValid) throw isAmmountValid
+}
+
 module.exports = {
+  trxCore,
   generateCard,
   updateBalance,
   generateTrxInfo,

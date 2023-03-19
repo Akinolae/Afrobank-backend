@@ -18,6 +18,7 @@ const {
 } = require('../../utils')
 const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
+const { trxCore } = require('../../utils/transactionsUtil')
 
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
@@ -135,20 +136,11 @@ class Cards {
       const { cardNumber, sendingCardId, cardPin, amount, description } =
         req.body
 
-      /*
-      Verify Both cards to know if they exist
-      */
-
       const [isRecipientValid, isSenderValid, userCards] = await Promise.all([
         verifyCard(cardNumber),
         verifyCard(sendingCardId),
         fetchAllCards(res.user.id),
       ])
-
-      /*
-      picks sender card from list of cards and prepare for transaction
-      We have to ensure that card belongs to the rightful owner before processing any transaction.
-      */
 
       const senderCard = this.getCurrentCard(userCards, isSenderValid)
 
@@ -161,12 +153,7 @@ class Cards {
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else if (
-        /*
-      bloc only allows card owner to spend from card
-      */
-        !Object.keys(senderCard).length
-      ) {
+      } else if (!Object.keys(senderCard).length) {
         response(
           "You're not authorized to spend from this card",
           false,
@@ -174,103 +161,97 @@ class Cards {
           res
         )
       } else {
-        /* 
-        gets virtual account attached to sender card
-        */
-
-        const senderVirtualAccount = await dbActionGenerator(ACTIONS.FIND, {
-          collection: this.virtualAccount,
-          data: [
-            {
-              accountNumber: isSenderValid.message.accountNumber,
-            },
-          ],
-        })
-
-        /* 
-        Check the conditions of both cards if they can accept or make transactions
-        Check if user has sufficient balance to process transactions
-        */
-
-        const [sender, recipient, isValidAmount] = await Promise.all([
+        const [
+          sender,
+          recipient,
+          senderVirtualAccount,
+          recipientVirtualAccount,
+        ] = await Promise.all([
           cardConditionsCheck(isSenderValid.message),
           cardConditionsCheck(isRecipientValid.message),
-          validateAmount(
-            { accountBalance: senderVirtualAccount[0].accountBalance },
-            amount
+          ...[
+            { account: isSenderValid.message.accountNumber },
+            { account: isRecipientValid.message.accountNumber },
+          ].map((data) =>
+            dbActionGenerator(ACTIONS.FIND, {
+              collection: this.virtualAccount,
+              data: [{ accountNumber: data.account }],
+            })
           ),
         ])
 
-        if (
-          !sender.status ||
-          !recipient.status ||
-          !!isValidAmount ||
-          isSenderValid.message.pin !== cardPin
-        ) {
+        if (!sender.status || !recipient.status) {
           response(
-            !recipient.status
-              ? recipient.message
-              : !sender.status
-              ? sender.message
-              : !!isValidAmount
-              ? isValidAmount
-              : 'Invalid pin',
+            !recipient.status ? recipient.message : sender.message,
             false,
-            !!isValidAmount
-              ? StatusCodes.UNPROCESSABLE_ENTITY
-              : StatusCodes.UNAUTHORIZED,
+            StatusCodes.UNAUTHORIZED,
             res
           )
         } else {
           let senderData, recipientData
 
+          try {
+            await trxCore({
+              user: isSenderValid.message,
+              trxPin: cardPin,
+              amount,
+            })
+
+            const trxData = [
+              {
+                account: senderVirtualAccount,
+                cardTrx,
+                amount,
+                isCardTrx: true,
+                trx: senderData,
+              },
+              {
+                account: recipientVirtualAccount,
+                cardTrx,
+                amount,
+                isCardTrx: true,
+                trx: recipientData,
+              },
+            ]
+
+            await Promise.all([
+              ...trxData.map((data) =>
+                updateTransaction(
+                  data.account,
+                  data.cardTrx,
+                  null,
+                  null,
+                  data.amount,
+                  null,
+                  null,
+                  {
+                    isCardTrx: data.isCardTrx,
+                    trx: data.trx,
+                  }
+                )
+              ),
+            ])
+
+            senderData = generateTrxInfo(
+              isSenderValid.message,
+              'debit',
+              description,
+              amount
+            )
+            recipientData = generateTrxInfo(
+              isRecipientValid.message,
+              'credit',
+              description,
+              amount
+            )
+
+            response('Transfer success', true, StatusCodes.OK, res)
+          } catch (error) {
+            response(error, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+          }
           /* 
           SenderData && RecipientData auto generates transaction information to be added to the DB          
           */
-
-          senderData = generateTrxInfo(
-            isSenderValid.message,
-            'debit',
-            description,
-            amount
-          )
-          recipientData = generateTrxInfo(
-            isRecipientValid.message,
-            'credit',
-            description,
-            amount
-          )
-
-          await Promise.all([
-            updateTransaction(
-              this.virtualAccount,
-              cardTrx,
-              null,
-              null,
-              amount,
-              null,
-              null,
-              {
-                isCardTrx: true,
-                trx: senderData,
-              }
-            ),
-            updateTransaction(
-              this.virtualAccount,
-              cardTrx,
-              null,
-              null,
-              amount,
-              null,
-              null,
-              {
-                isCardTrx: true,
-                trx: recipientData,
-              }
-            ),
-          ])
-
-          response('Transfer success', true, StatusCodes.OK, res)
         }
       }
     } catch (error) {
