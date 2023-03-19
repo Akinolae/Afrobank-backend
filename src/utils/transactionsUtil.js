@@ -96,11 +96,10 @@ const generateCard = async (params) => {
 
 const generateTrxInfo = (userInfo, trxType, description, amount) => {
   return {
-    cardNumber: userInfo.cardNumber,
-    accountNumber: userInfo.accountNumber,
     transaction_type: trxType,
-    user_id: userInfo.ownerId,
+    user_id: userInfo.user_id,
     transaction_date: new Date(),
+    account_id: userInfo.account_id,
     description: !!description
       ? `AFROBANK-CARD||TRX-${description ?? ''}`
       : 'AFROBANK-CARD||TRX',

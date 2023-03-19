@@ -1,6 +1,7 @@
 //imports
 const cards = require('../model/cards')
 const cardTrx = require('../model/cardTransactions')
+const virtualAccount = require('../model/virtualAccounts')
 const customer = require('../model/customer')
 const transactions = require('../model/transactions')
 const { pinReset } = require('./validator')
@@ -10,17 +11,17 @@ const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
 
 // updates transactions db for both card and normal transactions ...//
-const updateTransaction = async (
-  _customer_,
-  transactions,
+const updateTransaction = async ({
+  _customer_ = virtualAccount,
+  transactions = transactions,
   _type_,
   _accountNumber,
   _amount_,
   _description_,
   user_id,
   accountDetails,
-  { isCardTrx, trx } = {}
-) => {
+  trx,
+}) => {
   const date = new Date()
 
   //generates transaction id for every transaction
@@ -28,44 +29,31 @@ const updateTransaction = async (
   const transaction_id = uuidv4()
   try {
     //Bloc processes only non card transactions
-    if (isCardTrx === undefined || !isCardTrx) {
-      let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
-        collection: transactions,
-        data: [
-          {
-            transaction_id,
-            transaction_type: _type_,
-            amount: _amount_,
-            description: _description_,
-            transaction_date: date,
-            user_id: user_id,
-            account_id: accountDetails.user.account_id,
-          },
-        ],
-      })
+    let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
+      collection: transactions,
+      data: [
+        !!trx
+          ? {
+              transaction_id,
+              ...trx,
+            }
+          : {
+              transaction_id,
+              transaction_type: _type_,
+              amount: _amount_,
+              description: _description_,
+              transaction_date: date,
+              user_id: user_id,
+              account_id: accountDetails.user.account_id,
+            },
+      ],
+    })
 
-      await Promise.all([
-        transactionModel.save(),
-        updateBalance(_customer_, _type_, _accountNumber, _amount_),
-      ])
-    } else {
-      //Bloc processes card transactions
-      //updates the transactions table accordingly as well as balance of the cards...//
-      let cardTransaction = await dbActionGenerator(ACTIONS.CREATE, {
-        collection: transactions,
-        data: [{ transaction_id, ...trx }],
-      })
+    await Promise.all([
+      transactionModel.save(),
+      updateBalance(_customer_, _type_, _accountNumber, _amount_),
+    ])
 
-      await Promise.all([
-        cardTransaction.save(),
-        updateBalance(
-          _customer_,
-          trx.transaction_type,
-          trx.accountNumber,
-          _amount_
-        ),
-      ])
-    }
     return true
   } catch (error) {
     throw new Error(error)

@@ -5,11 +5,10 @@ const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { validateAmount } = require('../../utils')
 const { updateTransaction } = require('../../utils/queries')
+const { verifyAccountNumber } = require('../../utils/userUtil')
 const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
-const { decryptPassword, verifyAccountNumber } = require('../../utils/userUtil')
 class Transactions {
   constructor(_customer_, _transactions_, _virtualAccount_) {
     this.customer = _customer_
@@ -140,16 +139,14 @@ class Transactions {
     user_id,
     accountDetails
   ) => {
-    return await updateTransaction(
-      this.virtualAccount,
-      this.transactions,
-      type,
-      accountNumber,
-      amount,
-      description,
+    return await updateTransaction({
+      _type_: type,
+      _accountNumber: accountNumber,
+      _amount_: amount,
+      _description_: description,
       user_id,
-      accountDetails
-    )
+      accountDetails,
+    })
   }
 
   getTransactionHistory = async (req, res) => {

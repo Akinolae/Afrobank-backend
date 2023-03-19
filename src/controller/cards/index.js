@@ -1,5 +1,6 @@
 const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
+const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
@@ -26,10 +27,11 @@ const { trxCore } = require('../../utils/transactionsUtil')
 //3. @sendMoney ~~~ only authenticared users can send money from cards
 
 class Cards {
-  constructor(_cards_, _virtualAccount_, _cardTrx_) {
+  constructor(_cards_, _virtualAccount_, _cardTrx_, _transactions_) {
     this.cards = _cards_
     this.virtualAccount = _virtualAccount_
     this.cardTrx = _cardTrx_
+    this.transactions = _transactions_
   }
   createCard = async (req, res) => {
     try {
@@ -197,53 +199,26 @@ class Cards {
               amount,
             })
 
-            const trxData = [
-              {
-                account: senderVirtualAccount,
-                cardTrx,
-                amount,
-                isCardTrx: true,
-                trx: senderData,
-              },
-              {
-                account: recipientVirtualAccount,
-                cardTrx,
-                amount,
-                isCardTrx: true,
-                trx: recipientData,
-              },
-            ]
-
-            await Promise.all([
-              ...trxData.map((data) =>
-                updateTransaction(
-                  data.account,
-                  data.cardTrx,
-                  null,
-                  null,
-                  data.amount,
-                  null,
-                  null,
-                  {
-                    isCardTrx: data.isCardTrx,
-                    trx: data.trx,
-                  }
-                )
-              ),
-            ])
-
             senderData = generateTrxInfo(
-              isSenderValid.message,
+              senderVirtualAccount,
               'debit',
               description,
               amount
             )
             recipientData = generateTrxInfo(
-              isRecipientValid.message,
+              recipientVirtualAccount,
               'credit',
               description,
               amount
             )
+
+            await Promise.all([
+              ...[senderData, recipientData].map((data) =>
+                updateTransaction({
+                  trx: data,
+                })
+              ),
+            ])
 
             response('Transfer success', true, StatusCodes.OK, res)
           } catch (error) {
@@ -394,7 +369,7 @@ class Cards {
   }
 }
 
-const userCards = new Cards(cards, virtualAccount, cardTrx)
+const userCards = new Cards(cards, virtualAccount, cardTrx, transactions)
 Object.freeze(userCards)
 
 module.exports = userCards
