@@ -2,9 +2,10 @@ const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
 const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
+const { trxCore } = require('../../utils/transactionsUtil')
 const { response } = require('../responseHandler')
+const { updateCard } = require('../../utils/queries')
 const { StatusCodes } = require('http-status-codes')
-const { updateTransaction, updateCard } = require('../../utils/queries')
 const {
   useCrypto,
   verifyCard,
@@ -13,13 +14,11 @@ const {
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 const {
   generateCard,
-  validateAmount,
   generateTrxInfo,
   createAccountNumber,
 } = require('../../utils')
 const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
-const { trxCore } = require('../../utils/transactionsUtil')
 
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
@@ -192,33 +191,27 @@ class Cards {
         } else {
           let senderData, recipientData
 
+          senderData = generateTrxInfo(
+            senderVirtualAccount,
+            'debit',
+            description,
+            amount
+          )
+          recipientData = generateTrxInfo(
+            recipientVirtualAccount,
+            'credit',
+            description,
+            amount
+          )
+
           try {
             await trxCore({
               user: isSenderValid.message,
               trxPin: cardPin,
               amount,
+              isCard: true,
+              trxData: [senderData, recipientData],
             })
-
-            senderData = generateTrxInfo(
-              senderVirtualAccount,
-              'debit',
-              description,
-              amount
-            )
-            recipientData = generateTrxInfo(
-              recipientVirtualAccount,
-              'credit',
-              description,
-              amount
-            )
-
-            await Promise.all([
-              ...[senderData, recipientData].map((data) =>
-                updateTransaction({
-                  trx: data,
-                })
-              ),
-            ])
 
             response('Transfer success', true, StatusCodes.OK, res)
           } catch (error) {

@@ -5,7 +5,6 @@ const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const { updateTransaction } = require('../../utils/queries')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
@@ -47,27 +46,42 @@ class Transactions {
           res
         )
       } else {
+        let senderData, recipientData
+        const senderDesc = `TRX-INTERNAL`
+        const recipientDesc = `TRX-INTERNAL`
+
+        senderData = {
+          type: 'debit',
+          accountNumber: senderDetails.user.accountNumber,
+          amount: req.body.amount,
+          description: senderDesc,
+          user_id: senderDetails.user.user_id,
+          accountDetails: senderDetails,
+        }
+
+        recipientData = {
+          type: 'credit',
+          accountNumber: recipientDetails.user.accountNumber,
+          amount: req.body.amount,
+          description: recipientDesc,
+          user_id: recipientDetails.user.user_id,
+          accountDetails: recipientDetails,
+        }
+
         try {
           await trxCore({
             user: senderDetails.user,
             trxPin: req.body.pin,
             amount: req.body.amount,
+            trxData: [senderData, recipientData],
           })
 
-          const transactionData = {
-            senderAccountNumber: senderDetails.user.accountNumber,
-            recipientAccountNumber: recipientDetails.user.accountNumber,
-            recipientName: `${recipientDetails.user.firstName} ${recipientDetails.user.lastName}`,
-            senderName: `${senderDetails.user.firstName} ${senderDetails.user.lastName}`,
-            amount: req.body.amount,
-            type: 'debit',
-            sender_id: senderDetails.user.user_id,
-            recipient_id: recipientDetails.user.user_id,
-            senderDetails,
-            recipientDetails,
-          }
-
-          this.completeTransfer(transactionData, res)
+          response(
+            transfer.success_message(req.body.amount),
+            true,
+            StatusCodes.OK,
+            res
+          )
         } catch (error) {
           response(error, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
         }
@@ -80,73 +94,6 @@ class Transactions {
         res
       )
     }
-  }
-
-  completeTransfer = async (payload, res) => {
-    const {
-      type,
-      senderAccountNumber,
-      recipientAccountNumber,
-      amount,
-      recipientName,
-      senderName,
-      sender_id,
-      recipient_id,
-      senderDetails,
-      recipientDetails,
-    } = payload
-
-    if (!type) {
-      throw 'transaction type is required'
-    }
-    try {
-      if (type === 'debit') {
-        const senderDesc = `TRX-INTERNAL/${recipientName ?? ''}`
-        const recipientDesc = `TRX-INTERNAL/${senderName ?? ''}`
-        const [sender, recipient] = await Promise.all([
-          this.updateTransactionHistory(
-            type,
-            senderAccountNumber,
-            amount,
-            senderDesc,
-            sender_id,
-            senderDetails
-          ),
-          this.updateTransactionHistory(
-            'credit',
-            recipientAccountNumber,
-            amount,
-            recipientDesc,
-            recipient_id,
-            recipientDetails
-          ),
-        ])
-
-        !!sender &&
-          !!recipient &&
-          response(transfer.success_message(amount), true, StatusCodes.OK, res)
-      }
-    } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
-    }
-  }
-
-  updateTransactionHistory = async (
-    type,
-    accountNumber,
-    amount,
-    description,
-    user_id,
-    accountDetails
-  ) => {
-    return await updateTransaction({
-      _type_: type,
-      _accountNumber: accountNumber,
-      _amount_: amount,
-      _description_: description,
-      user_id,
-      accountDetails,
-    })
   }
 
   getTransactionHistory = async (req, res) => {

@@ -1,65 +1,10 @@
 //imports
 const cards = require('../model/cards')
 const cardTrx = require('../model/cardTransactions')
-const virtualAccount = require('../model/virtualAccounts')
 const customer = require('../model/customer')
-const transactions = require('../model/transactions')
 const { pinReset } = require('./validator')
-const { updateBalance } = require('../utils/')
 const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
-const { v4: uuidv4 } = require('uuid')
-
-// updates transactions db for both card and normal transactions ...//
-const updateTransaction = async ({
-  _customer_ = virtualAccount,
-  transactions = transactions,
-  _type_,
-  _accountNumber,
-  _amount_,
-  _description_,
-  user_id,
-  accountDetails,
-  trx,
-}) => {
-  const date = new Date()
-
-  //generates transaction id for every transaction
-
-  const transaction_id = uuidv4()
-  try {
-    //Bloc processes only non card transactions
-    let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
-      collection: transactions,
-      data: [
-        !!trx
-          ? {
-              transaction_id,
-              ...trx,
-            }
-          : {
-              transaction_id,
-              transaction_type: _type_,
-              amount: _amount_,
-              description: _description_,
-              transaction_date: date,
-              user_id: user_id,
-              account_id: accountDetails.user.account_id,
-            },
-      ],
-    })
-
-    await Promise.all([
-      transactionModel.save(),
-      updateBalance(_customer_, _type_, _accountNumber, _amount_),
-    ])
-
-    return true
-  } catch (error) {
-    throw new Error(error)
-  }
-}
-//transactions update ends...
 
 const updatePassword = async (accountNumber, password) => {
   try {
@@ -290,7 +235,6 @@ module.exports = {
   updatePassword,
   update2faCodes,
   accountActivation,
-  updateTransaction,
   updateNotification,
   deleteNotification,
 }
