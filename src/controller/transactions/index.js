@@ -1,5 +1,4 @@
 require('dotenv').config()
-
 const model = require('../../model/customer')
 const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
@@ -25,10 +24,7 @@ class Transactions {
 
     try {
       const hasError =
-        !!joi_error.error ||
-        !senderDetails.status ||
-        !recipientDetails.status ||
-        senderDetails.user.pin === null
+        !!joi_error.error || !senderDetails.status || !recipientDetails.status
 
       if (hasError) {
         response(
@@ -38,53 +34,48 @@ class Transactions {
             ? senderDetails.message
             : !recipientDetails.status
             ? recipientDetails.message
-            : senderDetails.user.pin === null
-            ? 'Please create a pin to proceed'
             : transfer.single_user,
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else {
-        let senderData, recipientData
-        const senderDesc = `TRX-INTERNAL`
-        const recipientDesc = `TRX-INTERNAL`
-
-        senderData = {
-          type: 'debit',
-          accountNumber: senderDetails.user.accountNumber,
-          amount: req.body.amount,
-          description: senderDesc,
-          user_id: senderDetails.user.user_id,
-          accountDetails: senderDetails,
-        }
-
-        recipientData = {
-          type: 'credit',
-          accountNumber: recipientDetails.user.accountNumber,
-          amount: req.body.amount,
-          description: recipientDesc,
-          user_id: recipientDetails.user.user_id,
-          accountDetails: recipientDetails,
-        }
-
-        await trxCore({
-          user: senderDetails.user,
-          trxPin: req.body.pin,
-          amount: req.body.amount,
-          trxData: [senderData, recipientData],
-        })
-
-        response(
-          transfer.success_message(req.body.amount),
-          true,
-          StatusCodes.OK,
-          res
-        )
+        return
       }
+
+      const senderData = {
+        type: 'debit',
+        accountNumber: senderDetails.user.accountNumber,
+        amount: req.body.amount,
+        description: `TRX-INTERNAL`,
+        user_id: senderDetails.user.user_id,
+        accountDetails: senderDetails,
+      }
+
+      const recipientData = {
+        type: 'credit',
+        accountNumber: recipientDetails.user.accountNumber,
+        amount: req.body.amount,
+        description: `TRX-INTERNAL`,
+        user_id: recipientDetails.user.user_id,
+        accountDetails: recipientDetails,
+      }
+
+      await trxCore({
+        user: senderDetails.user,
+        trxPin: req.body.pin,
+        amount: req.body.amount,
+        trxData: [senderData, recipientData],
+      })
+
+      response(
+        transfer.success_message(req.body.amount),
+        true,
+        StatusCodes.OK,
+        res
+      )
     } catch (error) {
       response(
-        error.message || 'An error occured',
+        error || error.message || 'An error occured',
         false,
         StatusCodes.UNPROCESSABLE_ENTITY,
         res

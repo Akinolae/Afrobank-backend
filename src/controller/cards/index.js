@@ -1,10 +1,9 @@
 const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
-const transactions = require('../../model/transactions')
-const virtualAccount = require('../../model/virtualAccounts')
 const { trxCore } = require('../../utils/transactionsUtil')
 const { response } = require('../responseHandler')
 const { updateCard } = require('../../utils/queries')
+const virtualAccount = require('../../model/virtualAccounts')
 const { StatusCodes } = require('http-status-codes')
 const {
   useCrypto,
@@ -26,12 +25,12 @@ const { v4: uuidv4 } = require('uuid')
 //3. @sendMoney ~~~ only authenticared users can send money from cards
 
 class Cards {
-  constructor(_cards_, _virtualAccount_, _cardTrx_, _transactions_) {
+  constructor(_cards_, _virtualAccount_, _cardTrx_) {
     this.cards = _cards_
     this.virtualAccount = _virtualAccount_
     this.cardTrx = _cardTrx_
-    this.transactions = _transactions_
   }
+
   createCard = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -154,20 +153,20 @@ class Cards {
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else if (!Object.keys(senderCard).length) {
+        return
+      }
+
+      if (!Object.keys(senderCard).length) {
         response(
           "You're not authorized to spend from this card",
           false,
           StatusCodes.UNAUTHORIZED,
           res
         )
-      } else {
-        const [
-          sender,
-          recipient,
-          senderVirtualAccount,
-          recipientVirtualAccount,
-        ] = await Promise.all([
+        return
+      }
+      const [sender, recipient, senderVirtualAccount, recipientVirtualAccount] =
+        await Promise.all([
           cardConditionsCheck(isSenderValid.message),
           cardConditionsCheck(isRecipientValid.message),
           ...[
@@ -181,39 +180,38 @@ class Cards {
           ),
         ])
 
-        if (!sender.status || !recipient.status) {
-          response(
-            !recipient.status ? recipient.message : sender.message,
-            false,
-            StatusCodes.UNAUTHORIZED,
-            res
-          )
-        } else {
-          let senderData, recipientData
+      if (!sender.status || !recipient.status) {
+        response(
+          !recipient.status ? recipient.message : sender.message,
+          false,
+          StatusCodes.UNAUTHORIZED,
+          res
+        )
+      } else {
+        let senderData, recipientData
 
-          senderData = generateTrxInfo(
-            senderVirtualAccount,
-            'debit',
-            description,
-            amount
-          )
-          recipientData = generateTrxInfo(
-            recipientVirtualAccount,
-            'credit',
-            description,
-            amount
-          )
+        senderData = generateTrxInfo(
+          senderVirtualAccount,
+          'debit',
+          description,
+          amount
+        )
+        recipientData = generateTrxInfo(
+          recipientVirtualAccount,
+          'credit',
+          description,
+          amount
+        )
 
-          await trxCore({
-            user: isSenderValid.message,
-            trxPin: cardPin,
-            amount,
-            isCard: true,
-            trxData: [senderData, recipientData],
-          })
+        await trxCore({
+          user: isSenderValid.message,
+          trxPin: cardPin,
+          amount,
+          isCard: true,
+          trxData: [senderData, recipientData],
+        })
 
-          response('Transfer success', true, StatusCodes.OK, res)
-        }
+        response('Transfer success', true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
@@ -285,7 +283,12 @@ class Cards {
         }
       }
     } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      response(
+        error || error.message || 'An error occured',
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        res
+      )
     }
   }
 
@@ -355,7 +358,7 @@ class Cards {
   }
 }
 
-const userCards = new Cards(cards, virtualAccount, cardTrx, transactions)
+const userCards = new Cards(cards, virtualAccount, cardTrx)
 Object.freeze(userCards)
 
 module.exports = userCards
