@@ -1,9 +1,11 @@
 const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
+const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
+const { trxCore } = require('../../utils/transactionsUtil')
 const { response } = require('../responseHandler')
+const { updateCard } = require('../../utils/queries')
 const { StatusCodes } = require('http-status-codes')
-const { updateTransaction, updateCard } = require('../../utils/queries')
 const {
   useCrypto,
   verifyCard,
@@ -12,7 +14,6 @@ const {
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 const {
   generateCard,
-  validateAmount,
   generateTrxInfo,
   createAccountNumber,
 } = require('../../utils')
@@ -25,10 +26,11 @@ const { v4: uuidv4 } = require('uuid')
 //3. @sendMoney ~~~ only authenticared users can send money from cards
 
 class Cards {
-  constructor(_cards_, _virtualAccount_, _cardTrx_) {
+  constructor(_cards_, _virtualAccount_, _cardTrx_, _transactions_) {
     this.cards = _cards_
     this.virtualAccount = _virtualAccount_
     this.cardTrx = _cardTrx_
+    this.transactions = _transactions_
   }
   createCard = async (req, res) => {
     try {
@@ -135,20 +137,11 @@ class Cards {
       const { cardNumber, sendingCardId, cardPin, amount, description } =
         req.body
 
-      /*
-      Verify Both cards to know if they exist
-      */
-
       const [isRecipientValid, isSenderValid, userCards] = await Promise.all([
         verifyCard(cardNumber),
         verifyCard(sendingCardId),
         fetchAllCards(res.user.id),
       ])
-
-      /*
-      picks sender card from list of cards and prepare for transaction
-      We have to ensure that card belongs to the rightful owner before processing any transaction.
-      */
 
       const senderCard = this.getCurrentCard(userCards, isSenderValid)
 
@@ -161,12 +154,7 @@ class Cards {
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else if (
-        /*
-      bloc only allows card owner to spend from card
-      */
-        !Object.keys(senderCard).length
-      ) {
+      } else if (!Object.keys(senderCard).length) {
         response(
           "You're not authorized to spend from this card",
           false,
@@ -174,103 +162,64 @@ class Cards {
           res
         )
       } else {
-        /* 
-        gets virtual account attached to sender card
-        */
-
-        const senderVirtualAccount = await dbActionGenerator(ACTIONS.FIND, {
-          collection: this.virtualAccount,
-          data: [
-            {
-              accountNumber: isSenderValid.message.accountNumber,
-            },
-          ],
-        })
-
-        /* 
-        Check the conditions of both cards if they can accept or make transactions
-        Check if user has sufficient balance to process transactions
-        */
-
-        const [sender, recipient, isValidAmount] = await Promise.all([
+        const [
+          sender,
+          recipient,
+          senderVirtualAccount,
+          recipientVirtualAccount,
+        ] = await Promise.all([
           cardConditionsCheck(isSenderValid.message),
           cardConditionsCheck(isRecipientValid.message),
-          validateAmount(
-            { accountBalance: senderVirtualAccount[0].accountBalance },
-            amount
+          ...[
+            { account: isSenderValid.message.accountNumber },
+            { account: isRecipientValid.message.accountNumber },
+          ].map((data) =>
+            dbActionGenerator(ACTIONS.FIND, {
+              collection: this.virtualAccount,
+              data: [{ accountNumber: data.account }],
+            })
           ),
         ])
 
-        if (
-          !sender.status ||
-          !recipient.status ||
-          !!isValidAmount ||
-          isSenderValid.message.pin !== cardPin
-        ) {
+        if (!sender.status || !recipient.status) {
           response(
-            !recipient.status
-              ? recipient.message
-              : !sender.status
-              ? sender.message
-              : !!isValidAmount
-              ? isValidAmount
-              : 'Invalid pin',
+            !recipient.status ? recipient.message : sender.message,
             false,
-            !!isValidAmount
-              ? StatusCodes.UNPROCESSABLE_ENTITY
-              : StatusCodes.UNAUTHORIZED,
+            StatusCodes.UNAUTHORIZED,
             res
           )
         } else {
           let senderData, recipientData
 
-          /* 
-          SenderData && RecipientData auto generates transaction information to be added to the DB          
-          */
-
           senderData = generateTrxInfo(
-            isSenderValid.message,
+            senderVirtualAccount,
             'debit',
             description,
             amount
           )
           recipientData = generateTrxInfo(
-            isRecipientValid.message,
+            recipientVirtualAccount,
             'credit',
             description,
             amount
           )
 
-          await Promise.all([
-            updateTransaction(
-              this.virtualAccount,
-              cardTrx,
-              null,
-              null,
+          try {
+            await trxCore({
+              user: isSenderValid.message,
+              trxPin: cardPin,
               amount,
-              null,
-              null,
-              {
-                isCardTrx: true,
-                trx: senderData,
-              }
-            ),
-            updateTransaction(
-              this.virtualAccount,
-              cardTrx,
-              null,
-              null,
-              amount,
-              null,
-              null,
-              {
-                isCardTrx: true,
-                trx: recipientData,
-              }
-            ),
-          ])
+              isCard: true,
+              trxData: [senderData, recipientData],
+            })
 
-          response('Transfer success', true, StatusCodes.OK, res)
+            response('Transfer success', true, StatusCodes.OK, res)
+          } catch (error) {
+            response(error, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+          }
+          /* 
+          SenderData && RecipientData auto generates transaction information to be added to the DB          
+          */
         }
       }
     } catch (error) {
@@ -413,7 +362,7 @@ class Cards {
   }
 }
 
-const userCards = new Cards(cards, virtualAccount, cardTrx)
+const userCards = new Cards(cards, virtualAccount, cardTrx, transactions)
 Object.freeze(userCards)
 
 module.exports = userCards

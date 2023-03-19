@@ -1,10 +1,61 @@
-const transactions = require('../model/transactions')
+const trxModel = require('../model/transactions')
+const virtualAccount = require('../model/virtualAccounts')
 const { createPin } = require('./pinUtils')
 const { v4: uuidv4 } = require('uuid')
 const createAccountNumber = require('./accountNumberUtil')
 const { createExpiryDate } = require('./dateUtils')
-const { verifyAccountNumber } = require('./userUtil')
+const { verifyAccountNumber, decryptPassword } = require('./userUtil')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
+const validateAmount = require('./amountValidator')
+
+const updateTransaction = async ({
+  _customer_ = virtualAccount,
+  transactions = trxModel,
+  _type_,
+  _accountNumber,
+  _amount_,
+  _description_,
+  user_id,
+  accountDetails,
+  trx,
+}) => {
+  const date = new Date()
+
+  //generates transaction id for every transaction
+
+  const transaction_id = uuidv4()
+  try {
+    //Bloc processes only non card transactions
+    let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
+      collection: transactions,
+      data: [
+        !!trx
+          ? {
+              transaction_id,
+              ...trx,
+            }
+          : {
+              transaction_id,
+              transaction_type: _type_,
+              amount: _amount_,
+              description: _description_,
+              transaction_date: date,
+              user_id: user_id,
+              account_id: accountDetails.user.account_id,
+            },
+      ],
+    })
+
+    await Promise.all([
+      transactionModel.save(),
+      updateBalance(_customer_, _type_, _accountNumber, _amount_),
+    ])
+
+    return true
+  } catch (error) {
+    throw new Error(error)
+  }
+}
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -22,7 +73,7 @@ const transactionHistory = async (accountNumber, res) => {
 
     const trx = (
       await dbActionGenerator(ACTIONS.FIND, {
-        collection: transactions,
+        collection: trxModel,
         data: [{ user_id: res.user_id }],
       })
     )
@@ -95,11 +146,10 @@ const generateCard = async (params) => {
 
 const generateTrxInfo = (userInfo, trxType, description, amount) => {
   return {
-    cardNumber: userInfo.cardNumber,
-    accountNumber: userInfo.accountNumber,
     transaction_type: trxType,
-    user_id: userInfo.ownerId,
+    user_id: userInfo.user_id,
     transaction_date: new Date(),
+    account_id: userInfo.account_id,
     description: !!description
       ? `AFROBANK-CARD||TRX-${description ?? ''}`
       : 'AFROBANK-CARD||TRX',
@@ -123,7 +173,42 @@ const calc_account_balance = async (accountNumber) => {
   }
 }
 
+const trxCore = async (params) => {
+  const { user, trxPin, amount, isCard = false, trxData = [] } = params
+
+  const [isPinValid, isAmmountValid] = await Promise.all([
+    decryptPassword(trxPin, user.pin),
+    validateAmount(user, amount),
+  ])
+
+  if (!isPinValid) throw 'Invalid pin'
+
+  if (!!isAmmountValid) throw isAmmountValid
+
+  try {
+    await Promise.all([
+      ...trxData.map((data) =>
+        updateTransaction(
+          isCard
+            ? { trx: data }
+            : {
+                _type_: data.type,
+                _accountNumber: data.accountNumber,
+                _amount_: data.amount,
+                _description_: data.description,
+                user_id: data.user_id,
+                accountDetails: data.accountDetails,
+              }
+        )
+      ),
+    ])
+  } catch (error) {
+    throw error
+  }
+}
+
 module.exports = {
+  trxCore,
   generateCard,
   updateBalance,
   generateTrxInfo,
