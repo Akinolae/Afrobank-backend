@@ -7,6 +7,7 @@ const { StatusCodes } = require('http-status-codes')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
+
 class Transactions {
   constructor(_customer_, _transactions_, _virtualAccount_) {
     this.customer = _customer_

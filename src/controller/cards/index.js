@@ -10,7 +10,7 @@ const {
   verifyCard,
   fetch_single_user,
 } = require('../../utils/userUtil')
-const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
+const { fetchAllCards, cardConditionsCheck} = require('../../utils/cardsUtil')
 const {
   generateCard,
   generateTrxInfo,
@@ -148,7 +148,7 @@ class Cards {
       const senderCard = this.getCurrentCard(userCards, isSenderValid)
 
       if (!isRecipientValid.status || !isSenderValid.status) {
-        throw response(
+         response(
           !isRecipientValid.status
             ? isRecipientValid.message
             : 'Sender card invalid',
@@ -159,7 +159,7 @@ class Cards {
       }
 
       if (!Object.keys(senderCard).length) {
-        throw response(
+         response(
           "You're not authorized to spend from this card",
           false,
           StatusCodes.UNAUTHORIZED,
@@ -172,18 +172,18 @@ class Cards {
           cardConditionsCheck(isSenderValid.message),
           cardConditionsCheck(isRecipientValid.message),
           ...[
-            { account: isSenderValid.message.accountNumber },
-            { account: isRecipientValid.message.accountNumber },
+            isSenderValid.message.accountNumber ,
+             isRecipientValid.message.accountNumber ,
           ].map((data) =>
             dbActionGenerator(ACTIONS.FIND, {
               collection: this.virtualAccount,
-              data: [{ accountNumber: data.account }],
+              data: [{ accountNumber: data }],
             })
           ),
         ])
 
       if (!sender.status || !recipient.status) {
-        throw response(
+         response(
           !recipient.status ? recipient.message : sender.message,
           false,
           StatusCodes.UNAUTHORIZED,
@@ -239,7 +239,7 @@ class Cards {
     const validAction = !['deactivate', 'activate'].includes(action)
     try {
       if (!card || typeof card === undefined || validAction) {
-        throw response(
+         response(
           validAction ? 'Provide a valid action' : 'No card provided',
           false,
           StatusCodes.NOT_FOUND,
@@ -312,8 +312,8 @@ class Cards {
           !pin
             ? 'Pin is required'
             : !isCardValid.status
-            ? 'Card invalid'
-            : "You're not authorized to do that",
+              ? 'Card invalid'
+              : "You're not authorized to do that",
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res

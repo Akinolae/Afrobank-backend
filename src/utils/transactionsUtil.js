@@ -22,10 +22,9 @@ const updateTransaction = async ({
   const date = new Date()
 
   //generates transaction id for every transaction
-
   const transaction_id = uuidv4()
   try {
-    //Bloc processes only non card transactions
+    //Bloc processes all transactions
     let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
       collection: transactions,
       data: [
