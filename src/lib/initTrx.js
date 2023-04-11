@@ -9,17 +9,21 @@ const trxModel = require('../model/transactions')
 const { verifyAccountNumber } = require('../utils/userUtil')
 
 const updateBalance = async (customer, type = '', accountNumber, amount) => {
-  const { user } = await verifyAccountNumber(accountNumber)
+  const { user, status, message } = await verifyAccountNumber(accountNumber)
 
   let currentBalance = 0
-  type.toLowerCase() === 'credit'
-    ? (currentBalance += +user.accountBalance + +amount)
-    : (currentBalance = +user.accountBalance - +amount)
+  if (!!Object.keys(user).length || typeof user != 'undefined') {
+    type.toLowerCase() === 'credit'
+      ? (currentBalance += +user.accountBalance + +amount)
+      : (currentBalance = +user.accountBalance - +amount)
 
-  await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
-    collection: customer,
-    data: [{ accountNumber }, { $set: { accountBalance: currentBalance } }],
-  })
+    await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
+      collection: customer,
+      data: [{ accountNumber }, { $set: { accountBalance: currentBalance } }],
+    })
+  } else {
+    throw message
+  }
 }
 
 const addTrxTodb = async ({
@@ -127,9 +131,12 @@ const trxInit = (params = {}) => {
 
 const resolveAccountNumber = async (params) => {
   const { account_number, bank_code, ...rest } = params
+
   try {
     const { data } = await axios.get(
-      `${providerEndpoints.resolveAccount}?account_number=${account_number}&bank_code=${bank_code}`,
+      `${
+        providerEndpoints.resolveAccount
+      }?account_number=${account_number}&bank_code=${bank_code}`,
       {
         headers: {
           Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
@@ -154,12 +161,16 @@ const coreTransfer = async (params) => {
   const { account_number, amount, bank_code, ...rest } = trxInit(params)
 
   try {
-    const data = await resolveAccountNumber({ account_number, bank_code, rest })
+    const { data } = await resolveAccountNumber({
+      account_number,
+      bank_code,
+      rest,
+    })
     if (!!data) {
       const trxDetails = {
         type: 'nuban',
-        name: data.data.account_name,
-        account_number: account_number,
+        name: data.account_name,
+        account_number: data.account_number,
         bank_code: bank_code,
         currency: 'NGN',
       }
@@ -183,10 +194,19 @@ const coreTransfer = async (params) => {
           recipient: res.data.data.recipient_code,
         }
 
-        await axios.post(providerEndpoints.transfer, ref, {
+        const { data } = await axios.post(providerEndpoints.transfer, ref, {
           headers: {
             Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
           },
+        })
+
+        await addTrxTodb({
+          _amount_: data.data.amount,
+          _description_: data.data.reason,
+          user_id: rest.user_id,
+          accountDetails: rest.accountDetails,
+          _accountNumber: data.account_number,
+          _type_: rest._type_,
         })
       }
     }
