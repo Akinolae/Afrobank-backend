@@ -13,6 +13,7 @@ class Transactions {
     this.customer = _customer_
     this.transactions = _transactions_
     this.virtualAccount = _virtualAccount_
+    this.isInternalTrx = false
   }
 
   transfer = async (req, res) => {
@@ -28,7 +29,7 @@ class Transactions {
         !!joi_error.error || !senderDetails.status || !recipientDetails.status
 
       if (hasError) {
-         response(
+        response(
           !!joi_error.error
             ? joi_error.error.details[0].message
             : !senderDetails.status
@@ -64,6 +65,7 @@ class Transactions {
         user: senderDetails.user,
         trxPin: req.body.pin,
         amount: req.body.amount,
+        bank_name: req.body.bank_name,
         trxData: [senderData, recipientData],
       })
 
@@ -74,7 +76,7 @@ class Transactions {
         res
       )
     } catch (error) {
-       response(
+      response(
         error || error.message || 'An error occured',
         false,
         StatusCodes.UNPROCESSABLE_ENTITY,

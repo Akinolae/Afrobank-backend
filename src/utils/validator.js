@@ -21,6 +21,7 @@ const transferAuthSchema = joi.object({
   recipient: joi.string().trim().required(),
   amount: joi.number().required(),
   pin: joi.string().max(4).min(4).trim().required(),
+  bank_name: joi.string().trim().required(),
 })
 
 const setPinSchema = joi.object({

@@ -7,55 +7,7 @@ const { createExpiryDate } = require('./dateUtils')
 const { verifyAccountNumber, decryptPassword } = require('./userUtil')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 const validateAmount = require('./amountValidator')
-const initTrx = require('../lib/initTrx')
-
-const updateTransaction = async ({
-  _customer_ = virtualAccount,
-  transactions = trxModel,
-  _type_,
-  _accountNumber,
-  _amount_,
-  _description_,
-  user_id,
-  accountDetails,
-  trx,
-}) => {
-  const date = new Date()
-
-  //generates transaction id for every transaction
-  const transaction_id = uuidv4()
-  try {
-    //Bloc processes all transactions
-    let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
-      collection: transactions,
-      data: [
-        !!trx
-          ? {
-              transaction_id,
-              ...trx,
-            }
-          : {
-              transaction_id,
-              transaction_type: _type_,
-              amount: _amount_,
-              description: _description_,
-              transaction_date: date,
-              user_id: user_id,
-              account_id: accountDetails.user.account_id,
-            },
-      ],
-    })
-
-    await Promise.all([
-      transactionModel.save(),
-      updateBalance(_customer_, _type_, _accountNumber, _amount_),
-    ])
-
-    return true
-  } catch (error) {
-    throw new Error(error)
-  }
-}
+const coreTransfer = require('../lib/initTrx')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -96,24 +48,6 @@ const fetchAllNotifications = async (accountNumber) => {
     return { status: true, response: data.user.notifications }
   } catch (error) {
     throw error
-  }
-}
-
-const updateBalance = async (customer, type = '', accountNumber, amount) => {
-  const data = await verifyAccountNumber(accountNumber)
-
-  let currentBalance = 0
-  try {
-    type.toLowerCase() === 'credit'
-      ? (currentBalance += +data.user.accountBalance + +amount)
-      : (currentBalance = +data.user.accountBalance - +amount)
-
-    await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
-      collection: customer,
-      data: [{ accountNumber }, { $set: { accountBalance: currentBalance } }],
-    })
-  } catch (e) {
-    throw e
   }
 }
 
@@ -174,7 +108,7 @@ const calc_account_balance = async (accountNumber) => {
 }
 
 const trxCore = async (params) => {
-  const { user, trxPin, amount, isCard = false, trxData = [] } = params
+  const { user, trxPin, amount, isCard = false, bank_name, trxData = [] } = params
 
   const [isPinValid, isAmmountValid] = await Promise.all([
     decryptPassword(trxPin, user.pin),
@@ -188,7 +122,7 @@ const trxCore = async (params) => {
   try {
     await Promise.all([
       ...trxData.map((data) =>
-      initTrx(
+        coreTransfer(
           isCard
             ? { trx: data }
             : {
@@ -198,6 +132,7 @@ const trxCore = async (params) => {
                 _description_: data.description,
                 user_id: data.user_id,
                 accountDetails: data.accountDetails,
+                bank_name
               }
         )
       ),
@@ -210,7 +145,6 @@ const trxCore = async (params) => {
 module.exports = {
   trxCore,
   generateCard,
-  updateBalance,
   generateTrxInfo,
   transactionHistory,
   calc_account_balance,
