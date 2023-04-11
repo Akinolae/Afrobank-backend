@@ -108,7 +108,7 @@ const calc_account_balance = async (accountNumber) => {
 }
 
 const trxCore = async (params) => {
-  const { user, trxPin, amount, isCard = false, trxData = [] } = params
+  const { user, trxPin, amount, isCard = false, bank_name, trxData = [] } = params
 
   const [isPinValid, isAmmountValid] = await Promise.all([
     decryptPassword(trxPin, user.pin),
@@ -132,6 +132,7 @@ const trxCore = async (params) => {
                 _description_: data.description,
                 user_id: data.user_id,
                 accountDetails: data.accountDetails,
+                bank_name
               }
         )
       ),

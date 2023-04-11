@@ -65,6 +65,7 @@ class Transactions {
         user: senderDetails.user,
         trxPin: req.body.pin,
         amount: req.body.amount,
+        bank_name: req.body.bank_name,
         trxData: [senderData, recipientData],
       })
 
