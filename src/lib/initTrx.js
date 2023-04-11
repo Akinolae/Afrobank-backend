@@ -177,7 +177,7 @@ const coreTransfer = async (params) => {
       if (res.status) {
         const ref = {
           source: 'balance',
-          reason: 'Savings',
+          reason: rest._description_,
           amount: amount,
           reference: uuidv4(),
           recipient: res.data.data.recipient_code,
