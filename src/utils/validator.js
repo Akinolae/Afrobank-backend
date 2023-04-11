@@ -23,6 +23,14 @@ const transferAuthSchema = joi.object({
   pin: joi.string().max(4).min(4).trim().required(),
 })
 
+const externalTransferAuthSchema = joi.object({
+  sender: joi.string().trim().required(),
+  recipient: joi.string().trim().required(),
+  amount: joi.number().required(),
+  pin: joi.string().max(4).min(4).trim().required(),
+  bank_name: joi.string().trim().required(),
+})
+
 const setPinSchema = joi.object({
   accountNumber: joi.string().trim().required(),
   pin: joi.string().max(4).min(4).trim().required(),
@@ -272,6 +280,7 @@ module.exports = {
   user_reg,
   authSchema,
   transferAuthSchema,
+  externalTransferAuthSchema,
   transfer,
   otp_messsage,
   setPinSchema,
