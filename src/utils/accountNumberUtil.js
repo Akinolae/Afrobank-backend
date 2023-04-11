@@ -17,6 +17,7 @@ const createAccountNumber = async (params, length = 10) => {
       3. If it exists create another one 
       4. Return the accountNumber if it's not tied to a user
     */
+   
     let accountNumber
     let isAccountNumberExists
     do {

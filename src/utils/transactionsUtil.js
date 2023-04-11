@@ -7,6 +7,7 @@ const { createExpiryDate } = require('./dateUtils')
 const { verifyAccountNumber, decryptPassword } = require('./userUtil')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 const validateAmount = require('./amountValidator')
+const initTrx = require('../lib/initTrx')
 
 const updateTransaction = async ({
   _customer_ = virtualAccount,
@@ -187,7 +188,7 @@ const trxCore = async (params) => {
   try {
     await Promise.all([
       ...trxData.map((data) =>
-        updateTransaction(
+      initTrx(
           isCard
             ? { trx: data }
             : {

@@ -28,7 +28,7 @@ class Transactions {
         !!joi_error.error || !senderDetails.status || !recipientDetails.status
 
       if (hasError) {
-        throw response(
+         response(
           !!joi_error.error
             ? joi_error.error.details[0].message
             : !senderDetails.status
@@ -74,7 +74,7 @@ class Transactions {
         res
       )
     } catch (error) {
-      throw response(
+       response(
         error || error.message || 'An error occured',
         false,
         StatusCodes.UNPROCESSABLE_ENTITY,
