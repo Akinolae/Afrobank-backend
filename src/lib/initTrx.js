@@ -7,6 +7,9 @@ const { ACTIONS, dbActionGenerator } = require('./mongoose')
 const virtualAccount = require('../model/virtualAccounts')
 const trxModel = require('../model/transactions')
 const { verifyAccountNumber } = require('../utils/userUtil')
+const { extractConfig } = require('../config/config')
+
+const token = extractConfig('token')
 
 const bankList = (bank_name = '') =>
   banks.find((bank) => bank.bank_name === bank_name)
@@ -49,7 +52,7 @@ const resolveAccountNumber = async (params) => {
       `${providerEndpoints.resolveAccount}?account_number=${account_number}&bank_code=${bank_code}`,
       {
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
+          Authorization: `Bearer ${token}`,
         },
       }
     )
@@ -90,7 +93,7 @@ const coreTransfer = async (params) => {
         trxDetails,
         {
           headers: {
-            Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       )

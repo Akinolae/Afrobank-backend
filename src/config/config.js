@@ -7,8 +7,12 @@ const config = {
   email: process.env.EMAIL,
   password: process.env.EMAIL_PASSWORD,
   provider: process.env.PROVIDER,
-  PAYSTACK_TEST:
-    process.env.NODE_ENV === 'development' ? process.env.PAYSTACK_TEST : '',
+  token:
+    process.env.PROVIDER === 'flutterWave'
+      ? process.env.FLUTTERWAVE_TEST
+      : process.env.PROVIDER === 'payStack'
+      ? process.env.PAYSTACK_TEST
+      : '',
 }
 
 const extractConfig = (param = '') => {

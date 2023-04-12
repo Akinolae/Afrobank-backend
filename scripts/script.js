@@ -22,12 +22,16 @@ const getCurrentProviderConfig = () => {
         transferRecipient: 'https://api.paystack.co/transferrecipient',
         transfer: 'https://api.paystack.co/transfer',
         resolveAccount: 'https://api.paystack.co/bank/resolve',
+        key: extractConfig('token'),
       }
       break
     case providers.flutterWave:
       data = {
-        fetchBanksUrl: '',
+        fetchBanksUrl: 'https://api.flutterwave.com/v3/banks/NG',
+        transfer: 'https://api.flutterwave.com/v3/transfers',
+        key: extractConfig('token'),
       }
+
       break
     default:
       return null
@@ -52,9 +56,12 @@ const getCurrentProviderConfig = () => {
 const fetchBanks = async () => {
   let data
 
-  console.log(`fetching banks from ${getCurrentProviderConfig().provider}`)
   try {
-    const res = await axios.get(getCurrentProviderConfig().fetchBanksUrl)
+    const res = await axios.get(getCurrentProviderConfig().fetchBanksUrl, {
+      headers: {
+        Authorization: `Bearer ${getCurrentProviderConfig().key}`,
+      },
+    })
     data = res.data.data.map((bank) => ({
       bank_name: bank.name,
       bank_code: bank.code,
@@ -95,22 +102,17 @@ const createFile = async () => {
     },
   ]
 
-  const fileExists = data
-    .map((info) => ({
-      path: info.path,
-      data: info.data,
-      exits: fs.existsSync(info.path),
-    }))
-    .filter((res) => !res.exits)
-
-  if (!!fileExists.length) {
-    await Promise.all([...fileExists.map((res) => writeToFile(res))])
-  } else {
-    fs.readFile('./src/lib/banks.json', 'utf8', (err, data) => {
-      if (err) throw err
-      // console.log(JSON.parse(data))
-    })
-  }
+  data.map((file) => {
+    if (fs.existsSync(file.path)) {
+      fs.unlink(file.path, (err, data) => {
+        if (err) throw err
+        console.log('File delete')
+      })
+      writeToFile(file)
+    } else {
+      writeToFile(file)
+    }
+  })
 }
 
 createFile()
