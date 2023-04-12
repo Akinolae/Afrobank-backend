@@ -41,17 +41,6 @@ const getCurrentProviderConfig = () => {
   return data
 }
 
-// shows the existing branch
-// if (process.env.NODE_ENV === 'development') {
-//   exec('git rev-parse --abbrev-ref HEAD', (err, stdout, stderr) => {
-//     if (!!err) {
-//       throw err
-//     } else {
-//       console.log(`working branch:::${stdout}`)
-//     }
-//   })
-// }
-
 // fetches banks according to the provider specified
 const fetchBanks = async () => {
   let data
@@ -89,8 +78,10 @@ const writeToFile = (params = {}) => {
   )
 }
 
-// Creates files that stores all the required credentials to make the app run smoothly
-const createFile = async () => {
+// Creates files that stores all the required
+// credentials to make the app run smoothly
+
+;(async () => {
   const data = [
     {
       path: './src/lib/banks.json',
@@ -102,6 +93,7 @@ const createFile = async () => {
     },
   ]
 
+  //  Delete file, create a file based on the payment provider specified
   data.map((file) => {
     if (fs.existsSync(file.path)) {
       fs.unlink(file.path, (err, data) => {
@@ -113,6 +105,4 @@ const createFile = async () => {
       writeToFile(file)
     }
   })
-}
-
-createFile()
+})()
