@@ -121,7 +121,6 @@ const coreTransfer = async (params) => {
       return
     }
   } catch (error) {
-    console.log(error)
     throw error || error.response.data.message || error.message
   }
 }
