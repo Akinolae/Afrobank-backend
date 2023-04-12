@@ -7,6 +7,7 @@ const { StatusCodes } = require('http-status-codes')
 const { verifyAccountNumber } = require('../../utils/userUtil')
 const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
+const banks = require('../../lib/banks.json')
 
 class Transactions {
   constructor(_customer_, _transactions_, _virtualAccount_) {
@@ -83,6 +84,10 @@ class Transactions {
         res
       )
     }
+  }
+
+  getBankList = async (req, res) => {
+    response(banks, true, StatusCodes.OK, res)
   }
 
   getTransactionHistory = async (req, res) => {

@@ -1,15 +1,12 @@
 require('dotenv').config()
-const providerEndpoints = require('./providerEndpoints.json')
 const banks = require('./banks.json')
-const { default: axios } = require('axios')
 const { v4: uuidv4 } = require('uuid')
-const { ACTIONS, dbActionGenerator } = require('./mongoose')
-const virtualAccount = require('../model/virtualAccounts')
+const { default: axios } = require('axios')
 const trxModel = require('../model/transactions')
+const virtualAccount = require('../model/virtualAccounts')
 const { verifyAccountNumber } = require('../utils/userUtil')
-const { extractConfig } = require('../config/config')
-
-const token = extractConfig('token')
+const { ACTIONS, dbActionGenerator } = require('./mongoose')
+const providerEndpoints = require('./providerEndpoints.json')
 
 const bankList = (bank_name = '') =>
   banks.find((bank) => bank.bank_name === bank_name)
@@ -52,7 +49,7 @@ const resolveAccountNumber = async (params) => {
       `${providerEndpoints.resolveAccount}?account_number=${account_number}&bank_code=${bank_code}`,
       {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${providerEndpoints.key}`,
         },
       }
     )
@@ -79,6 +76,7 @@ const coreTransfer = async (params) => {
       bank_code,
       rest,
     })
+
     if (!!accountResolve?.data) {
       const trxDetails = {
         type: 'nuban',
@@ -93,7 +91,7 @@ const coreTransfer = async (params) => {
         trxDetails,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${providerEndpoints.key}`,
           },
         }
       )
@@ -108,7 +106,7 @@ const coreTransfer = async (params) => {
 
       const { data } = await axios.post(providerEndpoints.transfer, ref, {
         headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
+          Authorization: `Bearer ${providerEndpoints.key}`,
         },
       })
 
