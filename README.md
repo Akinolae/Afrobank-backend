@@ -30,6 +30,7 @@ npm run dev
 7. Card Transactions
 8. Dedicated account for cards
 9. Card status update
+10. Added multi providers for transfer
 ```
 
 
