@@ -11,6 +11,7 @@ NODE_ENV=**********
 DB_CONNECT=**********
 TOKEN_SECRET=**********
 DEFAULT_BALANCE=**********
+refer to sample.env
 ```
 ```
 npm install
