@@ -8,6 +8,122 @@ const virtualAccount = require('../model/virtualAccounts')
 const trxModel = require('../model/transactions')
 const { verifyAccountNumber } = require('../utils/userUtil')
 
+const bankList = (bank_name = '') =>
+  banks.find((bank) => bank.bank_name === bank_name)
+
+const parseTrxDetails = (params = {}) => {
+  if (!Object.keys(params).length) {
+    throw 'Transfer details not provided'
+  }
+
+  return {
+    account_number: params._accountNumber || params.accountNumber,
+    amount: params._amount_ || params.trx_amount,
+    bank_name: params._bank_name || params.bankName,
+    ...params,
+  }
+}
+
+const trxInit = (params = {}) => {
+  const { account_number, bank_name, amount, ...rest } = parseTrxDetails(params)
+
+  if (!account_number || !bank_name || !amount)
+    throw 'Please provide valid transaction information'
+
+  const { bank_code } = bankList(bank_name)
+
+  return {
+    account_number,
+    bank_name,
+    amount: Number(amount),
+    bank_code,
+    ...rest,
+  }
+}
+
+const resolveAccountNumber = async (params) => {
+  const { account_number, bank_code, ...rest } = params
+
+  try {
+    const { data } = await axios.get(
+      `${providerEndpoints.resolveAccount}?account_number=${account_number}&bank_code=${bank_code}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
+        },
+      }
+    )
+
+    return data
+  } catch (error) {
+    let accountNameError = RegExp('Could not resolve account name')
+
+    if (!!accountNameError.test(error.response.data.message)) {
+      await makeInternalTransfer({ account_number, bank_code, ...rest })
+      return
+    } else {
+      throw error.response.data.message || error.message
+    }
+  }
+}
+
+const coreTransfer = async (params) => {
+  const { account_number, amount, bank_code, ...rest } = trxInit(params)
+
+  try {
+    const accountResolve = await resolveAccountNumber({
+      account_number,
+      bank_code,
+      rest,
+    })
+    if (!!accountResolve?.data) {
+      const trxDetails = {
+        type: 'nuban',
+        name: accountResolve.data.account_name,
+        account_number: accountResolve.data.account_number,
+        bank_code: bank_code,
+        currency: 'NGN',
+      }
+
+      const res = await axios.post(
+        providerEndpoints.transferRecipient,
+        trxDetails,
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
+          },
+        }
+      )
+
+      const ref = {
+        source: 'balance',
+        reason: rest._description_,
+        amount: amount,
+        reference: uuidv4(),
+        recipient: res.data.data.recipient_code,
+      }
+
+      const { data } = await axios.post(providerEndpoints.transfer, ref, {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
+        },
+      })
+
+      await addTrxTodb({
+        _amount_: data.data.amount,
+        _description_: data.data.reason,
+        user_id: rest.user_id,
+        accountDetails: rest.accountDetails,
+        _accountNumber: data.account_number,
+        _type_: rest._type_,
+      })
+      return
+    }
+  } catch (error) {
+    throw error || error.response.data.message || error.message
+  }
+}
+
 const updateBalance = async (customer, type = '', accountNumber, amount) => {
   const { user, status, message } = await verifyAccountNumber(accountNumber)
 
@@ -96,123 +212,6 @@ const makeInternalTransfer = async (data) => {
     })
   } catch (error) {
     throw error
-  }
-}
-
-const bankList = (bank_name = '') =>
-  banks.find((bank) => bank.bank_name === bank_name)
-
-const parseTrxDetails = (params = {}) => {
-  if (!Object.keys(params).length) {
-    throw 'Transfer details not provided'
-  }
-
-  return {
-    account_number: params._accountNumber || params.accountNumber,
-    amount: params._amount_ || params.trx_amount,
-    bank_name: params._bank_name || params.bankName,
-    ...params,
-  }
-}
-
-const trxInit = (params = {}) => {
-  const { account_number, bank_name, amount, ...rest } = parseTrxDetails(params)
-
-  if (!account_number || !bank_name || !amount)
-    throw 'Please provide valid transaction information'
-
-  const { bank_code } = bankList(bank_name)
-
-  return {
-    account_number,
-    bank_name,
-    amount: Number(amount),
-    bank_code,
-    ...rest,
-  }
-}
-
-const resolveAccountNumber = async (params) => {
-  const { account_number, bank_code, ...rest } = params
-
-  try {
-    const { data } = await axios.get(
-      `${
-        providerEndpoints.resolveAccount
-      }?account_number=${'0128949662'}&bank_code=${bank_code}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
-        },
-      }
-    )
-
-    return data
-  } catch (error) {
-    let accountNameError = RegExp('Could not resolve account name')
-
-    if (!!accountNameError.test(error.response.data.message)) {
-      await makeInternalTransfer({ account_number, bank_code, ...rest })
-      return
-    } else {
-      throw error.response.data.message || error.message
-    }
-  }
-}
-
-const coreTransfer = async (params) => {
-  const { account_number, amount, bank_code, ...rest } = trxInit(params)
-
-  try {
-    const accountResolve = await resolveAccountNumber({
-      account_number,
-      bank_code,
-      rest,
-    })
-    if (!!accountResolve.data) {
-      const trxDetails = {
-        type: 'nuban',
-        name: accountResolve.data.account_name,
-        account_number: accountResolve.data.account_number,
-        bank_code: bank_code,
-        currency: 'NGN',
-      }
-
-      const res = await axios.post(
-        providerEndpoints.transferRecipient,
-        trxDetails,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
-          },
-        }
-      )
-
-      const ref = {
-        source: 'balance',
-        reason: rest._description_,
-        amount: amount,
-        reference: uuidv4(),
-        recipient: res.data.data.recipient_code,
-      }
-
-      const { data } = await axios.post(providerEndpoints.transfer, ref, {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_TEST}`,
-        },
-      })
-
-      await addTrxTodb({
-        _amount_: data.data.amount,
-        _description_: data.data.reason,
-        user_id: rest.user_id,
-        accountDetails: rest.accountDetails,
-        _accountNumber: data.account_number,
-        _type_: rest._type_,
-      })
-    }
-  } catch (error) {
-    throw error || error.response.data.message || error.message
   }
 }
 
