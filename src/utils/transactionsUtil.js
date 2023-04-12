@@ -1,5 +1,4 @@
 const trxModel = require('../model/transactions')
-const virtualAccount = require('../model/virtualAccounts')
 const { createPin } = require('./pinUtils')
 const { v4: uuidv4 } = require('uuid')
 const createAccountNumber = require('./accountNumberUtil')
@@ -108,7 +107,14 @@ const calc_account_balance = async (accountNumber) => {
 }
 
 const trxCore = async (params) => {
-  const { user, trxPin, amount, isCard = false, bank_name, trxData = [] } = params
+  const {
+    user,
+    trxPin,
+    amount,
+    isCard = false,
+    bank_name,
+    trxData = [],
+  } = params
 
   const [isPinValid, isAmmountValid] = await Promise.all([
     decryptPassword(trxPin, user.pin),
@@ -132,7 +138,7 @@ const trxCore = async (params) => {
                 _description_: data.description,
                 user_id: data.user_id,
                 accountDetails: data.accountDetails,
-                bank_name
+                bank_name,
               }
         )
       ),
