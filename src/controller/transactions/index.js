@@ -69,7 +69,6 @@ class Transactions {
         res
       )
     } catch (error) {
-      console.log(error)
       response(
         error || error.message || 'An error occured',
         false,
