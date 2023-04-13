@@ -1,6 +1,6 @@
 {
   "name": "afrobankapi",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Afro bank Api",
   "main": "/src/afrobankserver.js",
   "engines": {

@@ -58,11 +58,10 @@ const fetchBanks = async () => {
     }))
 
     console.log('Banks fetched successfully')
+    return data
   } catch (error) {
     throw error
   }
-
-  return data
 }
 
 const writeToFile = (params = {}) => {

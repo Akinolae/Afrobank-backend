@@ -11,38 +11,39 @@ const providerEndpoints = require('./providerEndpoints.json')
 const bankList = (bank_name = '') =>
   banks.find((bank) => bank.bank_name === bank_name)
 
-const parseTrxDetails = (params = {}) => {
-  if (!Object.keys(params).length) {
+const parseTrxDetails = (params = []) => {
+  let recipient, sender
+
+  if (!params.length || params.length !== 2) {
     throw 'Transfer details not provided'
   }
 
-  return {
-    account_number: params._accountNumber || params.accountNumber,
-    amount: params._amount_ || params.trx_amount,
-    bank_name: params._bank_name || params.bankName,
-    ...params,
+  if (Array.isArray(params)) {
+    if (
+      params.some(
+        (val) => !!val.accountNumber && !!val.bank_name && !!val.amount
+      )
+    ) {
+      sender = params[0]
+      recipient = params[1]
+    }
   }
-}
 
-const trxInit = (params = {}) => {
-  const { account_number, bank_name, amount, ...rest } = parseTrxDetails(params)
-
-  if (!account_number || !bank_name || !amount)
-    throw 'Please provide valid transaction information'
-
-  const { bank_code } = bankList(bank_name)
+  const parseData = (data) => ({
+    account_number: data._accountNumber || data.accountNumber,
+    amount: data.amount || data.trx_amount,
+    bank_name: data.bank_name || data.bankName,
+    ...data,
+  })
 
   return {
-    account_number,
-    bank_name,
-    amount: Number(amount),
-    bank_code,
-    ...rest,
+    sender: parseData(sender),
+    recipient: parseData(recipient),
   }
 }
 
 const resolveAccountNumber = async (params) => {
-  const { account_number, bank_code, ...rest } = params
+  const { account_number, bank_code, sender } = params
 
   try {
     const { data } = await axios.get(
@@ -59,7 +60,7 @@ const resolveAccountNumber = async (params) => {
     let accountNameError = RegExp('Could not resolve account name')
 
     if (!!accountNameError.test(error.response.data.message)) {
-      await makeInternalTransfer({ account_number, bank_code, ...rest })
+      await makeInternalTransfer({ account_number, bank_code, sender })
       return
     } else {
       throw error.response.data.message || error.message
@@ -68,13 +69,14 @@ const resolveAccountNumber = async (params) => {
 }
 
 const coreTransfer = async (params) => {
-  const { account_number, amount, bank_code, ...rest } = trxInit(params)
+  const { recipient, sender } = parseTrxDetails(params)
+  const { bank_code } = bankList(recipient.bank_name)
 
   try {
     const accountResolve = await resolveAccountNumber({
-      account_number,
+      account_number: recipient.account_number,
       bank_code,
-      rest,
+      sender,
     })
 
     if (!!accountResolve?.data) {
@@ -98,8 +100,8 @@ const coreTransfer = async (params) => {
 
       const ref = {
         source: 'balance',
-        reason: rest._description_,
-        amount: amount,
+        reason: sender._description_,
+        amount: sender.amount,
         reference: uuidv4(),
         recipient: res.data.data.recipient_code,
       }
@@ -113,10 +115,10 @@ const coreTransfer = async (params) => {
       await addTrxTodb({
         _amount_: data.data.amount,
         _description_: data.data.reason,
-        user_id: rest.user_id,
-        accountDetails: rest.accountDetails,
+        user_id: sender.user_id,
+        account_id: sender.account_id,
         _accountNumber: data.account_number,
-        _type_: rest._type_,
+        _type_: sender._type_,
       })
       return
     }
@@ -139,9 +141,6 @@ const updateBalance = async (customer, type = '', accountNumber, amount) => {
       data: [{ accountNumber }, { $set: { accountBalance: currentBalance } }],
     })
   } else {
-    if (message === 'Unable to verify account number') {
-      throw 'Unable to complete transaction'
-    }
     throw message
   }
 }
@@ -154,13 +153,14 @@ const addTrxTodb = async ({
   _amount_,
   _description_,
   user_id,
-  accountDetails,
+  account_id,
   trx,
 }) => {
   const date = new Date()
 
   //generates transaction id for every transaction
   const transaction_id = uuidv4()
+
   try {
     //Bloc processes all transactions
     let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
@@ -178,7 +178,7 @@ const addTrxTodb = async ({
               description: _description_,
               transaction_date: date,
               user_id: user_id,
-              account_id: accountDetails.user.account_id,
+              account_id: account_id,
             },
       ],
     })
@@ -193,24 +193,26 @@ const addTrxTodb = async ({
 }
 
 const makeInternalTransfer = async (data) => {
-  const {
-    _type_,
-    _accountNumber,
-    _amount_,
-    _description_,
-    user_id,
-    accountDetails,
-  } = data.rest
+  const { account_number, sender } = data
 
   try {
-    await addTrxTodb({
-      _type_,
-      _accountNumber,
-      _amount_,
-      _description_,
-      user_id,
-      accountDetails,
-    })
+    const recipientDetails = await verifyAccountNumber(account_number)
+    if (!recipientDetails.status) throw 'Recipient account number invalid'
+
+    await Promise.all([
+      ...[recipientDetails.user, sender].map((data) => {
+        let type = !data.type ? 'credit' : data.type
+
+        addTrxTodb({
+          _type_: type,
+          _accountNumber: data.accountNumber || data.account_number,
+          _amount_: sender.amount,
+          _description_: sender.description,
+          user_id: data.user_id,
+          account_id: data.account_id,
+        })
+      }),
+    ])
   } catch (error) {
     throw error
   }
