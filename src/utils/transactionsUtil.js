@@ -107,14 +107,7 @@ const calc_account_balance = async (accountNumber) => {
 }
 
 const trxCore = async (params) => {
-  const {
-    user,
-    trxPin,
-    amount,
-    isCard = false,
-    bank_name,
-    trxData = [],
-  } = params
+  const { user, trxPin, amount, isCard = false, trxData = [] } = params
 
   const [isPinValid, isAmmountValid] = await Promise.all([
     decryptPassword(trxPin, user.pin),
@@ -126,23 +119,20 @@ const trxCore = async (params) => {
   if (!!isAmmountValid) throw isAmmountValid
 
   try {
-    await Promise.all([
-      ...trxData.map((data) =>
-        coreTransfer(
-          isCard
-            ? { trx: data }
-            : {
-                _type_: data.type,
-                _accountNumber: data.accountNumber,
-                _amount_: data.amount,
-                _description_: data.description,
-                user_id: data.user_id,
-                accountDetails: data.accountDetails,
-                bank_name,
-              }
-        )
-      ),
-    ])
+    await coreTransfer(
+      trxData
+      // isCard
+      //   ? { trx: data }
+      //   : {
+      //       _type_: data.type,
+      //       _accountNumber: data.accountNumber,
+      //       _amount_: data.amount,
+      //       _description_: data.description,
+      //       user_id: data.user_id,
+      //       accountDetails: data.accountDetails,
+      //       bank_name: data.bank_name,
+      //     }
+    )
   } catch (error) {
     throw error
   }

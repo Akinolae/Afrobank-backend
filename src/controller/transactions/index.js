@@ -19,15 +19,10 @@ class Transactions {
 
   transfer = async (req, res) => {
     const joi_error = transferAuthSchema.validate(req.body)
-
-    const [senderDetails, recipientDetails] = await Promise.all([
-      verifyAccountNumber(req.body.sender),
-      verifyAccountNumber(req.body.recipient),
-    ])
+    const senderDetails = await verifyAccountNumber(req.body.sender)
 
     try {
-      const hasError =
-        !!joi_error.error || !senderDetails.status || !recipientDetails.status
+      const hasError = !!joi_error.error || !senderDetails.status
 
       if (hasError) {
         response(
@@ -35,8 +30,6 @@ class Transactions {
             ? joi_error.error.details[0].message
             : !senderDetails.status
             ? senderDetails.message
-            : !recipientDetails.status
-            ? recipientDetails.message
             : transfer.single_user,
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
@@ -50,23 +43,22 @@ class Transactions {
         amount: req.body.amount,
         description: `TRX-INTERNAL`,
         user_id: senderDetails.user.user_id,
-        accountDetails: senderDetails,
+        account_id: senderDetails.user.account_id,
+        bank_name: req.body.bank_name,
       }
 
       const recipientData = {
         type: 'credit',
-        accountNumber: recipientDetails.user.accountNumber,
+        accountNumber: req.body.recipient,
         amount: req.body.amount,
         description: `TRX-INTERNAL`,
-        user_id: recipientDetails.user.user_id,
-        accountDetails: recipientDetails,
+        bank_name: req.body.bank_name,
       }
 
       await trxCore({
         user: senderDetails.user,
         trxPin: req.body.pin,
         amount: req.body.amount,
-        bank_name: req.body.bank_name,
         trxData: [senderData, recipientData],
       })
 
@@ -77,6 +69,7 @@ class Transactions {
         res
       )
     } catch (error) {
+      console.log(error)
       response(
         error || error.message || 'An error occured',
         false,
