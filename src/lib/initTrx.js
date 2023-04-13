@@ -43,7 +43,6 @@ const parseTrxDetails = (params = []) => {
 }
 
 const resolveAccountNumber = async (params) => {
-  console.log(params)
   const { account_number, bank_code, sender } = params
 
   try {
@@ -101,8 +100,8 @@ const coreTransfer = async (params) => {
 
       const ref = {
         source: 'balance',
-        reason: rest._description_,
-        amount: amount,
+        reason: sender._description_,
+        amount: sender.amount,
         reference: uuidv4(),
         recipient: res.data.data.recipient_code,
       }
@@ -116,10 +115,10 @@ const coreTransfer = async (params) => {
       await addTrxTodb({
         _amount_: data.data.amount,
         _description_: data.data.reason,
-        user_id: rest.user_id,
-        accountDetails: rest.accountDetails,
+        user_id: sender.user_id,
+        account_id: sender.account_id,
         _accountNumber: data.account_number,
-        _type_: rest._type_,
+        _type_: sender._type_,
       })
       return
     }
@@ -162,15 +161,6 @@ const addTrxTodb = async ({
   //generates transaction id for every transaction
   const transaction_id = uuidv4()
 
-  console.log({
-    transaction_id,
-    transaction_type: _type_,
-    amount: _amount_,
-    description: _description_,
-    transaction_date: date,
-    user_id: user_id,
-    account_id: account_id,
-  })
   try {
     //Bloc processes all transactions
     let transactionModel = await dbActionGenerator(ACTIONS.CREATE, {
@@ -209,7 +199,7 @@ const makeInternalTransfer = async (data) => {
     const recipientDetails = await verifyAccountNumber(account_number)
     if (!recipientDetails.status) throw 'Recipient account number invalid'
 
-    await Promise.all(
+    await Promise.all([
       ...[recipientDetails.user, sender].map((data) => {
         let type = !data.type ? 'credit' : data.type
 
@@ -221,17 +211,8 @@ const makeInternalTransfer = async (data) => {
           user_id: data.user_id,
           account_id: data.account_id,
         })
-      })
-    )
-
-    // await addTrxTodb({
-    //   _type_,
-    //   _accountNumber,
-    //   _amount_,
-    //   _description_: sender.description,
-    //   user_id,
-    //   accountDetails,
-    // })
+      }),
+    ])
   } catch (error) {
     throw error
   }

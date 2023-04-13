@@ -119,20 +119,7 @@ const trxCore = async (params) => {
   if (!!isAmmountValid) throw isAmmountValid
 
   try {
-    await coreTransfer(
-      trxData
-      // isCard
-      //   ? { trx: data }
-      //   : {
-      //       _type_: data.type,
-      //       _accountNumber: data.accountNumber,
-      //       _amount_: data.amount,
-      //       _description_: data.description,
-      //       user_id: data.user_id,
-      //       accountDetails: data.accountDetails,
-      //       bank_name: data.bank_name,
-      //     }
-    )
+    await coreTransfer(trxData)
   } catch (error) {
     throw error
   }
