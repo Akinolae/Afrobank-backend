@@ -10,13 +10,13 @@ const { extractConfig } = require('../src/config/config')
 // Gets all the required resources according to the provider specified
 const getCurrentProviderConfig = () => {
   const providers = {
-    payStack: 'payStack',
-    flutterWave: 'flutterWave',
+    payStack: 'paystack',
+    flutterWave: 'flutterwave',
   }
 
   let data
   switch (extractConfig('provider').toLowerCase()) {
-    case providers.payStack.toLowerCase():
+    case providers.payStack:
       data = {
         fetchBanksUrl: 'https://api.paystack.co/bank?currency=NGN',
         transferRecipient: 'https://api.paystack.co/transferrecipient',
@@ -25,7 +25,7 @@ const getCurrentProviderConfig = () => {
         key: extractConfig('token'),
       }
       break
-    case providers.flutterWave.toLowerCase():
+    case providers.flutterWave:
       data = {
         fetchBanksUrl: 'https://api.flutterwave.com/v3/banks/NG',
         transfer: 'https://api.flutterwave.com/v3/transfers',
