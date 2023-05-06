@@ -1,6 +1,6 @@
-//This scripts section basically prepares the app to run
-// The provider is needed to perform major transactions across the app
-// Hence, the need to fetch all endpoints/resources of the selected provider as well ass the banks.
+//  This scripts section basically prepares the app to run
+//  The provider is needed to perform major transactions across the app
+//  Hence, the need to fetch all endpoints/resources of the selected provider as well ass the banks.
 
 require('dotenv').config()
 const fs = require('fs')
@@ -15,8 +15,8 @@ const getCurrentProviderConfig = () => {
   }
 
   let data
-  switch (extractConfig('provider')) {
-    case providers.payStack:
+  switch (extractConfig('provider').toLowerCase()) {
+    case providers.payStack.toLowerCase():
       data = {
         fetchBanksUrl: 'https://api.paystack.co/bank?currency=NGN',
         transferRecipient: 'https://api.paystack.co/transferrecipient',
@@ -25,7 +25,7 @@ const getCurrentProviderConfig = () => {
         key: extractConfig('token'),
       }
       break
-    case providers.flutterWave:
+    case providers.flutterWave.toLowerCase():
       data = {
         fetchBanksUrl: 'https://api.flutterwave.com/v3/banks/NG',
         transfer: 'https://api.flutterwave.com/v3/transfers',
@@ -72,36 +72,36 @@ const writeToFile = (params = {}) => {
     typeof data !== 'string' ? JSON.stringify(data) : data,
     (err) => {
       if (err) throw err
-      console.log('file created successfully')
+      console.log(`${path} created successfully`)
     }
   )
 }
 
+const fileExists = (file) => {
+  return fs.existsSync(file)
+}
+
+const deleteFile = (path) => {
+  return fs.unlink(path, (err, data) => {
+    if (!!err) throw err
+    console.log(`${path}: deleted`)
+  })
+}
 // Creates files that stores all the required
 // credentials to make the app run smoothly
 
 ;(async () => {
-  const data = [
-    {
-      path: './src/lib/banks.json',
-      data: await fetchBanks(),
-    },
-    {
-      path: './src/lib/providerEndpoints.json',
-      data: getCurrentProviderConfig(),
-    },
-  ]
+  const bank = './src/lib/banks.json'
+  const providerEndpoints = './src/lib/providerEndpoints.json'
 
-  //  Delete file, create a file based on the payment provider specified
-  data.map((file) => {
-    if (fs.existsSync(file.path)) {
-      fs.unlink(file.path, (err, data) => {
-        if (err) throw err
-        console.log('File delete')
-      })
-      writeToFile(file)
-    } else {
-      writeToFile(file)
-    }
-  })
+  if (fileExists(bank)) {
+    deleteFile(bank)
+  }
+
+  if (fileExists(providerEndpoints)) {
+    deleteFile(providerEndpoints)
+  }
+
+  writeToFile({ path: bank, data: await fetchBanks() })
+  writeToFile({ path: providerEndpoints, data: getCurrentProviderConfig() })
 })()
