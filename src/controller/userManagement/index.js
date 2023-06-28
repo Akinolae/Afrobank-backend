@@ -37,6 +37,7 @@ const {
   fetch_single_user,
   verifyAccountNumber,
   verifyUserAccessToken,
+  fetch_single_user_id,
 } = require('../../utils/userUtil')
 const { ACTIONS, dbActionGenerator } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
@@ -213,7 +214,6 @@ class UserManagement {
   getUsers = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
-
       const isUserAdmin = !!userData.message?.isAdmin
 
       if (!userData.status || !isUserAdmin) {
@@ -254,7 +254,6 @@ class UserManagement {
 
     try {
       const { userData } = await this.userVerification(res.user.email)
-
       const accounts = (
         await dbActionGenerator(ACTIONS.FIND, {
           collection: this.virtualAccount,
@@ -654,6 +653,90 @@ class UserManagement {
         })
 
         response('token updated', true, StatusCodes.OK, res)
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  // #21
+  addFriend = async (req, res) => {
+    try {
+      const { userData } = await this.userVerification(res.user.email)
+      const { user } = req.body
+      if (
+        !userData.status ||
+        !user ||
+        !!userData.message.friends.find((friend) => friend.user_id === user) ||
+        userData.message.user_id === user
+      ) {
+        response(
+          !userData.status ? userData.message : 'Please select a valid user',
+          false,
+          !userData.status
+            ? StatusCodes.UNAUTHORIZED
+            : StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      } else {
+        const isAvailable = await fetch_single_user_id(user)
+        if (!isAvailable.status) {
+          response(
+            "User is invalid or doesn't exist",
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
+            collection: this.customer,
+            data: [
+              { email: userData.message.email },
+              {
+                $push: {
+                  friends: {
+                    user_id: isAvailable.message.user_id,
+                  },
+                },
+              },
+            ],
+          })
+        }
+
+        response('You have a new friend', true, StatusCodes.OK, res)
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  // #22
+  getFriendList = async (req, res) => {
+    try {
+      const { userData } = await this.userVerification(res.user.email)
+      if (!userData.status) {
+        response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
+      } else {
+        const { friends } = userData.message
+        if (!friends.length) {
+          response('You do not have any friend', false, StatusCodes.OK, res)
+        } else {
+          const users = await getAllUsers()
+          const activeFriends = friends.map((friend) => {
+            let currentFriend
+            if (!!friend.user_id) {
+              currentFriend = users.message.find(
+                (user) => user.user_id === friend.user_id
+              )
+            }
+            return {
+              firstName: currentFriend.firstName,
+              lastName: currentFriend.lastName,
+              user_id: currentFriend.user_id,
+            }
+          })
+          response(activeFriends, true, StatusCodes.OK, res)
+        }
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)

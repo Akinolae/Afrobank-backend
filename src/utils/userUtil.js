@@ -31,7 +31,7 @@ const fetch_single_user_id = async (id) => {
       collection: customer,
       data: [
         {
-          _id: id,
+          user_id: id,
         },
       ],
     })
