@@ -37,6 +37,7 @@ const {
   fetch_single_user,
   verifyAccountNumber,
   verifyUserAccessToken,
+  fetch_single_user_id,
 } = require('../../utils/userUtil')
 const { ACTIONS, dbActionGenerator } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
@@ -663,7 +664,12 @@ class UserManagement {
     try {
       const { userData } = await this.userVerification(res.user.email)
       const { user } = req.body
-      if (!userData.status || !user) {
+      if (
+        !userData.status ||
+        !user ||
+        !!userData.message.friends.find((friend) => friend.user_id === user) ||
+        userData.message.user_id === user
+      ) {
         response(
           !userData.status ? userData.message : 'Please select a valid user',
           false,
@@ -672,6 +678,32 @@ class UserManagement {
             : StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
+      } else {
+        const isAvailable = await fetch_single_user_id(user)
+        if (!isAvailable.status) {
+          response(
+            "User is invalid or doesn't exist",
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+        } else {
+          await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
+            collection: this.customer,
+            data: [
+              { email: userData.message.email },
+              {
+                $push: {
+                  friends: {
+                    user_id: isAvailable.message.user_id,
+                  },
+                },
+              },
+            ],
+          })
+        }
+
+        response('You have a new friend', true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)

@@ -14,7 +14,6 @@ const notificationSchema = new mongoose.Schema({
 const friendSchema = new mongoose.Schema({
   user_id: {
     type: String,
-    required: true,
   },
   date: {
     type: Date,

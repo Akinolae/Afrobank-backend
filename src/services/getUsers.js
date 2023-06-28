@@ -7,4 +7,5 @@ module.exports = {
   verifyToken: (req, res) => user.verifyToken(req, res),
   getNewToken: (req, res) => user.getNewToken(req, res),
   getFriendsList: (req, res) => user.getFriendList(req, res),
+  addAfriend: (req, res) => user.addFriend(req, res),
 }
