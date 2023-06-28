@@ -213,7 +213,6 @@ class UserManagement {
   getUsers = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
-
       const isUserAdmin = !!userData.message?.isAdmin
 
       if (!userData.status || !isUserAdmin) {
@@ -254,7 +253,6 @@ class UserManagement {
 
     try {
       const { userData } = await this.userVerification(res.user.email)
-
       const accounts = (
         await dbActionGenerator(ACTIONS.FIND, {
           collection: this.virtualAccount,
@@ -654,6 +652,59 @@ class UserManagement {
         })
 
         response('token updated', true, StatusCodes.OK, res)
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  // #21
+  addFriend = async (req, res) => {
+    try {
+      const { userData } = await this.userVerification(res.user.email)
+      const { user } = req.body
+      if (!userData.status || !user) {
+        response(
+          !userData.status ? userData.message : 'Please select a valid user',
+          false,
+          !userData.status
+            ? StatusCodes.UNAUTHORIZED
+            : StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+      }
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  // #22
+  getFriendList = async (req, res) => {
+    try {
+      const { userData } = await this.userVerification(res.user.email)
+      if (!userData.status) {
+        response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
+      } else {
+        const { friends } = userData.message
+        if (!friends || friends.length === 0) {
+          response('You do not have any friend', false, StatusCodes.OK, res)
+        } else {
+          const users = await getAllUsers()
+          const activeFriends = friends.map((friend) => {
+            let currentFriend
+            if (!!friend.user_id) {
+              currentFriend = users.message.find(
+                (user) => user.user_id === friend.user_id
+              )
+            }
+            return {
+              firstName: currentFriend.firstName,
+              lastName: currentFriend.lastName,
+              user_id: currentFriend.user_id,
+            }
+          })
+          response(activeFriends, true, StatusCodes.OK, res)
+        }
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)

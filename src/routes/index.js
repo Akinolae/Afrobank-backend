@@ -12,6 +12,7 @@ const {
   getProfile,
   verifyToken,
   getNewToken,
+  getFriendsList,
 } = require('../services/getUsers')
 const {
   activateAccount,
@@ -80,5 +81,6 @@ router.patch(`/update-status`, verifyUser, updateCardStatus)
 router.get(`/transaction/`, verifyUser, getSingleTransaction)
 router.get(`/generate-account`, verifyUser, generateAccountNumber)
 router.get(`/card-transactions`, verifyUser, fetchCardTransactions)
+router.get(`/friends`, verifyUser, getFriendsList)
 
 module.exports = router
