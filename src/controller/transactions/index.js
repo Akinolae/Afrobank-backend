@@ -8,6 +8,7 @@ const { verifyAccountNumber } = require('../../utils/userUtil')
 const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const banks = require('../../lib/banks.json')
+const errorUtil = require('../../utils/errorUtil')
 
 class Transactions {
   constructor(_customer_, _transactions_, _virtualAccount_) {
@@ -69,12 +70,7 @@ class Transactions {
         res
       )
     } catch (error) {
-      response(
-        error || error.message || 'An error occured',
-        false,
-        StatusCodes.UNPROCESSABLE_ENTITY,
-        res
-      )
+      response(errorUtil(error), false, StatusCodes.UNPROCESSABLE_ENTITY, res)
     }
   }
 
