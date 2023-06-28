@@ -718,7 +718,7 @@ class UserManagement {
         response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
       } else {
         const { friends } = userData.message
-        if (!friends || friends.length === 0) {
+        if (!friends.length) {
           response('You do not have any friend', false, StatusCodes.OK, res)
         } else {
           const users = await getAllUsers()
