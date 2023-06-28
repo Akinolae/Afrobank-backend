@@ -20,24 +20,20 @@ const generateRandomEmail = () => {
 }
 
 const sendEmail = (recipient, config) => {
-  try {
-    transporter.sendMail(
-      {
-        from: process.env.EMAIL,
-        to: recipient,
-        ...config,
-      },
-      (error, info) => {
-        if (error) {
-          throw error
-        } else {
-          console.log(`Email Sent: ${info.response}`)
-        }
+  transporter.sendMail(
+    {
+      from: process.env.EMAIL,
+      to: recipient,
+      ...config,
+    },
+    (error, info) => {
+      if (error) {
+        throw error
+      } else {
+        console.log(`Email Sent: ${info.response}`)
       }
-    )
-  } catch (error) {
-    throw error
-  }
+    }
+  )
 }
 
 module.exports = {

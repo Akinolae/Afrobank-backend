@@ -33,7 +33,7 @@ const emailConfig = async (params) => {
         service: 'gmail',
         host: 'smtp.gmail.com',
         port: 587,
-        secure: false, // true for 465, false for other ports
+        secure: true, // true for 465, false for other ports
         auth: {
           user: extractConfig('email'), // Specific gmail account which can be found in the confi
           pass: extractConfig('password'), // Specific gmail account which can be found in the co

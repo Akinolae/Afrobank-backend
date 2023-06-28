@@ -54,7 +54,7 @@ const user_reg = {
         </head>
         <body>
             <section style="background-color: aquamarine;">
-                <div style="display: flex; justify-content: center; align-items: center;">
+                <div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
                     <h5>AfroBank</h5>
                     <p>Your trusted life partner</p>
                 </div>
