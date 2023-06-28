@@ -11,6 +11,17 @@ const notificationSchema = new mongoose.Schema({
   },
 })
 
+const friendSchema = new mongoose.Schema({
+  user_id: {
+    type: String,
+    required: true,
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+})
+
 const customer = new mongoose.Schema({
   firstName: {
     type: String,
@@ -72,6 +83,7 @@ const customer = new mongoose.Schema({
     default: Date.now,
   },
   notifications: [notificationSchema],
+  friends: [friendSchema],
 })
 
 module.exports = mongoose.model('customer', customer)
