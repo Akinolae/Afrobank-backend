@@ -9,31 +9,12 @@ const { StatusCodes } = require('http-status-codes')
 const CryptoJS = require('crypto-js')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 
-const fetch_single_user = async (email) => {
+const fetch_single_user = async (params, byEmail = true) => {
   try {
+    params = byEmail ? { email: params } : { user_id: params }
     const isAvailable = await dbActionGenerator(ACTIONS.FINDONE, {
       collection: customer,
-      data: [{ email }],
-    })
-    const res =
-      isAvailable === null || isAvailable === undefined
-        ? { status: false, message: 'invalid email address or password' }
-        : { status: true, message: isAvailable }
-    return res
-  } catch (err) {
-    throw err
-  }
-}
-
-const fetch_single_user_id = async (id) => {
-  try {
-    const isAvailable = await dbActionGenerator(ACTIONS.FINDONE, {
-      collection: customer,
-      data: [
-        {
-          user_id: id,
-        },
-      ],
+      data: [params],
     })
     const res =
       isAvailable === null || isAvailable === undefined
@@ -73,6 +54,7 @@ const useCrypto = ({ payLoad = '', encrypt = true }) => {
   }
   return data
 }
+
 const verifyCard = async (cardNumber) => {
   try {
     const isUserAvailable = (
@@ -218,7 +200,6 @@ module.exports = {
   generate2FAcodes,
   fetch_single_user,
   verifyAccountNumber,
-  fetch_single_user_id,
   verifyUserAccessToken,
   generateUserAccessToken,
 }

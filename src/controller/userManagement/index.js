@@ -37,7 +37,6 @@ const {
   fetch_single_user,
   verifyAccountNumber,
   verifyUserAccessToken,
-  fetch_single_user_id,
 } = require('../../utils/userUtil')
 const { ACTIONS, dbActionGenerator } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
@@ -679,7 +678,7 @@ class UserManagement {
           res
         )
       } else {
-        const isAvailable = await fetch_single_user_id(user)
+        const isAvailable = await fetch_single_user(user, false)
         if (!isAvailable.status) {
           response(
             "User is invalid or doesn't exist",
