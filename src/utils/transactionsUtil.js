@@ -54,7 +54,8 @@ const generateCard = async (params) => {
   let info
 
   try {
-    if (typeof params !== 'object') throw 'Transaction info should be an object'
+    if (typeof params !== 'object')
+      throw `Transaction info should be an object got ${typeof params}`
     const cardNumber = await createAccountNumber(
       { type: 'Card', isCard: true },
       16

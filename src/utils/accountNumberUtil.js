@@ -17,7 +17,7 @@ const createAccountNumber = async (params, length = 10) => {
       3. If it exists create another one 
       4. Return the accountNumber if it's not tied to a user
     */
-   
+
     let accountNumber
     let isAccountNumberExists
     do {
@@ -25,7 +25,7 @@ const createAccountNumber = async (params, length = 10) => {
         ? generator.GenCC('Mastercard')
         : generate_account_no(length)
 
-      isAccountNumberExists = type.includes('accountNumber')
+      isAccountNumberExists = new RegExp('accountNumber').test(type)
         ? await verifyAccountNumber(accountNumber)
         : await verifyCard(accountNumber[0])
     } while (

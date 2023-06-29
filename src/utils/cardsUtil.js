@@ -1,6 +1,6 @@
 const cards = require('../model/cards')
-const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 const { useCrypto } = require('./userUtil')
+const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 
 const fetchAllCards = async (id) => {
   try {
