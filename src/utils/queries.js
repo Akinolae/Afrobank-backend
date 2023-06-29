@@ -146,7 +146,7 @@ const addNewField = async (db, field, value) => {
       data: [{}, { $set: { [field]: value } }],
     })
   }
-  
+
   try {
     switch (db) {
       case 'user':
