@@ -1,12 +1,12 @@
-const customer = require('../model/customer')
-const account = require('../model/virtualAccounts')
-const card = require('../model/cards')
-const { generate } = require('otp-generator')
 const jwt = require('jsonwebtoken')
 const encrypt = require('bcryptjs')
-const { response } = require('../controller/responseHandler')
-const { StatusCodes } = require('http-status-codes')
 const CryptoJS = require('crypto-js')
+const card = require('../model/cards')
+const { generate } = require('otp-generator')
+const customer = require('../model/customer')
+const account = require('../model/virtualAccounts')
+const { StatusCodes } = require('http-status-codes')
+const { response } = require('../controller/responseHandler')
 const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 
 const fetch_single_user = async (params, byEmail = true) => {

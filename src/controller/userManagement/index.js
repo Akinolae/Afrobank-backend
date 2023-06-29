@@ -79,7 +79,7 @@ class UserManagement {
         response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
       } catch (err) {
         response(
-          err.message.includes('duplicate')
+          new RegExp('duplicate').test(err.message)
             ? `user already exists`
             : err.message || 'An error occured',
           false,
