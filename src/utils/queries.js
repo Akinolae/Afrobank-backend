@@ -4,7 +4,6 @@ const { pinReset } = require('./validator')
 const customer = require('../model/customer')
 const cardTrx = require('../model/cardTransactions')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
-const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 
 // Queries that act as the primary mode of communication with the database
 // Written to ensure reusability and easy debugging
@@ -49,20 +48,20 @@ const updateCard = async (config = {}, params = '') => {
   }
 }
 
-const setNewPin = async (accountNumber, pin) => {
+const verifyAccountNumber = async (accountNumber) => {
   try {
-    const user = await verifyAccountNumber(accountNumber)
-    if (user.status) {
-      const hashedPin = await hashPassword(pin, 10)
-      await queries.updateToDb([
-        { accountNumber: accountNumber },
-        { $set: { pin: hashedPin } },
-      ])
-
-      return { status: true, message: pinReset.message }
-    } else throw user.message
-  } catch (err) {
-    throw err || 'Something went wrong'
+    const isUserAvailable = await queries.getFromDb(
+      [{ accountNumber }],
+      ACTIONS.FINDONE,
+      account
+    )
+    const response =
+      isUserAvailable === null || isUserAvailable === 'undefined'
+        ? { status: false, message: 'Unable to verify account number' }
+        : { status: true, user: isUserAvailable }
+    return response
+  } catch (error) {
+    throw error
   }
 }
 
@@ -226,8 +225,8 @@ const update2faCodes = async (email, codes) => {
 }
 
 module.exports = {
+  queries,
   createOtp,
-  setNewPin,
   newSchema,
   update2fa,
   addNewField,

@@ -1,8 +1,6 @@
 const joi = require('joi')
 const { template } = require('../templates/welcomeEmail')
 
-
-
 const authSchema = joi.object({
   firstName: joi.string().trim().required(),
   lastName: joi.string().trim().required(),

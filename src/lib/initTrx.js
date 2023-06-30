@@ -7,6 +7,7 @@ const virtualAccount = require('../model/virtualAccounts')
 const { verifyAccountNumber } = require('../utils/userUtil')
 const { ACTIONS, dbActionGenerator } = require('./mongoose')
 const providerEndpoints = require('./providerEndpoints.json')
+const { queries } = require('../utils/queries')
 
 const bankList = (bank_name = '') =>
   banks.find((bank) => bank.bank_name === bank_name)
@@ -127,7 +128,7 @@ const coreTransfer = async (params) => {
   }
 }
 
-const updateBalance = async (customer, type = '', accountNumber, amount) => {
+const updateBalance = async (type = '', accountNumber, amount) => {
   const { user, status, message } = await verifyAccountNumber(accountNumber)
 
   let currentBalance = 0
@@ -136,10 +137,10 @@ const updateBalance = async (customer, type = '', accountNumber, amount) => {
       ? (currentBalance += +user.accountBalance + +amount)
       : (currentBalance = +user.accountBalance - +amount)
 
-    await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
-      collection: customer,
-      data: [{ accountNumber }, { $set: { accountBalance: currentBalance } }],
-    })
+    await queries.updateToDb(
+      [{ accountNumber }, { $set: { accountBalance: currentBalance } }],
+      ACTIONS.FINDONEANDUPDATE
+    )
   } else {
     throw message
   }
@@ -185,7 +186,7 @@ const addTrxTodb = async ({
 
     await Promise.all([
       transactionModel.save(),
-      updateBalance(_customer_, _type_, _accountNumber, _amount_),
+      updateBalance(_type_, _accountNumber, _amount_),
     ])
   } catch (error) {
     throw error.message || error
