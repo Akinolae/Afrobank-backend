@@ -1,20 +1,28 @@
 //imports
 const cards = require('../model/cards')
 const cardTrx = require('../model/cardTransactions')
-const customer = require('../model/customer')
 const { pinReset } = require('./validator')
 const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
+const customer = require('../model/customer')
+
+const updateToDb = async (
+  data,
+  action = ACTIONS.UPDATEONE,
+  collection = customer
+) => {
+  return await dbActionGenerator(action, {
+    collection,
+    data: [...data],
+  })
+}
 
 const updatePassword = async (accountNumber, password) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        { accountNumber: accountNumber },
-        { $set: { password: password, otp: null } },
-      ],
-    })
+    await updateToDb([
+      { accountNumber: accountNumber },
+      { $set: { password: password, otp: null } },
+    ])
 
     return { status: true, message: 'password changed' }
   } catch (error) {
@@ -24,48 +32,46 @@ const updatePassword = async (accountNumber, password) => {
 
 const updateCard = async (config = {}, params = '') => {
   try {
-    await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
-      collection: cards,
-      data: [config, params],
-    })
+    await updateToDb([config, params], ACTIONS.FINDONEANDUPDATE, cards)
     return
   } catch (error) {
     throw error
   }
 }
 
-const setNewPin = async (_customer_, accountNumber, pin) => {
+const setNewPin = async (accountNumber, pin) => {
   try {
     const user = await verifyAccountNumber(accountNumber)
     if (user.status) {
       const hashedPin = await hashPassword(pin, 10)
-      await dbActionGenerator(ACTIONS.UPDATEONE, {
-        collection: _customer_,
-        data: [{ accountNumber: accountNumber }, { $set: { pin: hashedPin } }],
-      })
+      await updateToDb([
+        { accountNumber: accountNumber },
+        { $set: { pin: hashedPin } },
+      ])
 
       return { status: true, message: pinReset.message }
-    } else throw user
+    } else throw user.message
   } catch (err) {
     throw err || 'Something went wrong'
   }
 }
 
-const updateNotification = async (customer, accountNumber, message) => {
+const updateNotification = async (
+  customer = customer,
+  accountNumber,
+  message
+) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        { accountNumber: accountNumber },
-        {
-          $push: {
-            notifications: {
-              notification_text: message,
-            },
+    await updateToDb([
+      { accountNumber: accountNumber },
+      {
+        $push: {
+          notifications: {
+            notification_text: message,
           },
         },
-      ],
-    })
+      },
+    ])
 
     return
   } catch (error) {
