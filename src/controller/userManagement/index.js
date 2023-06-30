@@ -697,9 +697,8 @@ class UserManagement {
             ],
             ACTIONS.FINDONEANDUPDATE
           )
+          response('You have a new friend', true, StatusCodes.OK, res)
         }
-
-        response('You have a new friend', true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
