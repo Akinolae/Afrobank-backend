@@ -4,9 +4,9 @@ const { v4: uuidv4 } = require('uuid')
 const createAccountNumber = require('./accountNumberUtil')
 const { createExpiryDate } = require('./dateUtils')
 const { verifyAccountNumber, decryptPassword } = require('./userUtil')
-const { ACTIONS, dbActionGenerator } = require('../lib/mongoose')
 const validateAmount = require('./amountValidator')
 const coreTransfer = require('../lib/initTrx')
+const { queries } = require('./queries')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)
@@ -23,10 +23,7 @@ const transactionHistory = async (accountNumber, res) => {
     if (!data.status) throw data.message
 
     const trx = (
-      await dbActionGenerator(ACTIONS.FIND, {
-        collection: trxModel,
-        data: [{ user_id: res.user_id }],
-      })
+      await queries.getFromDb([{ user_id: res.user_id }], null, trxModel)
     )
       .filter((account) => account.account_id === data.user.account_id)
       .sort(

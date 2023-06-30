@@ -1,21 +1,38 @@
 //imports
 const cards = require('../model/cards')
-const cardTrx = require('../model/cardTransactions')
-const customer = require('../model/customer')
 const { pinReset } = require('./validator')
-const { verifyAccountNumber, hashPassword } = require('../utils/userUtil')
+const customer = require('../model/customer')
+const cardTrx = require('../model/cardTransactions')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
+
+// Queries that act as the primary mode of communication with the database
+// Written to ensure reusability and easy debugging
+
+const queries = {
+  updateToDb: async (
+    data,
+    action = ACTIONS.UPDATEONE,
+    collection = customer
+  ) => {
+    return await dbActionGenerator(action, {
+      collection,
+      data: [...data],
+    })
+  },
+  getFromDb: async (data, action = ACTIONS.FIND, collection = customer) => {
+    return await dbActionGenerator(action, {
+      collection,
+      data: [...data],
+    })
+  },
+}
 
 const updatePassword = async (accountNumber, password) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        { accountNumber: accountNumber },
-        { $set: { password: password, otp: null } },
-      ],
-    })
-
+    await queries.updateToDb([
+      { accountNumber: accountNumber },
+      { $set: { password: password, otp: null } },
+    ])
     return { status: true, message: 'password changed' }
   } catch (error) {
     throw error
@@ -24,48 +41,46 @@ const updatePassword = async (accountNumber, password) => {
 
 const updateCard = async (config = {}, params = '') => {
   try {
-    await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
-      collection: cards,
-      data: [config, params],
-    })
+    await queries.updateToDb([config, params], ACTIONS.FINDONEANDUPDATE, cards)
     return
   } catch (error) {
     throw error
   }
 }
 
-const setNewPin = async (_customer_, accountNumber, pin) => {
+const verifyAccountNumber = async (accountNumber) => {
   try {
-    const user = await verifyAccountNumber(accountNumber)
-    if (user.status) {
-      const hashedPin = await hashPassword(pin, 10)
-      await dbActionGenerator(ACTIONS.UPDATEONE, {
-        collection: _customer_,
-        data: [{ accountNumber: accountNumber }, { $set: { pin: hashedPin } }],
-      })
-
-      return { status: true, message: pinReset.message }
-    } else throw user
-  } catch (err) {
-    throw err || 'Something went wrong'
+    const isUserAvailable = await queries.getFromDb(
+      [{ accountNumber }],
+      ACTIONS.FINDONE,
+      account
+    )
+    const response =
+      isUserAvailable === null || isUserAvailable === 'undefined'
+        ? { status: false, message: 'Unable to verify account number' }
+        : { status: true, user: isUserAvailable }
+    return response
+  } catch (error) {
+    throw error
   }
 }
 
-const updateNotification = async (customer, accountNumber, message) => {
+const updateNotification = async (
+  customer = customer,
+  accountNumber,
+  message
+) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        { accountNumber: accountNumber },
-        {
-          $push: {
-            notifications: {
-              notification_text: message,
-            },
+    await queries.updateToDb([
+      { accountNumber: accountNumber },
+      {
+        $push: {
+          notifications: {
+            notification_text: message,
           },
         },
-      ],
-    })
+      },
+    ])
 
     return
   } catch (error) {
@@ -73,17 +88,14 @@ const updateNotification = async (customer, accountNumber, message) => {
   }
 }
 
-const createOtp = async (customer, email, otp) => {
+const createOtp = async (email, otp) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        {
-          email: email,
-        },
-        { $set: { otp: otp } },
-      ],
-    })
+    await queries.updateToDb([
+      {
+        email: email,
+      },
+      { $set: { otp: otp } },
+    ])
 
     return {
       status: true,
@@ -94,15 +106,13 @@ const createOtp = async (customer, email, otp) => {
   }
 }
 
-const deleteNotification = async (customer, accountNumber, index) => {
+const deleteNotification = async (accountNumber, index) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        { accountNumber: accountNumber },
-        { $pull: { notifications: { _id: index } } },
-      ],
-    })
+    await queries.updateToDb([
+      { accountNumber: accountNumber },
+      { $pull: { notifications: { _id: index } } },
+    ])
+
     return true
   } catch (error) {
     throw error
@@ -111,15 +121,12 @@ const deleteNotification = async (customer, accountNumber, index) => {
 
 const accountActivation = async (email, value) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        {
-          email: email,
-        },
-        { $set: { active: value } },
-      ],
-    })
+    await queries.updateToDb([
+      {
+        email: email,
+      },
+      { $set: { active: value } },
+    ])
   } catch (error) {
     throw error
   }
@@ -128,6 +135,7 @@ const accountActivation = async (email, value) => {
 const newSchema = async (data) => {
   const { model, email, payload } = data
   try {
+    await queries.updateToDb([{ email: email }, { $set: { token: payload } }])
     await dbActionGenerator(ACTIONS.UPDATEONE, {
       collection: model,
       data: [{ email: email }, { $set: { token: payload } }],
@@ -140,11 +148,11 @@ const newSchema = async (data) => {
 const addNewField = async (db, field, value) => {
   const update = async (params) => {
     const { db, field, value } = params
-
-    await dbActionGenerator(ACTIONS.UPDATEMANY, {
-      collection: db,
-      data: [{}, { $set: { [field]: value } }],
-    })
+    await queries.updateToDb(
+      [{}, { $set: { [field]: value } }],
+      ACTIONS.UPDATEMANY,
+      db
+    )
   }
 
   try {
@@ -170,10 +178,7 @@ const addNewField = async (db, field, value) => {
 
 const getAllUsers = async () => {
   try {
-    const res = await dbActionGenerator(ACTIONS.FIND, {
-      collection: customer,
-      data: [],
-    })
+    const res = await queries.getFromDb([], ACTIONS.FIND)
 
     return {
       status: true,
@@ -186,20 +191,17 @@ const getAllUsers = async () => {
 
 const update2fa = async (email, activate, codes) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        {
-          email: email,
+    await queries.updateToDb([
+      {
+        email: email,
+      },
+      {
+        $set: {
+          '2faEnabled': activate,
+          '2faCodes': codes,
         },
-        {
-          $set: {
-            '2faEnabled': activate,
-            '2faCodes': codes,
-          },
-        },
-      ],
-    })
+      },
+    ])
   } catch (error) {
     throw error
   }
@@ -207,27 +209,24 @@ const update2fa = async (email, activate, codes) => {
 
 const update2faCodes = async (email, codes) => {
   try {
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: customer,
-      data: [
-        {
-          email: email,
+    await queries.updateToDb([
+      {
+        email: email,
+      },
+      {
+        $set: {
+          '2faCodes': codes,
         },
-        {
-          $set: {
-            '2faCodes': codes,
-          },
-        },
-      ],
-    })
+      },
+    ])
   } catch (error) {
     throw error
   }
 }
 
 module.exports = {
+  queries,
   createOtp,
-  setNewPin,
   newSchema,
   update2fa,
   addNewField,

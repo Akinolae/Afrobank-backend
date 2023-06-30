@@ -15,6 +15,7 @@ const {
   accountActivation,
   updateNotification,
   deleteNotification,
+  queries,
 } = require('../../utils/queries.js')
 const {
   createPin,
@@ -98,10 +99,11 @@ class UserManagement {
       } else {
         if (
           (
-            await dbActionGenerator(ACTIONS.FIND, {
-              collection: this.virtualAccount,
-              data: [{ user_id: userData.message.user_id }],
-            })
+            await queries.getFromDb(
+              [{ user_id: userData.message.user_id }],
+              '',
+              this.virtualAccount
+            )
           ).length >= 1
         ) {
           response(
@@ -253,12 +255,7 @@ class UserManagement {
 
     try {
       const { userData } = await this.userVerification(res.user.email)
-      const accounts = (
-        await dbActionGenerator(ACTIONS.FIND, {
-          collection: this.virtualAccount,
-          data: [],
-        })
-      )
+      const accounts = (await queries.getFromDb([], '', this.virtualAccount))
         .filter((account) => account.user_id === res.user.user_id)
         .some((acc) => acc.accountNumber === +accountNumber)
 
@@ -641,15 +638,15 @@ class UserManagement {
           user_id: userData.message.user_id,
         })
 
-        await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
-          collection: this.customer,
-          data: [
+        await queries.updateToDb(
+          [
             { email: userData.message.email },
             {
               token: token,
             },
           ],
-        })
+          ACTIONS.FINDONEANDUPDATE
+        )
 
         response('token updated', true, StatusCodes.OK, res)
       }
@@ -687,9 +684,8 @@ class UserManagement {
             res
           )
         } else {
-          await dbActionGenerator(ACTIONS.FINDONEANDUPDATE, {
-            collection: this.customer,
-            data: [
+          await queries.updateToDb(
+            [
               { email: userData.message.email },
               {
                 $push: {
@@ -699,7 +695,8 @@ class UserManagement {
                 },
               },
             ],
-          })
+            ACTIONS.FINDONEANDUPDATE
+          )
         }
 
         response('You have a new friend', true, StatusCodes.OK, res)
