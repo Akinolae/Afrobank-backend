@@ -8,20 +8,20 @@ const { getAccountBalance } = require('../services/getBalance')
 const { pinReset, createPin } = require('../services/pinreset')
 const {
   getUser,
-  getAllUsers,
   getProfile,
+  addAfriend,
   verifyToken,
+  getAllUsers,
   getNewToken,
   getFriendsList,
-  addAfriend,
 } = require('../services/getUsers')
 const {
   activateAccount,
   generateAccountNumber,
 } = require('../services/account')
 const {
-  getTransactionHistory,
   getSingleTransaction,
+  getTransactionHistory,
 } = require('../services/getTransactionHistory')
 const {
   sendOtp,
@@ -39,10 +39,10 @@ const {
   requestCodes,
 } = require('../services/2FA')
 const {
+  resetPin,
+  sendMoney,
   createCard,
   fetchCards,
-  sendMoney,
-  resetPin,
   updateCardStatus,
   fetchCardTransactions,
 } = require('../services/cards/cardsService')
@@ -50,10 +50,11 @@ const { verifyUser } = require('../utils/userUtil')
 
 // === {GET}/ request ===
 router.get(`/user/:email`, getUser)
-router.get(`/new-token`, getNewToken)
 router.get(`/bankList`, getBankList)
-router.get(`/userCards`, verifyUser, fetchCards)
+router.get(`/new-token`, getNewToken)
 router.get(`/getProfile`, getProfile)
+router.get(`/userCards`, verifyUser, fetchCards)
+router.get(`/friends`, verifyUser, getFriendsList)
 router.get(`/getAllUsers`, verifyUser, getAllUsers)
 router.get(`/balance`, verifyUser, getAccountBalance)
 router.get('/notifications/:id', fetchAllNotifications)
@@ -61,7 +62,6 @@ router.get(`/history`, verifyUser, getTransactionHistory)
 router.get(`/transaction/`, verifyUser, getSingleTransaction)
 router.get(`/generate-account`, verifyUser, generateAccountNumber)
 router.get(`/card-transactions`, verifyUser, fetchCardTransactions)
-router.get(`/friends`, verifyUser, getFriendsList)
 
 // === {POST}/ request ===
 router.post(`/login`, localLogin)
@@ -73,9 +73,9 @@ router.post('/validate', validateAccount)
 router.post(`/sendOtp`, verifyUser, sendOtp)
 router.post(`/transfer/`, verifyUser, transfer)
 router.post(`/sendMoney`, verifyUser, sendMoney)
+router.post(`/add-friend`, verifyUser, addAfriend)
 router.post('/createCard', verifyUser, createCard)
 router.post('/validate2fa', verifyUser, validate2fa)
-router.post(`/add-friend`, verifyUser, addAfriend)
 
 // === {PATCH}/ request ===
 router.patch(`/forgotPassword`, forgotPassword)
