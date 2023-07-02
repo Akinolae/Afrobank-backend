@@ -14,6 +14,7 @@ const {
   getAllUsers,
   getNewToken,
   getFriendsList,
+  getFriendAccount,
 } = require('../services/getUsers')
 const {
   activateAccount,
@@ -62,6 +63,7 @@ router.get(`/history`, verifyUser, getTransactionHistory)
 router.get(`/transaction/`, verifyUser, getSingleTransaction)
 router.get(`/generate-account`, verifyUser, generateAccountNumber)
 router.get(`/card-transactions`, verifyUser, fetchCardTransactions)
+router.get(`/friend-account`, verifyUser, getFriendAccount)
 
 // === {POST}/ request ===
 router.post(`/login`, localLogin)

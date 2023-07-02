@@ -12,8 +12,8 @@ const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const banks = require('../../lib/banks.json')
 const errorUtil = require('../../utils/errorUtil')
-const { getAllUsers } = require('../../services/getUsers')
 const { user } = require('../userManagement/index')
+const { getAllAccounts } = require('../../utils/queries')
 
 class Transactions {
   constructor(_customer_, _transactions_, _virtualAccount_) {
@@ -144,13 +144,41 @@ class Transactions {
     try {
       const { id } = req.query
       const userData = await fetch_single_user(res.user.email)
-      if (!userData.status || !id) {
-        !id ? 'Invalid user id' : userData.message,
+      if (!id || !userData.status || !userData.message.friends.length) {
+        response(
+          !id ? 'Invalid user id' : userData.message,
           false,
           StatusCodes.BAD_REQUEST,
           res
+        )
       } else {
-        console.log(this.user.friendsCore(userData.message.friends))
+        const [friends, accounts] = await Promise.allSettled([
+          this.user.friendsCore(userData.message.friends),
+          getAllAccounts(),
+        ])
+
+        if (!friends.value.find((val) => val.user_id === id)) {
+          response(
+            "You're not friends with this user",
+            false,
+            StatusCodes.UNAUTHORIZED,
+            res
+          )
+        } else {
+          const userAccount = accounts.value.message.find(
+            (val) => val.user_id === id && !!val.main
+          )
+          if (!userAccount) {
+            response(
+              'There is no account attached to this user',
+              false,
+              StatusCodes.NOT_FOUND,
+              res
+            )
+          } else {
+            response(userAccount.accountNumber, true, StatusCodes.OK, res)
+          }
+        }
       }
     } catch (error) {}
   }
@@ -159,4 +187,4 @@ class Transactions {
 const userTransactions = new Transactions(model, transactions, virtualAccount)
 Object.freeze(userTransactions)
 
-module.exports = userTransactions
+module.exports = { userTransactions, Transactions }
