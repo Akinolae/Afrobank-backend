@@ -6,23 +6,19 @@ const cardTrx = require('../model/cardTransactions')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
 const virtualAccount = require('../model/virtualAccounts')
 
-
 // Queries that act as the primary mode of communication with the database
 // Written to ensure reusability and easy debugging
 
 const queries = {
-  updateToDb: async (
-    data,
-    action = ACTIONS.UPDATEONE,
-    collection = customer
-  ) => {
-    return await dbActionGenerator(action, {
+  updateToDb: async (data, action, collection = customer) => {
+    console.log(!action ? ACTIONS.UPDATEONE : action)
+    return await dbActionGenerator(!action ? ACTIONS.UPDATEONE : action, {
       collection,
       data: [...data],
     })
   },
-  getFromDb: async (data, action = ACTIONS.FIND, collection = customer) => {
-    return await dbActionGenerator(action, {
+  getFromDb: async (data, action, collection = customer) => {
+    return await dbActionGenerator(!action ? ACTIONS.FIND : action, {
       collection,
       data: [...data],
     })
@@ -91,6 +87,7 @@ const updateNotification = async (
 }
 
 const createOtp = async (email, otp) => {
+  console.log({ email, otp })
   try {
     await queries.updateToDb([
       {
@@ -190,7 +187,6 @@ const getAllUsers = async () => {
     throw e
   }
 }
-
 
 const getAllAccounts = async () => {
   try {
