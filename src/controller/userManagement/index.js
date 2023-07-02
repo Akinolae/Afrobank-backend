@@ -98,17 +98,17 @@ class UserManagement {
         response('Unable to fetch user', false, StatusCodes.UNAUTHORIZED, res)
       } else {
         if (
-          (
+          !!(
             await queries.getFromDb(
               [{ user_id: userData.message.user_id }],
-              '',
+              ACTIONS.FIND,
               this.virtualAccount
             )
-          ).length >= 1
+          ).find(({ main }) => !!main)
         ) {
           response(
             'User has an existing account',
-            true,
+            false,
             StatusCodes.UNPROCESSABLE_ENTITY,
             res
           )
@@ -120,6 +120,7 @@ class UserManagement {
           const accountData = {
             user_id: userData.message.user_id,
             active: true,
+            main: true,
             account_id: uuidv4(),
             pin: process.env.PIN,
             accountNumber: accountNumber,
