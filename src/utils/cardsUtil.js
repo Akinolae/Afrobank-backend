@@ -1,10 +1,11 @@
 const cards = require('../model/cards')
 const { useCrypto } = require('./userUtil')
 const { queries } = require('./queries')
+const { ACTIONS } = require('../lib/mongoose')
 
 const fetchAllCards = async (id) => {
   try {
-    return (await queries.getFromDb([], null, cards))
+    return (await queries.getFromDb([], ACTIONS.FIND, cards))
       .map((card) =>
         JSON.parse(useCrypto({ payLoad: card.cardToken, encrypt: false }))
       )
