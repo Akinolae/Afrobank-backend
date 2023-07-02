@@ -15,7 +15,7 @@ const dbConfig = async () => {
     console.log('==== Connection established ====')
     return true
   } catch (error) {
-    console.error(error)
+    console.log(error)
     return false
   }
 }
