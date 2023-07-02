@@ -39,7 +39,13 @@ const dbActionGenerator = async (action = '', params = {}) => {
       }
     }
   } catch (error) {
-    throw error
+    const errors = 'timed out' || 'Could not connect'
+    const err = new RegExp(errors).test(error)
+    throw err
+      ? {
+          message: "Network error: Check that you're connected to the internet",
+        }
+      : error
   }
 }
 
