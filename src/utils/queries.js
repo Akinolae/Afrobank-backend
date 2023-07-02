@@ -11,7 +11,6 @@ const virtualAccount = require('../model/virtualAccounts')
 
 const queries = {
   updateToDb: async (data, action, collection = customer) => {
-    console.log(!action ? ACTIONS.UPDATEONE : action)
     return await dbActionGenerator(!action ? ACTIONS.UPDATEONE : action, {
       collection,
       data: [...data],
