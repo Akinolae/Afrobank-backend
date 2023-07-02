@@ -18,6 +18,7 @@ const {
 } = require('../../utils')
 const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
+const { user } = require('../userManagement')
 
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
@@ -29,11 +30,12 @@ class Cards {
     this.cards = _cards_
     this.virtualAccount = _virtualAccount_
     this.cardTrx = _cardTrx_
+    this.user = user
   }
 
   createCard = async (req, res) => {
     try {
-      const { userData } = await this.userVerification(res.user.email)
+      const { userData } = await this.user.userVerification(res.user.email)
       if (!userData.status) {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
@@ -77,6 +79,7 @@ class Cards {
                 pin: process.env.PIN,
                 accountNumber: accountNumber,
                 accountBalance: process.env.DEFAULT_BALANCE,
+                main: false,
               },
             ],
           },
@@ -112,7 +115,7 @@ class Cards {
 
   getUserCards = async (req, res) => {
     try {
-      const { userData } = await this.userVerification(res.user.email)
+      const { userData } = await this.user.userVerification(res.user.email)
       if (!userData.status) {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
@@ -127,11 +130,6 @@ class Cards {
         res
       )
     }
-  }
-
-  userVerification = async (email) => {
-    const userData = await fetch_single_user(email)
-    return { userData }
   }
 
   sendMoney = async (req, res) => {

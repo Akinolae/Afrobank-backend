@@ -1,15 +1,24 @@
 const { generate } = require('otp-generator')
-const { decryptPassword, verifyAccountNumber, hashPassword } = require('./userUtil')
+const {
+  decryptPassword,
+  verifyAccountNumber,
+  hashPassword,
+} = require('./userUtil')
+const { queries } = require('./queries')
+const virtualAccount = require('../model/virtualAccounts')
+const { ACTIONS } = require('../lib/mongoose')
+const { pinReset } = require('./validator')
 
 const setNewPin = async (accountNumber, pin) => {
   try {
     const user = await verifyAccountNumber(accountNumber)
     if (user.status) {
       const hashedPin = await hashPassword(pin, 10)
-      await queries.updateToDb([
-        { accountNumber: accountNumber },
-        { $set: { pin: hashedPin } },
-      ])
+      await queries.updateToDb(
+        [{ accountNumber: accountNumber }, { $set: { pin: hashedPin } }],
+        null,
+        virtualAccount
+      )
 
       return { status: true, message: pinReset.message }
     } else throw user.message

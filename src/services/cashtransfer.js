@@ -1,10 +1,10 @@
-const customer = require('../controller/transactions/index')
+const { userTransactions } = require('../controller/transactions/index')
 
 module.exports = {
   transfer: (req, res) => {
-    customer.transfer(req, res)
+    userTransactions.transfer(req, res)
   },
   getBankList: (req, res) => {
-    customer.getBankList(req, res)
-  }
+    userTransactions.getBankList(req, res)
+  },
 }

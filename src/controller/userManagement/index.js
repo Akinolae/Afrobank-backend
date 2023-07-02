@@ -6,7 +6,6 @@ const { StatusCodes } = require('http-status-codes')
 
 const {
   update2fa,
-  setNewPin,
   createOtp,
   newSchema,
   getAllUsers,
@@ -23,6 +22,7 @@ const {
   fetchAllNotifications,
   generateUserAccessToken,
 } = require('../../utils')
+const { setNewPin } = require('../../utils/pinUtils')
 const {
   pinReset,
   user_reg,
@@ -101,7 +101,7 @@ class UserManagement {
           !!(
             await queries.getFromDb(
               [{ user_id: userData.message.user_id }],
-              ACTIONS.FIND,
+              null,
               this.virtualAccount
             )
           ).find(({ main }) => !!main)
@@ -256,7 +256,7 @@ class UserManagement {
 
     try {
       const { userData } = await this.userVerification(res.user.email)
-      const accounts = (await queries.getFromDb([], '', this.virtualAccount))
+      const accounts = (await queries.getFromDb([], null, this.virtualAccount))
         .filter((account) => account.user_id === res.user.user_id)
         .some((acc) => acc.accountNumber === +accountNumber)
 
@@ -276,7 +276,7 @@ class UserManagement {
           res
         )
       } else {
-        await setNewPin(this.virtualAccount, accountNumber, pin)
+        await setNewPin(accountNumber, pin)
         response(pinReset.message, true, StatusCodes.OK, res)
       }
     } catch (e) {
