@@ -152,12 +152,9 @@ class Transactions {
           res
         )
       } else {
-        const [friends, accounts] = await Promise.allSettled([
-          this.user.friendsCore(userData.message.friends),
-          getAllAccounts(),
-        ])
+        const accounts = await getAllAccounts()
 
-        if (!friends.value.find((val) => val.user_id === id)) {
+        if (!userData.message.friends.find((val) => val.user_id === id)) {
           response(
             "You're not friends with this user",
             false,
@@ -165,9 +162,10 @@ class Transactions {
             res
           )
         } else {
-          const userAccount = accounts.value.message.find(
+          const userAccount = accounts.message.find(
             (val) => val.user_id === id && !!val.main
           )
+
           if (!userAccount) {
             response(
               'There is no account attached to this user',
