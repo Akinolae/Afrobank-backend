@@ -98,17 +98,17 @@ class UserManagement {
         response('Unable to fetch user', false, StatusCodes.UNAUTHORIZED, res)
       } else {
         if (
-          (
+          !!(
             await queries.getFromDb(
               [{ user_id: userData.message.user_id }],
-              '',
+              ACTIONS.FIND,
               this.virtualAccount
             )
-          ).length >= 1
+          ).find(({ main }) => !!main)
         ) {
           response(
             'User has an existing account',
-            true,
+            false,
             StatusCodes.UNPROCESSABLE_ENTITY,
             res
           )
@@ -120,6 +120,7 @@ class UserManagement {
           const accountData = {
             user_id: userData.message.user_id,
             active: true,
+            main: true,
             account_id: uuidv4(),
             pin: process.env.PIN,
             accountNumber: accountNumber,
@@ -716,26 +717,33 @@ class UserManagement {
         if (!friends.length) {
           response('You do not have any friend', false, StatusCodes.OK, res)
         } else {
-          const users = await getAllUsers()
-          const activeFriends = friends.map((friend) => {
-            let currentFriend
-            if (!!friend.user_id) {
-              currentFriend = users.message.find(
-                (user) => user.user_id === friend.user_id
-              )
-            }
-            return {
-              firstName: currentFriend.firstName,
-              lastName: currentFriend.lastName,
-              user_id: currentFriend.user_id,
-            }
-          })
-          response(activeFriends, true, StatusCodes.OK, res)
+          const currentFriends = (await this.friendsCore(friends)).map(
+            (friend) => ({
+              firstName: friend.firstName,
+              lastName: friend.lastName,
+              user_id: friend.user_id,
+            })
+          )
+          response(currentFriends, true, StatusCodes.OK, res)
         }
       }
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
+  }
+
+  // 23
+  friendsCore = async (friends = []) => {
+    const users = await getAllUsers()
+    return friends.map((friend) => {
+      let currentFriend
+      if (!!friend.user_id) {
+        currentFriend = users.message.find(
+          (user) => user.user_id === friend.user_id
+        )
+      }
+      return currentFriend
+    })
   }
 }
 

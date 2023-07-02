@@ -4,6 +4,8 @@ const { pinReset } = require('./validator')
 const customer = require('../model/customer')
 const cardTrx = require('../model/cardTransactions')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
+const virtualAccount = require('../model/virtualAccounts')
+
 
 // Queries that act as the primary mode of communication with the database
 // Written to ensure reusability and easy debugging
@@ -189,6 +191,19 @@ const getAllUsers = async () => {
   }
 }
 
+
+const getAllAccounts = async () => {
+  try {
+    const res = await queries.getFromDb([], ACTIONS.FIND, virtualAccount)
+    return {
+      status: true,
+      message: res,
+    }
+  } catch (error) {
+    throw error
+  }
+}
+
 const update2fa = async (email, activate, codes) => {
   try {
     await queries.updateToDb([
@@ -232,6 +247,7 @@ module.exports = {
   addNewField,
   updateCard,
   getAllUsers,
+  getAllAccounts,
   updatePassword,
   update2faCodes,
   accountActivation,

@@ -16,6 +16,11 @@ const Account = new mongoose.Schema({
     allowNull: false,
     required: true,
   },
+  main: {
+    type: Boolean,
+    allowNull: false,
+    required: true,
+  },
   pin: {
     type: String,
     default: null,
