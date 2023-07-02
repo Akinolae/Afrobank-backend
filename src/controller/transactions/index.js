@@ -4,10 +4,7 @@ const transactions = require('../../model/transactions')
 const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-const {
-  verifyAccountNumber,
-  fetch_single_user,
-} = require('../../utils/userUtil')
+const { verifyAccountNumber } = require('../../utils/userUtil')
 const { transactionHistory, trxCore } = require('../../utils/transactionsUtil')
 const { transfer, transferAuthSchema } = require('../../utils/validator')
 const banks = require('../../lib/banks.json')
@@ -143,7 +140,7 @@ class Transactions {
   getFriendAccount = async (req, res) => {
     try {
       const { id } = req.query
-      const userData = await fetch_single_user(res.user.email)
+      const { userData } = await this.user.userVerification(res.user.email)
       if (!id || !userData.status || !userData.message.friends.length) {
         response(
           !id ? 'Invalid user id' : userData.message,
