@@ -19,9 +19,7 @@ const sumAmount = (transactions) => {
 const transactionHistory = async (accountNumber, res) => {
   try {
     const data = await verifyAccountNumber(accountNumber)
-
     if (!data.status) throw data.message
-
     const trx = (
       await queries.getFromDb([{ user_id: res.user_id }], null, trxModel)
     )
