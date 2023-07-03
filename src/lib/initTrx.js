@@ -7,7 +7,7 @@ const virtualAccount = require('../model/virtualAccounts')
 const { verifyAccountNumber } = require('../utils/userUtil')
 const { ACTIONS, dbActionGenerator } = require('./mongoose')
 const providerEndpoints = require('./providerEndpoints.json')
-const { queries } = require('../utils/queries')
+const { queries } = require('../queries/queries')
 
 const bankList = (bank_name = '') =>
   banks.find((bank) => bank.bank_name === bank_name)

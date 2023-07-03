@@ -1,5 +1,5 @@
 const { user } = require('../controller/userManagement')
-const { userTransactions } = require('../controller/transactions')
+const { virtualAccount } = require('../controller/virtualAccount')
 
 module.exports = {
   getUser: (req, res) => user.getUser(req, res),
@@ -9,5 +9,6 @@ module.exports = {
   getNewToken: (req, res) => user.getNewToken(req, res),
   getFriendsList: (req, res) => user.getFriendList(req, res),
   addAfriend: (req, res) => user.addFriend(req, res),
-  getFriendAccount: (req, res) => userTransactions.getFriendAccount(req, res),
+  getFriendAccount: (req, res) =>
+    virtualAccount.getFriendVirtualAccount(req, res),
 }

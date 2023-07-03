@@ -6,7 +6,7 @@ const { createExpiryDate } = require('./dateUtils')
 const { verifyAccountNumber, decryptPassword } = require('./userUtil')
 const validateAmount = require('./amountValidator')
 const coreTransfer = require('../lib/initTrx')
-const { queries } = require('./queries')
+const { queries } = require('../queries/queries')
 
 const filterTransactions = (type, transactions) => {
   return transactions.response.filter((data) => data.transaction_type === type)

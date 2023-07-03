@@ -1,28 +1,10 @@
 //imports
 const cards = require('../model/cards')
-const { pinReset } = require('./validator')
 const customer = require('../model/customer')
 const cardTrx = require('../model/cardTransactions')
 const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
 const virtualAccount = require('../model/virtualAccounts')
-
-// Queries that act as the primary mode of communication with the database
-// Written to ensure reusability and easy debugging
-
-const queries = {
-  updateToDb: async (data, action, collection = customer) => {
-    return await dbActionGenerator(!action ? ACTIONS.UPDATEONE : action, {
-      collection,
-      data: [...data],
-    })
-  },
-  getFromDb: async (data, action, collection = customer) => {
-    return await dbActionGenerator(!action ? ACTIONS.FIND : action, {
-      collection,
-      data: [...data],
-    })
-  },
-}
+const { queries } = require('.')
 
 const updatePassword = async (accountNumber, password) => {
   try {
@@ -40,23 +22,6 @@ const updateCard = async (config = {}, params = '') => {
   try {
     await queries.updateToDb([config, params], ACTIONS.FINDONEANDUPDATE, cards)
     return
-  } catch (error) {
-    throw error
-  }
-}
-
-const verifyAccountNumber = async (accountNumber) => {
-  try {
-    const isUserAvailable = await queries.getFromDb(
-      [{ accountNumber }],
-      ACTIONS.FINDONE,
-      account
-    )
-    const response =
-      isUserAvailable === null || isUserAvailable === 'undefined'
-        ? { status: false, message: 'Unable to verify account number' }
-        : { status: true, user: isUserAvailable }
-    return response
   } catch (error) {
     throw error
   }
@@ -234,8 +199,8 @@ const update2faCodes = async (email, codes) => {
   }
 }
 
+
 module.exports = {
-  queries,
   createOtp,
   newSchema,
   update2fa,

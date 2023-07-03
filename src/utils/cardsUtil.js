@@ -1,6 +1,6 @@
 const cards = require('../model/cards')
 const { useCrypto } = require('./userUtil')
-const { queries } = require('./queries')
+const { queries } = require('../queries/queries')
 const { ACTIONS } = require('../lib/mongoose')
 
 const fetchAllCards = async (id) => {

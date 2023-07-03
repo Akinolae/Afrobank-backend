@@ -1,4 +1,5 @@
 const { user } = require('../../controller/userManagement')
+const { virtualAccount } = require('../../controller/virtualAccount')
 
 module.exports = {
   activateAccount: (req, res) => {
@@ -8,6 +9,6 @@ module.exports = {
     user.deActivateUser(req, res)
   },
   generateAccountNumber: (req, res) => {
-    user.generateAccountNumber(req, res)
+    virtualAccount.generateVirtualAccount(req, res)
   },
 }

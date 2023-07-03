@@ -1,6 +1,6 @@
 const joi = require('joi')
 const { template } = require('../templates/welcomeEmail')
-
+const { fetch_single_user, decryptPassword } = require('./userUtil')
 const authSchema = joi.object({
   firstName: joi.string().trim().required(),
   lastName: joi.string().trim().required(),
@@ -40,6 +40,10 @@ const user_reg = {
   reg_mail_text: 'Registration',
   field_error: 'all fields are required',
   emailTemplate: template.registerationSuccess,
+  validate: (params) => {
+    const validate = authSchema.validate(params)
+    if (!!validate.error) return validate.error.details[0].message
+  },
 }
 const transfer = {
   pinError: 'Invalid pin',
@@ -78,11 +82,23 @@ const completeTransfer = {
 }
 
 const user_login = {
-  credentials: 'Email and password is required',
-  invalid_credentials: 'email or password invalid',
   login_success: 'Login successfully',
   email_text: 'Login notification',
   email_subject: 'Account Login',
+  validate: async (email, password) => {
+    const { message, status } = await fetch_single_user(email)
+    if (
+      !email ||
+      !password ||
+      !status ||
+      email !== message.email ||
+      !(await decryptPassword(password, message.password))
+    ) {
+      throw 'email or password invalid'
+    }
+
+    return message
+  },
 }
 
 const otp_messsage = {

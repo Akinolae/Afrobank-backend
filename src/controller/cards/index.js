@@ -2,14 +2,10 @@ const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
 const { trxCore } = require('../../utils/transactionsUtil')
 const { response } = require('../responseHandler')
-const { updateCard, queries } = require('../../utils/queries')
+const { updateCard, queries } = require('../../queries/queries')
 const virtualAccount = require('../../model/virtualAccounts')
 const { StatusCodes } = require('http-status-codes')
-const {
-  useCrypto,
-  verifyCard,
-  fetch_single_user,
-} = require('../../utils/userUtil')
+const { useCrypto, verifyCard } = require('../../utils/userUtil')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 const {
   generateCard,
