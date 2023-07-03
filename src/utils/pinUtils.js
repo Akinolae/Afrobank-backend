@@ -1,12 +1,11 @@
 const { generate } = require('otp-generator')
 const {
+  hashPassword,
   decryptPassword,
   verifyAccountNumber,
-  hashPassword,
 } = require('./userUtil')
-const { queries } = require('./queries')
+const { queries } = require('../queries/')
 const virtualAccount = require('../model/virtualAccounts')
-const { ACTIONS } = require('../lib/mongoose')
 const { pinReset } = require('./validator')
 
 const setNewPin = async (accountNumber, pin) => {

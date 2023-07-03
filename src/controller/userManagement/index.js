@@ -12,24 +12,11 @@ const {
   update2faCodes,
   updatePassword,
   accountActivation,
-  updateNotification,
-  deleteNotification,
-  queries,
-} = require('../../utils/queries.js')
-const {
-  createPin,
-  createAccountNumber,
-  fetchAllNotifications,
-  generateUserAccessToken,
-} = require('../../utils')
+} = require('../../queries/queries.js')
+const { queries } = require('../../queries')
+const { createPin, generateUserAccessToken } = require('../../utils')
 const { setNewPin } = require('../../utils/pinUtils')
-const {
-  pinReset,
-  user_reg,
-  authSchema,
-  user_login,
-  notifications,
-} = require('../../utils/validator')
+const { pinReset, user_reg, user_login } = require('../../utils/validator')
 const {
   validate2FA,
   hashPassword,
@@ -39,7 +26,7 @@ const {
   verifyAccountNumber,
   verifyUserAccessToken,
 } = require('../../utils/userUtil')
-const { ACTIONS, dbActionGenerator } = require('../../lib/mongoose')
+const { ACTIONS } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
 
 class UserManagement {
@@ -48,171 +35,83 @@ class UserManagement {
     this.virtualAccount = _virtualAccount_
   }
 
-  // #1
   register = async (params, res) => {
     const { firstName, lastName, email, phoneNumber, password } = params
-    const joi_validate = authSchema.validate(params)
-    if (!!joi_validate.error) {
+    if (!!user_reg.validate(params)) {
       response(
-        joi_validate.error.details[0].message,
+        user_reg.validate(params),
         false,
         StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
-    } else {
-      try {
-        const hashedPassword = await hashPassword(password)
-
-        const user = {
-          firstName,
-          lastName,
-          email,
-          phoneNumber,
-          password: hashedPassword,
-          user_id: uuidv4(),
-        }
-
-        let user_model = await dbActionGenerator(ACTIONS.CREATE, {
-          collection: this.customer,
-          data: [user],
-        })
-        await user_model.save()
-        response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
-      } catch (err) {
-        response(
-          new RegExp('duplicate').test(err.message)
-            ? `user already exists`
-            : err.message || 'An error occured',
-          false,
-          StatusCodes.UNPROCESSABLE_ENTITY,
-          res
-        )
-      }
+      return
     }
-  }
-
-  generateAccountNumber = async (req, res) => {
     try {
-      const { userData } = await this.userVerification(res.user.email)
-      if (!userData.status) {
-        response('Unable to fetch user', false, StatusCodes.UNAUTHORIZED, res)
-      } else {
-        if (
-          !!(
-            await queries.getFromDb(
-              [{ user_id: userData.message.user_id }],
-              null,
-              this.virtualAccount
-            )
-          ).find(({ main }) => !!main)
-        ) {
-          response(
-            'User has an existing account',
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
-        } else {
-          const accountNumber = await createAccountNumber({
-            type: 'accountNumber',
-          })
-
-          const accountData = {
-            user_id: userData.message.user_id,
-            active: true,
-            main: true,
-            account_id: uuidv4(),
-            pin: process.env.PIN,
-            accountNumber: accountNumber,
-            accountBalance: process.env.DEFAULT_BALANCE,
-          }
-          let accountModel = await dbActionGenerator(ACTIONS.CREATE, {
-            collection: this.virtualAccount,
-            data: [accountData],
-          })
-          await accountModel.save()
-          response(
-            'Account number generated successfully',
-            true,
-            StatusCodes.OK,
-            res
-          )
-        }
+      const hashedPassword = await hashPassword(password)
+      const user = {
+        firstName,
+        lastName,
+        email,
+        phoneNumber,
+        password: hashedPassword,
+        user_id: uuidv4(),
       }
-    } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+
+      let user_model = await queries.updateToDb([user], ACTIONS.CREATE)
+      await user_model.save()
+      response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
+    } catch (err) {
+      response(
+        new RegExp('duplicate').test(err.message)
+          ? `user already exists`
+          : err.message || 'An error occured',
+        false,
+        StatusCodes.UNPROCESSABLE_ENTITY,
+        res
+      )
     }
   }
 
-  // #2
   login = async (userEmail, userPassword, res) => {
     try {
-      if (!userEmail || !userPassword) {
-        response(
-          user_login.credentials,
-          false,
-          StatusCodes.UNPROCESSABLE_ENTITY,
-          res
-        )
-      } else {
-        const { message, status } = await fetch_single_user(userEmail.trim())
-        const { email, password } = message
-        const isValidUser =
-          email !== userEmail.trim() ||
-          !(await decryptPassword(userPassword.trim(), password))
-        if (status) {
-          if (isValidUser) {
-            response(
-              user_login.invalid_credentials,
-              false,
-              StatusCodes.UNAUTHORIZED,
-              res
-            )
-          } else {
-            const token = generateUserAccessToken({
-              id: message.id,
-              email: message.email,
-              user_id: message.user_id,
-            })
-            await newSchema({
-              model: this.customer,
-              email: message.email,
-              payload: token,
-            })
+      const message = await user_login.validate(userEmail.trim(), userPassword)
+      const token = generateUserAccessToken({
+        id: message.id,
+        email: message.email,
+        user_id: message.user_id,
+      })
+      await newSchema({
+        model: this.customer,
+        email: message.email,
+        payload: token,
+      })
 
-            const data = {
-              email: message.email,
-              token,
-              has2fa: message['2faEnabled'],
-            }
-
-            response(data, true, StatusCodes.OK, res)
-          }
-        } else {
-          response(message, false, StatusCodes.UNAUTHORIZED, res)
-        }
+      const data = {
+        email: message.email,
+        token,
+        has2fa: message['2faEnabled'],
       }
+
+      response(data, true, StatusCodes.OK, res)
     } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      response(error || error.message, false, StatusCodes.UNAUTHORIZED, res)
     }
   }
 
-  // #3
   getUser = async (req, res) => {
     try {
       const { userData } = await this.userVerification(req.params.email)
       if (!userData.status) {
         response(userData.message, false, StatusCodes.UNAUTHORIZED, res)
-      } else {
-        const { firstName, lastName } = userData.message
-        response({ firstName, lastName }, true, StatusCodes.OK, res)
+        return
       }
+      const { firstName, lastName } = userData.message
+      response({ firstName, lastName }, true, StatusCodes.OK, res)
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
-  // #4
   getUsers = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -227,30 +126,28 @@ class UserManagement {
           StatusCodes.UNAUTHORIZED,
           res
         )
-      } else {
-        const resp = await getAllUsers()
-
-        const allUsers = resp.message
-          .filter((data) => data.account !== 'admin')
-          .map((data) => ({
-            name: `${data.firstName} ${data.lastName}`,
-            email: data.email,
-            gender: data.gender,
-            id: data._id,
-            accountNumber: data.accountNumber,
-            balance: data.accountBalance,
-            transactions: data.transactions,
-          }))
-          .sort()
-
-        response(allUsers, true, StatusCodes.OK, res)
+        return
       }
+      const resp = await getAllUsers()
+      const allUsers = resp.message
+        .filter((data) => data.account !== 'admin')
+        .map((data) => ({
+          name: `${data.firstName} ${data.lastName}`,
+          email: data.email,
+          gender: data.gender,
+          id: data._id,
+          accountNumber: data.accountNumber,
+          balance: data.accountBalance,
+          transactions: data.transactions,
+        }))
+        .sort()
+
+      response(allUsers, true, StatusCodes.OK, res)
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
-  // #5
   setPin = async (req, res) => {
     const { pin, accountNumber } = req.body
 
@@ -284,12 +181,6 @@ class UserManagement {
     }
   }
 
-  // #6
-  createPushNotification = async (accountNumber, message) => {
-    await updateNotification(this.customer, accountNumber, message)
-  }
-
-  // #7
   activateUser = async (req, res) => {
     const reqEvent =
       req.url.split('/')[1] === 'activate'
@@ -340,34 +231,6 @@ class UserManagement {
     }
   }
 
-  // #8
-  deleteNotification = async (accountNumber, index, res) => {
-    try {
-      const resp = await deleteNotification(this.customer, accountNumber, index)
-      if (resp) response(notifications.delete, true, StatusCodes.OK, res)
-      else
-        response(notifications.deleteError, false, StatusCodes.NOT_FOUND, res)
-    } catch (error) {
-      response(error, false, 500, res)
-    }
-  }
-
-  // #9
-  getNotifications = async (accountNumber, res) => {
-    try {
-      const data = await fetchAllNotifications(accountNumber)
-
-      if (!data.status) {
-        response(data.response, false, StatusCodes.NOT_FOUND, res)
-      } else {
-        response(data.response, true, StatusCodes.OK, res)
-      }
-    } catch (e) {
-      console.log(e)
-    }
-  }
-
-  // #10
   changePassword = async (password, req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -385,7 +248,6 @@ class UserManagement {
     }
   }
 
-  // #11
   sendPasswordOtp = async (email, res) => {
     const code = createPin(5)
     const otp = await hashPassword(code)
@@ -402,7 +264,6 @@ class UserManagement {
     }
   }
 
-  // #12
   forgotPassword = async (accountNumber, pin, res) => {
     if (!!accountNumber && !!pin) {
       try {
@@ -431,7 +292,6 @@ class UserManagement {
     }
   }
 
-  // #13
   enable2fa = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -456,7 +316,7 @@ class UserManagement {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
-  // #14
+
   disable2fa = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -496,7 +356,6 @@ class UserManagement {
     }
   }
 
-  // #15
   validate2fa = async (req, res) => {
     try {
       const { code } = req.body
@@ -536,14 +395,12 @@ class UserManagement {
     }
   }
 
-  // #16
   userVerification = async (email) => {
     const userData = await fetch_single_user(email)
 
     return { userData }
   }
 
-  // #17
   requestCodes = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -575,7 +432,6 @@ class UserManagement {
     }
   }
 
-  // #18
   getProfile = async (req, res) => {
     const { email } = req.query
     try {
@@ -593,7 +449,6 @@ class UserManagement {
     }
   }
 
-  // #19
   verifyToken = async (req, res) => {
     const { token } = req.body
     try {
@@ -620,7 +475,6 @@ class UserManagement {
     }
   }
 
-  // #20
   getNewToken = async (req, res) => {
     const { email } = req.query
     const { userData } = await this.userVerification(email)
@@ -656,7 +510,6 @@ class UserManagement {
     }
   }
 
-  // #21
   addFriend = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -706,7 +559,6 @@ class UserManagement {
     }
   }
 
-  // #22
   getFriendList = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -732,7 +584,6 @@ class UserManagement {
     }
   }
 
-  // 23
   friendsCore = async (friends = []) => {
     const users = await getAllUsers()
     return friends.map((friend) => {
