@@ -39,4 +39,4 @@ npm run dev
 
 # Check API documentation
 
-[DOCUMENTATION](https://documenter.getpostman.com/view/7403618/TzshHR6x 'Postman')
+[DOCUMENTATION](https://documenter.getpostman.com/view/14236088/2s93zFWJZ8 'Postman')

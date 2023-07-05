@@ -3,7 +3,6 @@ const model = require('../../model/customer')
 const virtualAccount = require('../../model/virtualAccounts')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
-
 const {
   update2fa,
   createOtp,
