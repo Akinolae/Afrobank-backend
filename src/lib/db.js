@@ -84,7 +84,6 @@ const appConfig = (config, params = {}) => {
         dbConfig(params)
         break
       case 'email':
-        console.log('na email')
         emailConfig(true, params)
         break
       default:
