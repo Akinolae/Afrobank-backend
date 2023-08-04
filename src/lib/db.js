@@ -1,7 +1,10 @@
+require('dotenv').config()
 const mongoose = require('mongoose')
 const nodemailer = require('nodemailer')
 const error = require('../utils/errorUtil')
 const { extractConfig } = require('../config/config')
+const Mailgun = require('mailgun.js')
+const formData = require('form-data')
 
 const dbConfig = async () => {
   const url = extractConfig('URI')
@@ -20,12 +23,24 @@ const dbConfig = async () => {
   }
 }
 
-const emailConfig = async (params) => {
+const emailConfig = async (mailgun = true, params) => {
   if (!params) {
     error('Params is required for config')
   } else if (typeof params !== 'object') {
     error('Params must be an object')
   } else {
+    if (mailgun) {
+      const useMailGun = new Mailgun(formData)
+      const client = useMailGun.client({
+        username: 'api',
+        key: process.env.MAIL_GUN,
+      })
+      client.messages
+        .create(process.env.MAIL_GUN_CLIENT, params)
+        .then((res) => console.log(res))
+        .catch((err) => console.log(err))
+      return
+    }
     const { recipient, subject, text, message } = params
     async function main() {
       // create reusable transporter object using the default SMTP transport
@@ -43,7 +58,7 @@ const emailConfig = async (params) => {
         },
       })
       let info = await transporter.sendMail({
-        from: `Afrobank ${extractConfig('email')}`, // sender address
+        from: 'afrobank', // sender address
         to: recipient, //reciever address that was gotten from the frontend/client
         subject: subject,
         text: text,
@@ -69,7 +84,7 @@ const appConfig = (config, params = {}) => {
         dbConfig(params)
         break
       case 'email':
-        emailConfig(params)
+        emailConfig(true, params)
         break
       default:
         return null

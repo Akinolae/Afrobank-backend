@@ -27,6 +27,8 @@ const {
 } = require('../../utils/userUtil')
 const { ACTIONS } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
+const { appConfig } = require('../../lib/db')
+const { template } = require('../../templates/welcomeEmail')
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -91,6 +93,15 @@ class UserManagement {
         has2fa: message['2faEnabled'],
       }
 
+      appConfig(
+        { type: 'email' },
+        {
+          from: process.env.MAIL_GUN_CLIENT,
+          subject: 'Login Attempt',
+          to: message.email,
+          text: template.welcomeTemplate(message.email),
+        }
+      )
       response(data, true, StatusCodes.OK, res)
     } catch (error) {
       response(error || error.message, false, StatusCodes.UNAUTHORIZED, res)
@@ -163,8 +174,8 @@ class UserManagement {
           invalidPin
             ? 'Please provide a valid pin code'
             : !accounts
-            ? 'Please check account number and try again'
-            : userData.message,
+              ? 'Please check account number and try again'
+              : userData.message,
           false,
           !userData.status
             ? StatusCodes.NOT_FOUND
@@ -185,8 +196,8 @@ class UserManagement {
       req.url.split('/')[1] === 'activate'
         ? 'activate'
         : req.url.split('/')[1] === 'deactivate'
-        ? 'deactivate'
-        : ''
+          ? 'deactivate'
+          : ''
 
     try {
       const [admin, user] = await Promise.all([
@@ -326,8 +337,8 @@ class UserManagement {
           !code
             ? '2fa code is required'
             : !userData.message['2faEnabled']
-            ? "You don't have 2FA enabled"
-            : 'Invalid email address',
+              ? "You don't have 2FA enabled"
+              : 'Invalid email address',
           false,
           StatusCodes.NOT_FOUND,
           res
@@ -415,8 +426,8 @@ class UserManagement {
           !userData.message['2faEnabled']
             ? 'You do not have 2FA enabled'
             : canRequestCode
-            ? 'You cannot reset codes at this time'
-            : 'Invalid email address provided',
+              ? 'You cannot reset codes at this time'
+              : 'Invalid email address provided',
           false,
           StatusCodes.NOT_FOUND,
           res
@@ -437,11 +448,11 @@ class UserManagement {
       const { userData } = await this.userVerification(email)
       !userData.status
         ? response(
-            'Invalid email address provided',
-            false,
-            StatusCodes.NOT_FOUND,
-            res
-          )
+          'Invalid email address provided',
+          false,
+          StatusCodes.NOT_FOUND,
+          res
+        )
         : response(userData, true, StatusCodes.OK, res)
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
