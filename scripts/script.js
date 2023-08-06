@@ -1,6 +1,6 @@
 //  This scripts section basically prepares the app to run
 //  The provider is needed to perform major transactions across the app
-//  Hence, the need to fetch all endpoints/resources of the selected provider as well ass the banks.
+//  Hence, the need to fetch all endpoints/resources of the selected provider as well as the banks.
 
 require('dotenv').config()
 const fs = require('fs')

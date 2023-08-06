@@ -1,6 +1,7 @@
 const joi = require('joi')
 const { template } = require('../templates/welcomeEmail')
 const { fetch_single_user, decryptPassword } = require('./userUtil')
+
 const authSchema = joi.object({
   firstName: joi.string().trim().required(),
   lastName: joi.string().trim().required(),
@@ -74,9 +75,7 @@ const completeTransfer = {
   invalidCredentials: 'Check that credentials are valid',
   invalidOtp: 'Ivalid otp',
   message: (amount, surName, firstName, lastName) => {
-    return `
-            Your transfer of ₦${amount} to ${surName.toUpperCase()} ${firstName.toUpperCase()} ${lastName.toUpperCase()} was successful.
-        `
+    return `Your transfer of ₦${amount} to ${surName.toUpperCase()} ${firstName.toUpperCase()} ${lastName.toUpperCase()} was successful.`
   },
   senderTemplate: template.transferSent,
 }

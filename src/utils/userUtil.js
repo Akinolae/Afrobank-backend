@@ -77,19 +77,21 @@ const login_notify = (data) => {
   const minutes = date.getMinutes()
   const customerCareLine = '08183430438'
 
-  const msg = `  <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
+  const msg = `
+  <div>
+    <h2  style="color: white; background-color: #2C6975; padding: 30px; width: 50%;"><strong> Afrobank </strong></h2><br>
     <p>Dear <strong> ${data.firstName} ${data.lastName} ${data.surName} </strong></p>
     <p>A login attempt was made in your account at <strong>${hours}:${minutes}</strong>.</p>
     <p>If this is you kindly ignore, else, contact us at <strong>${customerCareLine}</strong>.</p><br>
-
-    <p>Thank you for choosing AfroBank.</p> 
+    <p>Thank you for choosing AfroBank.</p>
+  </div>
 `
   return msg
 }
 
-const generateUserAccessToken = (payload) => {
+const generateUserAccessToken = (payload, expires = '2 days') => {
   return jwt.sign(payload, process.env.TOKEN_SECRET, {
-    expiresIn: '2 days',
+    expiresIn: expires,
   })
 }
 
@@ -124,18 +126,17 @@ const generate2FAcodes = async () => {
 const hashPassword = async (password, length = 15) => {
   if (typeof password !== 'string') {
     throw 'Invalid params'
-  } else {
-    const hash = await encrypt.hash(password, length)
-    return hash
   }
+  
+  const hash = await encrypt.hash(password, length)
+  return hash
 }
 
 const decryptPassword = async (password1, password2) => {
   if (!password2 || password2 === null) {
     throw 'Please create a pin to proceed'
   }
-  const decrypt = await encrypt.compare(password1, password2)
-  return decrypt
+  return await encrypt.compare(password1, password2)
 }
 
 const validate2FA = async (codes = [], code) => {
@@ -159,11 +160,9 @@ const verifyUser = async (req, res, next) => {
     const token = !!authToken ? authToken.split(' ')[1] : ''
     const verify = verifyUserAccessToken(token)
 
-    if (!verify) {
-      response('user not found', false, StatusCodes.UNPROCESSABLE_ENTITY, res)
-    } else {
-      res.user = verify
-    }
+    !verify
+      ? response('user not found', false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+      : (res.user = verify)
     next()
   } catch (error) {
     const err = error.toString()
