@@ -51,7 +51,6 @@ const updateNotification = async (
 }
 
 const createOtp = async (email, otp) => {
-  console.log({ email, otp })
   try {
     await queries.updateToDb([
       {
@@ -96,13 +95,9 @@ const accountActivation = async (email, value) => {
 }
 
 const newSchema = async (data) => {
-  const { model, email, payload } = data
+  const { email, payload } = data
   try {
     await queries.updateToDb([{ email: email }, { $set: { token: payload } }])
-    await dbActionGenerator(ACTIONS.UPDATEONE, {
-      collection: model,
-      data: [{ email: email }, { $set: { token: payload } }],
-    })
   } catch (error) {
     throw error
   }
@@ -198,7 +193,6 @@ const update2faCodes = async (email, codes) => {
     throw error
   }
 }
-
 
 module.exports = {
   createOtp,

@@ -1,6 +1,6 @@
 const joi = require('joi')
 const { template } = require('../templates/welcomeEmail')
-const { fetch_single_user, decryptPassword } = require('./userUtil')
+
 const authSchema = joi.object({
   firstName: joi.string().trim().required(),
   lastName: joi.string().trim().required(),
@@ -33,12 +33,14 @@ const completeTransactionSchema = joi.object({
   amount: joi.number().required(),
 })
 const user_reg = {
-  resp_msg_registration: 'Registration success',
+  resp_msg_registration:
+    'User registered successfully, confirmation email sent.',
   welcome_text:
     'your Afrobank account was created successfully, enjoy smooth payments and deposits on our platform for free',
   reg_mail_subject: 'Account registration',
   reg_mail_text: 'Registration',
   field_error: 'all fields are required',
+  confirmation: 'Account verified successfully',
   emailTemplate: template.registerationSuccess,
   validate: (params) => {
     const validate = authSchema.validate(params)
@@ -74,9 +76,7 @@ const completeTransfer = {
   invalidCredentials: 'Check that credentials are valid',
   invalidOtp: 'Ivalid otp',
   message: (amount, surName, firstName, lastName) => {
-    return `
-            Your transfer of ₦${amount} to ${surName.toUpperCase()} ${firstName.toUpperCase()} ${lastName.toUpperCase()} was successful.
-        `
+    return `Your transfer of ₦${amount} to ${surName.toUpperCase()} ${firstName.toUpperCase()} ${lastName.toUpperCase()} was successful.`
   },
   senderTemplate: template.transferSent,
 }
@@ -85,20 +85,6 @@ const user_login = {
   login_success: 'Login successfully',
   email_text: 'Login notification',
   email_subject: 'Account Login',
-  validate: async (email, password) => {
-    const { message, status } = await fetch_single_user(email)
-    if (
-      !email ||
-      !password ||
-      !status ||
-      email !== message.email ||
-      !(await decryptPassword(password, message.password))
-    ) {
-      throw 'email or password invalid'
-    }
-
-    return message
-  },
 }
 
 const otp_messsage = {

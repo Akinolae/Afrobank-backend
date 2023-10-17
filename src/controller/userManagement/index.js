@@ -6,7 +6,6 @@ const { StatusCodes } = require('http-status-codes')
 const {
   update2fa,
   createOtp,
-  newSchema,
   getAllUsers,
   update2faCodes,
   updatePassword,
@@ -26,9 +25,12 @@ const {
   verifyUserAccessToken,
 } = require('../../utils/userUtil')
 const { ACTIONS } = require('../../lib/mongoose')
-const { v4: uuidv4 } = require('uuid')
-const { appConfig } = require('../../lib/db')
-const { template } = require('../../templates/welcomeEmail')
+const {
+  cognitoUserSignUp,
+  confirmSignUp,
+  cognitoSignIn,
+  getUserFromCognito,
+} = require('../../lib/cognito')
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -48,18 +50,15 @@ class UserManagement {
       return
     }
     try {
-      const hashedPassword = await hashPassword(password)
-      const user = {
+      await cognitoUserSignUp({
+        firstName,
+        password,
         firstName,
         lastName,
         email,
         phoneNumber,
-        password: hashedPassword,
-        user_id: uuidv4(),
-      }
+      })
 
-      let user_model = await queries.updateToDb([user], ACTIONS.CREATE)
-      await user_model.save()
       response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
     } catch (err) {
       response(
@@ -73,38 +72,55 @@ class UserManagement {
     }
   }
 
+  confirmSignUp = async (email, code, res) => {
+    try {
+      await confirmSignUp({ email, code })
+      response(user_reg.confirmation, true, StatusCodes.OK, res)
+    } catch (error) {
+      response(error?.message || error, false, StatusCodes.UNAUTHORIZED, res)
+    }
+  }
+
   login = async (userEmail, userPassword, res) => {
     try {
-      const message = await user_login.validate(userEmail.trim(), userPassword)
-      const token = generateUserAccessToken({
-        id: message.id,
-        email: message.email,
-        user_id: message.user_id,
-      })
-      await newSchema({
-        model: this.customer,
-        email: message.email,
-        payload: token,
-      })
-
-      const data = {
-        email: message.email,
-        token,
-        has2fa: message['2faEnabled'],
+      if (!userEmail || !userPassword) {
+        response(
+          'Invalid login parameters',
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+        return
       }
 
-      appConfig(
-        { type: 'email' },
-        {
-          from: process.env.MAIL_GUN_CLIENT,
-          subject: 'Login Attempt',
-          to: message.email,
-          text: template.welcomeTemplate(message.email),
-        }
+      const data = await cognitoSignIn({
+        email: userEmail,
+        password: userPassword,
+      })
+      const user = await getUserFromCognito(
+        data.AuthenticationResult.AccessToken
       )
-      response(data, true, StatusCodes.OK, res)
+
+      response(
+        {
+          ...{
+            accessToken: data?.AuthenticationResult?.AccessToken,
+            refreshToken: data?.AuthenticationResult?.RefreshToken,
+            idToken: data?.AuthenticationResult?.IdToken,
+            email: user.UserAttributes.find((data) => data.Name === 'email')
+              .Value,
+            user_id: user.UserAttributes.find(
+              (data) => data.Name === 'custom:user_id'
+            ).Value,
+          },
+          login: user_login.login_success,
+        },
+        true,
+        StatusCodes.OK,
+        res
+      )
     } catch (error) {
-      response(error || error.message, false, StatusCodes.UNAUTHORIZED, res)
+      response(error.message || error, false, StatusCodes.UNAUTHORIZED, res)
     }
   }
 
@@ -174,8 +190,8 @@ class UserManagement {
           invalidPin
             ? 'Please provide a valid pin code'
             : !accounts
-              ? 'Please check account number and try again'
-              : userData.message,
+            ? 'Please check account number and try again'
+            : userData.message,
           false,
           !userData.status
             ? StatusCodes.NOT_FOUND
@@ -196,8 +212,8 @@ class UserManagement {
       req.url.split('/')[1] === 'activate'
         ? 'activate'
         : req.url.split('/')[1] === 'deactivate'
-          ? 'deactivate'
-          : ''
+        ? 'deactivate'
+        : ''
 
     try {
       const [admin, user] = await Promise.all([
@@ -337,8 +353,8 @@ class UserManagement {
           !code
             ? '2fa code is required'
             : !userData.message['2faEnabled']
-              ? "You don't have 2FA enabled"
-              : 'Invalid email address',
+            ? "You don't have 2FA enabled"
+            : 'Invalid email address',
           false,
           StatusCodes.NOT_FOUND,
           res
@@ -426,8 +442,8 @@ class UserManagement {
           !userData.message['2faEnabled']
             ? 'You do not have 2FA enabled'
             : canRequestCode
-              ? 'You cannot reset codes at this time'
-              : 'Invalid email address provided',
+            ? 'You cannot reset codes at this time'
+            : 'Invalid email address provided',
           false,
           StatusCodes.NOT_FOUND,
           res
@@ -448,11 +464,11 @@ class UserManagement {
       const { userData } = await this.userVerification(email)
       !userData.status
         ? response(
-          'Invalid email address provided',
-          false,
-          StatusCodes.NOT_FOUND,
-          res
-        )
+            'Invalid email address provided',
+            false,
+            StatusCodes.NOT_FOUND,
+            res
+          )
         : response(userData, true, StatusCodes.OK, res)
     } catch (error) {
       response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
