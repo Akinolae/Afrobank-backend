@@ -22,64 +22,20 @@ const friendSchema = new mongoose.Schema({
 })
 
 const customer = new mongoose.Schema({
-  firstName: {
+  accessToken: {
     type: String,
-    required: true,
   },
-  lastName: {
+  refreshToken: {
     type: String,
-    required: true,
   },
-  pin: {
+  idToken: {
     type: String,
-    default: null,
-  },
-  token: {
-    type: String,
-    default: null,
-  },
-  otp: {
-    type: String,
-    default: null,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
   },
   user_id: {
     type: String,
-    required: true,
-    unique: true,
   },
-  phoneNumber: {
+  email: {
     type: String,
-    required: true,
-  },
-  '2faEnabled': {
-    type: Boolean,
-    default: false,
-  },
-  '2faCodes': {
-    type: Array,
-    allowNull: true,
-  },
-  isAdmin: {
-    type: Boolean,
-    allowNull: false,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    allowNull: false,
-  },
-  regDate: {
-    type: Date,
-    default: Date.now,
   },
   notifications: [notificationSchema],
   friends: [friendSchema],

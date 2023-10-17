@@ -1,5 +1,4 @@
 require('dotenv').config()
-const { hashPassword } = require('../utils/userUtil')
 const { cognito } = require('./aws')
 const { v4: uuidv4 } = require('uuid')
 
@@ -57,7 +56,6 @@ const cognitoUserSignUp = async (args) => {
     ],
   }
 
-  console.log(params)
   await cognitoPromisify(cognito.signUp.bind(cognito), params)
 }
 
@@ -76,8 +74,36 @@ const confirmSignUp = async (args) => {
   return res
 }
 
+const cognitoSignIn = async (args) => {
+  const { email, password } = args
+  let params = {
+    AuthFlow: 'USER_PASSWORD_AUTH',
+    ClientId: process.env.clientId,
+    AuthParameters: {
+      USERNAME: email,
+      PASSWORD: password,
+    },
+  }
+  const data = await cognitoPromisify(
+    cognito.initiateAuth.bind(cognito),
+    params
+  )
+  return data
+}
+
+const getUserFromCognito = async (token) => {
+  let params = {
+    // ClientId: process.env.clientId,
+    AccessToken: token,
+  }
+  const data = await cognitoPromisify(cognito.getUser.bind(cognito), params)
+  return data
+}
+
 module.exports = {
+  cognitoSignIn,
   confirmSignUp,
   cognitoPromisify,
   cognitoUserSignUp,
+  getUserFromCognito,
 }

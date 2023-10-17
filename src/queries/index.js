@@ -6,7 +6,6 @@ const customer = require('../model/customer')
 
 const queries = {
   updateToDb: async (data, action, collection = customer) => {
-    console.log(data)
     return await dbActionGenerator(!action ? ACTIONS.UPDATEONE : action, {
       collection,
       data: [...data],

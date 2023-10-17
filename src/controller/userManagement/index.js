@@ -6,7 +6,6 @@ const { StatusCodes } = require('http-status-codes')
 const {
   update2fa,
   createOtp,
-  newSchema,
   getAllUsers,
   update2faCodes,
   updatePassword,
@@ -24,11 +23,14 @@ const {
   fetch_single_user,
   verifyAccountNumber,
   verifyUserAccessToken,
-  login_notify,
 } = require('../../utils/userUtil')
 const { ACTIONS } = require('../../lib/mongoose')
-const { appConfig } = require('../../lib/db')
-const { cognitoUserSignUp, confirmSignUp } = require('../../lib/cognito')
+const {
+  cognitoUserSignUp,
+  confirmSignUp,
+  cognitoSignIn,
+  getUserFromCognito,
+} = require('../../lib/cognito')
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -81,39 +83,44 @@ class UserManagement {
 
   login = async (userEmail, userPassword, res) => {
     try {
-      const userDetails = await user_login.validate(
-        userEmail.trim(),
-        userPassword
-      )
-
-      const token = generateUserAccessToken({
-        id: userDetails.id,
-        email: userDetails.email,
-        user_id: userDetails.user_id,
-      })
-      await newSchema({
-        email: userDetails.email,
-        payload: token,
-      })
-
-      const data = {
-        email: userDetails.email,
-        token,
-        has2fa: userDetails['2faEnabled'],
+      if (!userEmail || !userPassword) {
+        response(
+          'Invalid login parameters',
+          false,
+          StatusCodes.UNPROCESSABLE_ENTITY,
+          res
+        )
+        return
       }
 
-      appConfig(
-        { type: 'email' },
-        {
-          from: process.env.MAIL_GUN_CLIENT,
-          subject: 'Login Attempt',
-          to: userDetails.email,
-          text: login_notify(userDetails),
-        }
+      const data = await cognitoSignIn({
+        email: userEmail,
+        password: userPassword,
+      })
+      const user = await getUserFromCognito(
+        data.AuthenticationResult.AccessToken
       )
-      response(data, true, StatusCodes.OK, res)
+
+      response(
+        {
+          ...{
+            accessToken: data?.AuthenticationResult?.AccessToken,
+            refreshToken: data?.AuthenticationResult?.RefreshToken,
+            idToken: data?.AuthenticationResult?.IdToken,
+            email: user.UserAttributes.find((data) => data.Name === 'email')
+              .Value,
+            user_id: user.UserAttributes.find(
+              (data) => data.Name === 'custom:user_id'
+            ).Value,
+          },
+          login: user_login.login_success,
+        },
+        true,
+        StatusCodes.OK,
+        res
+      )
     } catch (error) {
-      response(error || error.message, false, StatusCodes.UNAUTHORIZED, res)
+      response(error.message || error, false, StatusCodes.UNAUTHORIZED, res)
     }
   }
 

@@ -8,6 +8,7 @@ const { ACTIONS } = require('../lib/mongoose')
 const account = require('../model/virtualAccounts')
 const { StatusCodes } = require('http-status-codes')
 const { response } = require('../controller/responseHandler')
+const { getUserFromCognito } = require('../lib/cognito')
 
 const fetch_single_user = async (params, byEmail = true) => {
   try {
@@ -95,11 +96,13 @@ const generateUserAccessToken = (payload, expires = '2 days') => {
   })
 }
 
-const verifyUserAccessToken = (token) => {
-  return jwt.verify(token, process.env.TOKEN_SECRET, (err, data) => {
-    if (err) throw err.message
+const verifyUserAccessToken = async (token) => {
+  try {
+    const data = await getUserFromCognito(token)
     return data
-  })
+  } catch (error) {
+    throw error
+  }
 }
 
 const generate2FAcodes = async () => {
@@ -127,7 +130,7 @@ const hashPassword = async (password, length = 15) => {
   if (typeof password !== 'string') {
     throw 'Invalid params'
   }
-  
+
   const hash = await encrypt.hash(password, length)
   return hash
 }
@@ -158,7 +161,7 @@ const verifyUser = async (req, res, next) => {
   try {
     const authToken = req.headers.authorization
     const token = !!authToken ? authToken.split(' ')[1] : ''
-    const verify = verifyUserAccessToken(token)
+    const verify = await verifyUserAccessToken(token)
 
     !verify
       ? response('user not found', false, StatusCodes.UNPROCESSABLE_ENTITY, res)

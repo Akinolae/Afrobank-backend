@@ -1,6 +1,5 @@
 const joi = require('joi')
 const { template } = require('../templates/welcomeEmail')
-const { newSchema } = require('../queries/queries')
 
 const authSchema = joi.object({
   firstName: joi.string().trim().required(),
@@ -86,42 +85,6 @@ const user_login = {
   login_success: 'Login successfully',
   email_text: 'Login notification',
   email_subject: 'Account Login',
-  validate: async (email, password) => {
-    // Validates user login credentials
-    // const { message, status } = await fetch_single_user(email)
-    new Promise((resolve, reject) => {
-      try {
-        cognito.signUp(
-          { email: email, password: password },
-          function (err, data) {
-            if (err) {
-              return reject(err)
-            }
-            return resolve(data)
-          }
-        )
-      } catch (e) {
-        return reject(e)
-      }
-    })
-
-    // if (
-    //   !email ||
-    //   !password ||
-    //   !status ||
-    //   email !== message.email ||
-    //   !(await decryptPassword(password, message.password))
-    // ) {
-    //   throw 'email or password invalid'
-    // }
-
-    await newSchema({
-      email: message.email,
-      payload: '',
-    })
-
-    return message
-  },
 }
 
 const otp_messsage = {
