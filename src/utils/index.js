@@ -12,10 +12,13 @@ const {
 const logError = require('./logger')
 const validateAmount = require('./amountValidator')
 const { generateUserAccessToken, verifyUserAccessToken } = require('./userUtil')
+const { createRedisConnection, redisGet, redisSet } = require('./redisUtil')
 
 module.exports = {
   logError,
   sendMail,
+  redisGet,
+  redisSet,
   createPin,
   isPinValid,
   generateCard,
@@ -28,5 +31,6 @@ module.exports = {
   calc_account_balance,
   fetchAllNotifications,
   verifyUserAccessToken,
+  createRedisConnection,
   generateUserAccessToken,
 }

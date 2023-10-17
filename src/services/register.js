@@ -6,4 +6,8 @@ module.exports = {
   register: (req, res) => {
     user.register(req.body, res)
   },
+  confirmSignUp: (req, res) => {
+    const { email, code } = req.body
+    user.confirmSignUp(email, code, res)
+  },
 }

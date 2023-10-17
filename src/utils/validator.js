@@ -1,6 +1,6 @@
 const joi = require('joi')
 const { template } = require('../templates/welcomeEmail')
-const { fetch_single_user, decryptPassword } = require('./userUtil')
+const { newSchema } = require('../queries/queries')
 
 const authSchema = joi.object({
   firstName: joi.string().trim().required(),
@@ -34,12 +34,14 @@ const completeTransactionSchema = joi.object({
   amount: joi.number().required(),
 })
 const user_reg = {
-  resp_msg_registration: 'Registration success',
+  resp_msg_registration:
+    'User registered successfully, confirmation email sent.',
   welcome_text:
     'your Afrobank account was created successfully, enjoy smooth payments and deposits on our platform for free',
   reg_mail_subject: 'Account registration',
   reg_mail_text: 'Registration',
   field_error: 'all fields are required',
+  confirmation: 'Account verified successfully',
   emailTemplate: template.registerationSuccess,
   validate: (params) => {
     const validate = authSchema.validate(params)
@@ -85,16 +87,38 @@ const user_login = {
   email_text: 'Login notification',
   email_subject: 'Account Login',
   validate: async (email, password) => {
-    const { message, status } = await fetch_single_user(email)
-    if (
-      !email ||
-      !password ||
-      !status ||
-      email !== message.email ||
-      !(await decryptPassword(password, message.password))
-    ) {
-      throw 'email or password invalid'
-    }
+    // Validates user login credentials
+    // const { message, status } = await fetch_single_user(email)
+    new Promise((resolve, reject) => {
+      try {
+        cognito.signUp(
+          { email: email, password: password },
+          function (err, data) {
+            if (err) {
+              return reject(err)
+            }
+            return resolve(data)
+          }
+        )
+      } catch (e) {
+        return reject(e)
+      }
+    })
+
+    // if (
+    //   !email ||
+    //   !password ||
+    //   !status ||
+    //   email !== message.email ||
+    //   !(await decryptPassword(password, message.password))
+    // ) {
+    //   throw 'email or password invalid'
+    // }
+
+    await newSchema({
+      email: message.email,
+      payload: '',
+    })
 
     return message
   },

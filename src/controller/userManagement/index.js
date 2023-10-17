@@ -27,9 +27,8 @@ const {
   login_notify,
 } = require('../../utils/userUtil')
 const { ACTIONS } = require('../../lib/mongoose')
-const { v4: uuidv4 } = require('uuid')
 const { appConfig } = require('../../lib/db')
-const { template } = require('../../templates/welcomeEmail')
+const { cognitoUserSignUp, confirmSignUp } = require('../../lib/cognito')
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -49,18 +48,15 @@ class UserManagement {
       return
     }
     try {
-      const hashedPassword = await hashPassword(password)
-      const user = {
+      await cognitoUserSignUp({
+        firstName,
+        password,
         firstName,
         lastName,
         email,
         phoneNumber,
-        password: hashedPassword,
-        user_id: uuidv4(),
-      }
+      })
 
-      let user_model = await queries.updateToDb([user], ACTIONS.CREATE)
-      await user_model.save()
       response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
     } catch (err) {
       response(
@@ -74,19 +70,28 @@ class UserManagement {
     }
   }
 
+  confirmSignUp = async (email, code, res) => {
+    try {
+      await confirmSignUp({ email, code })
+      response(user_reg.confirmation, true, StatusCodes.OK, res)
+    } catch (error) {
+      response(error?.message || error, false, StatusCodes.UNAUTHORIZED, res)
+    }
+  }
+
   login = async (userEmail, userPassword, res) => {
     try {
       const userDetails = await user_login.validate(
         userEmail.trim(),
         userPassword
       )
+
       const token = generateUserAccessToken({
         id: userDetails.id,
         email: userDetails.email,
         user_id: userDetails.user_id,
       })
       await newSchema({
-        model: this.customer,
         email: userDetails.email,
         payload: token,
       })
