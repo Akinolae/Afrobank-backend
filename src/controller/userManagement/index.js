@@ -105,18 +105,27 @@ class UserManagement {
         data.AuthenticationResult.AccessToken
       )
 
+
+      const userDetails = {
+        accessToken: data?.AuthenticationResult?.AccessToken,
+        refreshToken: data?.AuthenticationResult?.RefreshToken,
+        idToken: data?.AuthenticationResult?.IdToken,
+        email: user.UserAttributes.find((data) => data.Name === 'email').Value,
+        user_id: user.UserAttributes.find(
+          (data) => data.Name === 'custom:user_id'
+        ).Value,
+        firstName: user.UserAttributes.find(
+          (data) => data.Name === 'custom:firstName'
+        ).Value,
+        lastName: user.UserAttributes.find(
+          (data) => data.Name === 'custom:lastName'
+        ).Value,
+      }
+      const createUser = await queries.updateToDb([userDetails], ACTIONS.CREATE)
+      createUser.save()
       response(
         {
-          ...{
-            accessToken: data?.AuthenticationResult?.AccessToken,
-            refreshToken: data?.AuthenticationResult?.RefreshToken,
-            idToken: data?.AuthenticationResult?.IdToken,
-            email: user.UserAttributes.find((data) => data.Name === 'email')
-              .Value,
-            user_id: user.UserAttributes.find(
-              (data) => data.Name === 'custom:user_id'
-            ).Value,
-          },
+          ...userDetails,
           login: user_login.login_success,
         },
         true,
