@@ -17,7 +17,6 @@ const generateAccountNumber = async (id) => {
   }))
 }
 
-
 module.exports = {
   generateAccountNumber,
 }

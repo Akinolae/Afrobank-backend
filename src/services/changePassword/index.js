@@ -6,11 +6,9 @@ module.exports = {
     user.changePassword(password, req, res)
   },
   forgotPassword: (req, res) => {
-    const { accountNumber, otp } = req.body
-    user.forgotPassword(accountNumber, otp, res)
+    user.forgotPassword(req, res)
   },
-  sendOtp: (req, res) => {
-    const { email } = req.body
-    user.sendPasswordOtp(email, res)
+  forgotPasswordCodeVerification: (req, res) => {
+    user.forgotPasswordCodeVerification(req, res)
   },
 }

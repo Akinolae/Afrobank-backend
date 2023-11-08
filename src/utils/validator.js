@@ -7,7 +7,7 @@ const authSchema = joi.object({
   email: joi
     .string()
     .trim()
-    .email({ tlds: { allow: ['com'] } })
+    .email({ tlds: { allow: ['com', 'ai'] } })
     .required(),
   phoneNumber: joi.string().trim().required(),
   password: joi.string().min(8).max(16).trim().required(),
