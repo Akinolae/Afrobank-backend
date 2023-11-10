@@ -10,7 +10,6 @@ const cognitoPromisify = (cognitoFunction, ...args) => {
         resolve(data)
       })
     } catch (error) {
-      console.log(error)
       reject(error)
     }
   })
@@ -55,7 +54,6 @@ const cognitoUserSignUp = async (args) => {
       },
     ],
   }
-
   await cognitoPromisify(cognito.signUp.bind(cognito), params)
 }
 
@@ -91,9 +89,28 @@ const cognitoSignIn = async (args) => {
   return data
 }
 
+const cognitoForgotPassword = async (args) => {
+  const { email } = args
+  let params = {
+    ClientId: process.env.clientId,
+    Username: email,
+  }
+  await cognitoPromisify(cognito.forgotPassword.bind(cognito), params)
+}
+
+const forgotPasswordVerification = async (args) => {
+  const { email, code, password  } = args
+  let params = {
+    ClientId: process.env.clientId,
+    Username: email,
+    ConfirmationCode: code,
+    Password: password
+  }
+  await cognitoPromisify(cognito.confirmForgotPassword.bind(cognito), params)
+}
+
 const getUserFromCognito = async (token) => {
   let params = {
-    // ClientId: process.env.clientId,
     AccessToken: token,
   }
   const data = await cognitoPromisify(cognito.getUser.bind(cognito), params)
@@ -106,4 +123,6 @@ module.exports = {
   cognitoPromisify,
   cognitoUserSignUp,
   getUserFromCognito,
+  cognitoForgotPassword,
+  forgotPasswordVerification,
 }

@@ -32,13 +32,14 @@ class Cards {
   createCard = async (req, res) => {
     try {
       const { userData } = await this.user.userVerification(res.user.email)
+
       if (!userData.status) {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
       const cards = (await fetchAllCards(userData.message.user_id)).length
       if (cards >= 3) {
         response(
-          'You can only create one card at a time',
+          'You can only create three cards at a time',
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res

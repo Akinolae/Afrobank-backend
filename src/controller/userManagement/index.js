@@ -5,23 +5,20 @@ const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const {
   update2fa,
-  createOtp,
   getAllUsers,
   update2faCodes,
   updatePassword,
   accountActivation,
 } = require('../../queries/queries.js')
 const { queries } = require('../../queries')
-const { createPin, generateUserAccessToken } = require('../../utils')
+const { generateUserAccessToken } = require('../../utils')
 const { setNewPin } = require('../../utils/pinUtils')
 const { pinReset, user_reg, user_login } = require('../../utils/validator')
 const {
   validate2FA,
   hashPassword,
-  decryptPassword,
   generate2FAcodes,
   fetch_single_user,
-  verifyAccountNumber,
   verifyUserAccessToken,
 } = require('../../utils/userUtil')
 const { ACTIONS } = require('../../lib/mongoose')
@@ -30,6 +27,8 @@ const {
   confirmSignUp,
   cognitoSignIn,
   getUserFromCognito,
+  cognitoForgotPassword,
+  forgotPasswordVerification,
 } = require('../../lib/cognito')
 
 class UserManagement {
@@ -38,6 +37,7 @@ class UserManagement {
     this.virtualAccount = _virtualAccount_
   }
 
+  /* Register user */
   register = async (params, res) => {
     const { firstName, lastName, email, phoneNumber, password } = params
     if (!!user_reg.validate(params)) {
@@ -71,16 +71,22 @@ class UserManagement {
       )
     }
   }
+  /* Register user ends */
 
+  /* confirm user signup */
   confirmSignUp = async (email, code, res) => {
     try {
       await confirmSignUp({ email, code })
+      const createUser = await queries.updateToDb([{ email }], ACTIONS.CREATE)
+      createUser.save()
       response(user_reg.confirmation, true, StatusCodes.OK, res)
     } catch (error) {
       response(error?.message || error, false, StatusCodes.UNAUTHORIZED, res)
     }
   }
+  /* confirm user signup ends*/
 
+  /* user login */
   login = async (userEmail, userPassword, res) => {
     try {
       if (!userEmail || !userPassword) {
@@ -101,18 +107,20 @@ class UserManagement {
         data.AuthenticationResult.AccessToken
       )
 
+      const userDetails = {
+        accessToken: data?.AuthenticationResult?.AccessToken,
+        refreshToken: data?.AuthenticationResult?.RefreshToken,
+        idToken: data?.AuthenticationResult?.IdToken,
+        email: user.UserAttributes.find((data) => data.Name === 'email').Value,
+        user_id: user.UserAttributes.find(
+          (data) => data.Name === 'custom:user_id'
+        ).Value,
+      }
+      await queries.updateToDb([userDetails], ACTIONS.UPDATEONE)
+
       response(
         {
-          ...{
-            accessToken: data?.AuthenticationResult?.AccessToken,
-            refreshToken: data?.AuthenticationResult?.RefreshToken,
-            idToken: data?.AuthenticationResult?.IdToken,
-            email: user.UserAttributes.find((data) => data.Name === 'email')
-              .Value,
-            user_id: user.UserAttributes.find(
-              (data) => data.Name === 'custom:user_id'
-            ).Value,
-          },
+          ...userDetails,
           login: user_login.login_success,
         },
         true,
@@ -260,7 +268,6 @@ class UserManagement {
   changePassword = async (password, req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
-
       if (!userData.status) {
         response(!userData.status, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
       } else {
@@ -274,47 +281,43 @@ class UserManagement {
     }
   }
 
-  sendPasswordOtp = async (email, res) => {
-    const code = createPin(5)
-    const otp = await hashPassword(code)
-    const userExists = await fetch_single_user(email)
-    if (!!userExists.status) {
-      try {
-        const data = await createOtp(this.customer, email, otp)
-        response(data.message, data.status, StatusCodes.OK, res)
-      } catch (error) {
-        throw error
-      }
-    } else {
-      response(userExists.message, false, StatusCodes.NOT_FOUND, res)
-    }
-  }
-
-  forgotPassword = async (accountNumber, pin, res) => {
-    if (!!accountNumber && !!pin) {
-      try {
-        const userExists = await verifyAccountNumber(accountNumber)
-        if (!!userExists.status) {
-          const { otp } = userExists.user
-          const isValidOtp = await decryptPassword(pin, otp)
-          if (!!isValidOtp) {
-            response('Please reset your password', true, StatusCodes.OK, res)
-          } else {
-            response('Invalid otp', false, StatusCodes.BAD_REQUEST, res)
-          }
-        } else {
-          response(userExists.message, false, StatusCodes.NOT_FOUND, res)
-        }
-      } catch (error) {
-        response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
-      }
-    } else {
+  forgotPassword = async (req, res) => {
+    const { email } = req.body
+    if (!email) {
       response(
-        'Kindly enter required fields',
+        'email is required',
         false,
         StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
+      return
+    }
+
+    try {
+      await cognitoForgotPassword({ email })
+      response(`Verification code sent to ${email}`, true, StatusCodes.OK, res)
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+    }
+  }
+
+  forgotPasswordCodeVerification = async (req, res) => {
+    const { email, code, password } = req.body
+    if (!email || !code || !password) {
+      response(
+        'email and code is required',
+        false,
+        StatusCodes.UNPROCESSABLE_ENTITY,
+        res
+      )
+      return
+    }
+
+    try {
+      await forgotPasswordVerification(req.body)
+      response(`Password reset successful`, true, StatusCodes.OK, res)
+    } catch (error) {
+      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
     }
   }
 
@@ -423,7 +426,6 @@ class UserManagement {
 
   userVerification = async (email) => {
     const userData = await fetch_single_user(email)
-
     return { userData }
   }
 

@@ -14,7 +14,6 @@ const fetch_single_user = async (params, byEmail = true) => {
   try {
     params = byEmail ? { email: params } : { user_id: params }
     const isAvailable = await queries.getFromDb([params], ACTIONS.FINDONE)
-
     return isAvailable === null || isAvailable === undefined
       ? { status: false, message: 'invalid email address or password' }
       : { status: true, message: isAvailable }
@@ -157,15 +156,25 @@ const validate2FA = async (codes = [], code) => {
   return responseValue
 }
 
+const getValueFromAttributes = (attributes = [], params) => {
+  return attributes.find((user) => user.Name === params).Value
+}
+
 const verifyUser = async (req, res, next) => {
   try {
     const authToken = req.headers.authorization
     const token = !!authToken ? authToken.split(' ')[1] : ''
     const verify = await verifyUserAccessToken(token)
+    let user = {}
+    user.user_id = getValueFromAttributes(
+      verify.UserAttributes,
+      'custom:user_id'
+    )
+    user.email = getValueFromAttributes(verify.UserAttributes, 'email')
 
     !verify
       ? response('user not found', false, StatusCodes.UNPROCESSABLE_ENTITY, res)
-      : (res.user = verify)
+      : (res.user = user)
     next()
   } catch (error) {
     const err = error.toString()

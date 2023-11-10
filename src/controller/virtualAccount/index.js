@@ -7,6 +7,7 @@ const { UserManagement } = require('../userManagement/index')
 const virtualAccounts = require('../../model/virtualAccounts')
 const model = require('../../model/customer')
 const { getAllAccounts } = require('../../queries/queries')
+const { v4: uuidv4 } = require('uuid')
 
 class VirtualAccount extends UserManagement {
   generateVirtualAccount = async (req, res) => {

@@ -25,9 +25,9 @@ const {
   getTransactionHistory,
 } = require('../services/getTransactionHistory')
 const {
-  sendOtp,
   changePassword,
   forgotPassword,
+  forgotPasswordCodeVerification,
 } = require('../services/changePassword/index')
 const {
   deleteNotification,
@@ -60,10 +60,10 @@ router.get(`/getAllUsers`, verifyUser, getAllUsers)
 router.get(`/balance`, verifyUser, getAccountBalance)
 router.get('/notifications/:id', fetchAllNotifications)
 router.get(`/history`, verifyUser, getTransactionHistory)
+router.get(`/friend-account`, verifyUser, getFriendAccount)
 router.get(`/transaction/`, verifyUser, getSingleTransaction)
 router.get(`/generate-account`, verifyUser, generateAccountNumber)
 router.get(`/card-transactions`, verifyUser, fetchCardTransactions)
-router.get(`/friend-account`, verifyUser, getFriendAccount)
 
 // === {POST}/ request ===
 router.post(`/login`, localLogin)
@@ -72,13 +72,13 @@ router.post(`/register`, register)
 router.post(`/verify-token`, verifyToken)
 router.post('/newField', addNewFieldToDb)
 router.post('/validate', validateAccount)
-router.post(`/sendOtp`, verifyUser, sendOtp)
 router.post('/confirmSignUp', confirmSignUp)
 router.post(`/transfer/`, verifyUser, transfer)
 router.post(`/sendMoney`, verifyUser, sendMoney)
 router.post(`/add-friend`, verifyUser, addAfriend)
 router.post('/createCard', verifyUser, createCard)
 router.post('/validate2fa', verifyUser, validate2fa)
+router.post(`/verify-code`, forgotPasswordCodeVerification)
 
 // === {PATCH}/ request ===
 router.patch(`/forgotPassword`, forgotPassword)

@@ -43,8 +43,8 @@ const dbActionGenerator = async (action = '', params = {}) => {
     const err = new RegExp(errors).test(error)
     throw err
       ? {
-        message: "Network error: Check that you're connected to the internet",
-      }
+          message: "Network error: Check that you're connected to the internet",
+        }
       : error
   }
 }

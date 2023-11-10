@@ -1,10 +1,10 @@
 //imports
+const { queries } = require('.')
 const cards = require('../model/cards')
 const customer = require('../model/customer')
+const { ACTIONS } = require('../lib/mongoose')
 const cardTrx = require('../model/cardTransactions')
-const { dbActionGenerator, ACTIONS } = require('../lib/mongoose')
 const virtualAccount = require('../model/virtualAccounts')
-const { queries } = require('.')
 
 const updatePassword = async (accountNumber, password) => {
   try {
@@ -137,7 +137,6 @@ const addNewField = async (db, field, value) => {
 const getAllUsers = async () => {
   try {
     const res = await queries.getFromDb([], ACTIONS.FIND)
-
     return {
       status: true,
       message: res,
