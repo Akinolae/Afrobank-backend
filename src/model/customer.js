@@ -37,12 +37,6 @@ const customer = new mongoose.Schema({
   email: {
     type: String,
   },
-  firstName: {
-    type: String,
-  },
-  lastName: {
-    type: String,
-  },
   notifications: [notificationSchema],
   friends: [friendSchema],
 })

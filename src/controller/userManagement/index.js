@@ -77,6 +77,8 @@ class UserManagement {
   confirmSignUp = async (email, code, res) => {
     try {
       await confirmSignUp({ email, code })
+      const createUser = await queries.updateToDb([{ email }], ACTIONS.CREATE)
+      createUser.save()
       response(user_reg.confirmation, true, StatusCodes.OK, res)
     } catch (error) {
       response(error?.message || error, false, StatusCodes.UNAUTHORIZED, res)
@@ -105,7 +107,6 @@ class UserManagement {
         data.AuthenticationResult.AccessToken
       )
 
-
       const userDetails = {
         accessToken: data?.AuthenticationResult?.AccessToken,
         refreshToken: data?.AuthenticationResult?.RefreshToken,
@@ -114,15 +115,9 @@ class UserManagement {
         user_id: user.UserAttributes.find(
           (data) => data.Name === 'custom:user_id'
         ).Value,
-        firstName: user.UserAttributes.find(
-          (data) => data.Name === 'custom:firstName'
-        ).Value,
-        lastName: user.UserAttributes.find(
-          (data) => data.Name === 'custom:lastName'
-        ).Value,
       }
-      const createUser = await queries.updateToDb([userDetails], ACTIONS.CREATE)
-      createUser.save()
+      await queries.updateToDb([userDetails], ACTIONS.UPDATEONE)
+
       response(
         {
           ...userDetails,
