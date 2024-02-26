@@ -1,6 +1,7 @@
 require('dotenv').config()
 const { cognito } = require('./aws')
 const { v4: uuidv4 } = require('uuid')
+require('aws-sdk/lib/maintenance_mode_message').suppress = true
 
 const cognitoPromisify = (cognitoFunction, ...args) => {
   return new Promise((resolve, reject) => {
