@@ -107,6 +107,10 @@ class UserManagement {
         data.AuthenticationResult.AccessToken
       )
 
+      if (!(await fetch_single_user(userEmail)).status) {
+        await queries.updateToDb([userDetails], ACTIONS.UPDATEONE)
+      }
+
       const userDetails = {
         accessToken: data?.AuthenticationResult?.AccessToken,
         refreshToken: data?.AuthenticationResult?.RefreshToken,
@@ -116,7 +120,6 @@ class UserManagement {
           (data) => data.Name === 'custom:user_id'
         ).Value,
       }
-      await queries.updateToDb([userDetails], ACTIONS.UPDATEONE)
 
       response(
         {
