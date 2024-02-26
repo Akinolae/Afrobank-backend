@@ -99,17 +99,16 @@ class UserManagement {
         return
       }
 
+      // Call cognito endpoint to login
       const data = await cognitoSignIn({
         email: userEmail,
         password: userPassword,
       })
+
+      // Fetch user from token returned by cognito
       const user = await getUserFromCognito(
         data.AuthenticationResult.AccessToken
       )
-
-      if (!(await fetch_single_user(userEmail)).status) {
-        await queries.updateToDb([userDetails], ACTIONS.UPDATEONE)
-      }
 
       const userDetails = {
         accessToken: data?.AuthenticationResult?.AccessToken,
@@ -119,6 +118,10 @@ class UserManagement {
         user_id: user.UserAttributes.find(
           (data) => data.Name === 'custom:user_id'
         ).Value,
+      }
+
+      if (!(await fetch_single_user(userEmail)).status) {
+        await queries.updateToDb([userDetails], ACTIONS.UPDATEONE)
       }
 
       response(
