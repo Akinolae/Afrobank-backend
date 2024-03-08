@@ -8,10 +8,7 @@ const payStackInstances = ['payStack', 'paystack', 'Paystack', 'PAYSTACK']
 
 const config = {
   node_env: process.env.NODE_ENV,
-  uri:
-    process.env.NODE_ENV === 'development'
-      ? process.env.DB_CONNECT
-      : process.env.DB_CONNECT_PROD,
+  uri: process.env.DB_CONNECT,
   email: process.env.EMAIL,
   password: process.env.EMAIL_PASSWORD,
   provider: process.env.PROVIDER,
