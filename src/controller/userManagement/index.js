@@ -120,8 +120,12 @@ class UserManagement {
         ).Value,
       }
 
-      if (!(await fetch_single_user(userEmail)).status) {
-        await queries.updateToDb([userDetails], ACTIONS.UPDATEONE)
+      const userExits = await fetch_single_user(userDetails.user_id, false)
+      if (!userExits.status) {
+        await queries.updateToDb(
+          [{ user_id: userDetails.user_id }],
+          ACTIONS.UPDATEONE
+        )
       }
 
       response(

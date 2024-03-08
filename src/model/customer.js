@@ -22,15 +22,6 @@ const friendSchema = new mongoose.Schema({
 })
 
 const customer = new mongoose.Schema({
-  accessToken: {
-    type: String,
-  },
-  refreshToken: {
-    type: String,
-  },
-  idToken: {
-    type: String,
-  },
   user_id: {
     type: String,
   },

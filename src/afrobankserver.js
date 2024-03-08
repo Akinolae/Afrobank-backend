@@ -3,7 +3,6 @@ const { response } = require('./controller/responseHandler')
 const cors = require('cors')
 const express = require('express')
 const { appConfig } = require('./lib/db')
-// const functions = require('firebase-functions')
 
 // morgan only logs requests in development \\
 const app = express()
@@ -23,18 +22,13 @@ app.use((req, res) => {
   response(msg, 'error', 404, res)
 })
 
-if (process.env.NODE_ENV === 'development') {
-  app.listen(process.env.PORT || 4000, () => {
-    // makes it easy to dynamically configure the db \\
-    // just create a CLUSTER on atlas cloud, \\
-    // pick the URL and add... voila!, you're connected to the DB! \\
-    appConfig({ type: 'db' })
-    process.on('warning', (e) => console.warn(e.stack))
-    console.log(`app is running ${process.env.PORT}`)
-  })
-} else {
-  const firbaseFunction = require('firebase-functions')
-  exports.app = firbaseFunction.https.onRequest(app)
-}
+app.listen(process.env.PORT || 4000, () => {
+  // makes it easy to dynamically configure the db \\
+  // just create a CLUSTER on atlas cloud, \\
+  // pick the URL and add... voila!, you're connected to the DB! \\
+  appConfig({ type: 'db' })
+  process.on('warning', (e) => console.warn(e.stack))
+  console.log(`app is running ${process.env.PORT}`)
+})
 
 module.exports = { app }
