@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "npm run pre-launch && nodemon ./src/afrobankserver.js ",
-    "start": "npm run pre-launch && node ./src/afrobankserver.js",
+    "start": "npm install && npm run pre-launch && node ./src/afrobankserver.js",
     "cleanup": "rm -rf node_modules && npm install",
     "pre-launch": "bash ./scripts/script.sh",
     "test": "mocha './src/tests/**/*.js' --timeout 30000"
