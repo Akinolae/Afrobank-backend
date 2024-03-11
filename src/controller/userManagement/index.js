@@ -60,6 +60,9 @@ class UserManagement {
         phoneNumber,
       })
 
+      const createUser = await queries.updateToDb([{ email }], ACTIONS.CREATE)
+      createUser.save()
+
       response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
     } catch (err) {
       response(
@@ -78,8 +81,6 @@ class UserManagement {
   confirmSignUp = async (email, code, res) => {
     try {
       await confirmSignUp({ email, code })
-      const createUser = await queries.updateToDb([{ email }], ACTIONS.CREATE)
-      createUser.save()
       response(user_reg.confirmation, true, StatusCodes.OK, res)
     } catch (error) {
       response(error?.message || error, false, StatusCodes.UNAUTHORIZED, res)
@@ -136,11 +137,17 @@ class UserManagement {
         ),
       }
 
-      const userExits = await fetch_single_user(userDetails.user_id, false)
-      if (!userExits.status) {
+      const userExits = await fetch_single_user(userDetails.email)
+
+      if (!userExits.message.hasOwnProperty('user_id')) {
         await queries.updateToDb(
-          [{ user_id: userDetails.user_id }],
-          ACTIONS.UPDATEONE
+          [
+            { email: userDetails.email },
+            {
+              user_id: userDetails.user_id,
+            },
+          ],
+          ACTIONS.FINDONEANDUPDATE
         )
       }
 
