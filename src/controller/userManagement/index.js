@@ -20,6 +20,7 @@ const {
   generate2FAcodes,
   fetch_single_user,
   verifyUserAccessToken,
+  getValueFromAttributes,
 } = require('../../utils/userUtil')
 const { ACTIONS } = require('../../lib/mongoose')
 const {
@@ -114,10 +115,25 @@ class UserManagement {
         accessToken: data?.AuthenticationResult?.AccessToken,
         refreshToken: data?.AuthenticationResult?.RefreshToken,
         idToken: data?.AuthenticationResult?.IdToken,
-        email: user.UserAttributes.find((data) => data.Name === 'email').Value,
-        user_id: user.UserAttributes.find(
-          (data) => data.Name === 'custom:user_id'
-        ).Value,
+        email: getValueFromAttributes(user.UserAttributes, 'email'),
+        user_id: getValueFromAttributes(user.UserAttributes, 'custom:user_id'),
+        verified: getValueFromAttributes(user.UserAttributes, 'email_verified'),
+        phone_number: getValueFromAttributes(
+          user.UserAttributes,
+          'custom:phoneNumber'
+        ),
+        createdAt: getValueFromAttributes(
+          user.UserAttributes,
+          'custom:createdAt'
+        ),
+        first_Name: getValueFromAttributes(
+          user.UserAttributes,
+          'custom:firstName'
+        ),
+        last_Name: getValueFromAttributes(
+          user.UserAttributes,
+          'custom:lastName'
+        ),
       }
 
       const userExits = await fetch_single_user(userDetails.user_id, false)

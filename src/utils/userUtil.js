@@ -166,10 +166,7 @@ const verifyUser = async (req, res, next) => {
     const token = !!authToken ? authToken.split(' ')[1] : ''
     const verify = await verifyUserAccessToken(token)
     let user = {}
-    user.user_id = getValueFromAttributes(
-      verify.UserAttributes,
-      'custom:user_id'
-    )
+    user.user_id = getValueFromAttributes(verify.UserAttributes, 'custom:user_id')
     user.email = getValueFromAttributes(verify.UserAttributes, 'email')
 
     !verify
@@ -204,5 +201,6 @@ module.exports = {
   fetch_single_user,
   verifyAccountNumber,
   verifyUserAccessToken,
+  getValueFromAttributes,
   generateUserAccessToken,
 }
