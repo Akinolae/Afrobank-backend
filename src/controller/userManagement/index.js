@@ -40,7 +40,6 @@ class UserManagement {
 
   /* Register user */
   register = async (params, res) => {
-    const { firstName, lastName, email, phoneNumber, password } = params
     if (!!user_reg.validate(params)) {
       response(
         user_reg.validate(params),
@@ -50,27 +49,23 @@ class UserManagement {
       )
       return
     }
+
     try {
       await cognitoUserSignUp({
-        firstName,
-        password,
-        firstName,
-        lastName,
-        email,
-        phoneNumber,
+        ...params,
       })
 
-      const createUser = await queries.updateToDb([{ email }], ACTIONS.CREATE)
-      createUser.save()
-
+      const newUser = await queries.updateToDb(
+        [{ email: params?.email }],
+        ACTIONS.CREATE
+      )
+      newUser.save()
       response(user_reg.resp_msg_registration, true, StatusCodes.OK, res)
     } catch (err) {
       response(
-        new RegExp('duplicate').test(err.message)
-          ? `user already exists`
-          : err.message || 'An error occured',
+        err.message,
         false,
-        StatusCodes.UNPROCESSABLE_ENTITY,
+        err?.statusCode ?? StatusCodes.UNPROCESSABLE_ENTITY,
         res
       )
     }
