@@ -5,18 +5,13 @@
 require('dotenv').config()
 const fs = require('fs')
 const { default: axios } = require('axios')
-const { extractConfig } = require('../src/config/config')
+const { extractConfig, providerInstance } = require('../src/config/config')
 
 // Gets all the required resources according to the provider specified
 const getCurrentProviderConfig = () => {
-  const providers = {
-    payStack: 'paystack',
-    flutterWave: 'flutterwave',
-  }
-
   let data
   switch (extractConfig('provider').toLowerCase()) {
-    case providers.payStack:
+    case providerInstance.payStack:
       data = {
         fetchBanksUrl: 'https://api.paystack.co/bank?currency=NGN',
         transferRecipient: 'https://api.paystack.co/transferrecipient',
@@ -25,7 +20,7 @@ const getCurrentProviderConfig = () => {
         key: extractConfig('token'),
       }
       break
-    case providers.flutterWave:
+    case providerInstance.flutterWave:
       data = {
         fetchBanksUrl: 'https://api.flutterwave.com/v3/banks/NG',
         transfer: 'https://api.flutterwave.com/v3/transfers',

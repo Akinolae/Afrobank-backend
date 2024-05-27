@@ -1,20 +1,21 @@
-const flutterWaveInstances = [
-  'flutterWave',
-  'Flutterwave',
-  'flutterWave',
-  'FLUTTERWAVE',
-]
-const payStackInstances = ['payStack', 'paystack', 'Paystack', 'PAYSTACK']
+const providerInstance = {
+  flutterWave: 'flutterWave',
+  payStack: 'PayStack',
+}
+
+const currentProvider = (instance) => {
+  const provider = String(process.env.PROVIDER).toLowerCase()
+  return new RegExp(String(instance).toLowerCase()).test(provider)
+}
 
 const config = {
-  node_env: process.env.NODE_ENV,
   uri: process.env.DB_CONNECT,
   email: process.env.EMAIL,
   password: process.env.EMAIL_PASSWORD,
   provider: process.env.PROVIDER,
-  token: flutterWaveInstances.includes(process.env.PROVIDER)
+  token: currentProvider(providerInstance.flutterWave)
     ? process.env.FLUTTERWAVE_TEST
-    : payStackInstances.includes(process.env.PROVIDER)
+    : currentProvider(providerInstance.payStack)
     ? process.env.PAYSTACK_TEST
     : '',
 }
@@ -33,4 +34,5 @@ const extractConfig = (param = '') => {
 
 module.exports = {
   extractConfig,
+  providerInstance
 }
