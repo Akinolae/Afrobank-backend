@@ -8,6 +8,11 @@ const currentProvider = (instance) => {
   return new RegExp(String(instance).toLowerCase()).test(provider)
 }
 
+const convertToLowerCase = (params) => {
+  params = typeof params !== 'string' ? params.toString() : params
+  return params.toLowerCase()
+}
+
 const config = {
   uri: process.env.DB_CONNECT,
   email: process.env.EMAIL,
@@ -22,11 +27,12 @@ const config = {
 
 const extractConfig = (param = '') => {
   let value
+  param = convertToLowerCase(param)
   if (!param) throw new Error('Params is required')
-  if (config[param.toLowerCase()] === undefined || null) {
+  if (config[param] === undefined || null) {
     throw new Error(`Unable to fetch ${param}'s config`)
   } else {
-    value = config[param.toLowerCase()]
+    value = config[param]
   }
 
   return value
@@ -34,5 +40,6 @@ const extractConfig = (param = '') => {
 
 module.exports = {
   extractConfig,
-  providerInstance
+  providerInstance,
+  convertToLowerCase,
 }

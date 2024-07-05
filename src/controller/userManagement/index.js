@@ -31,6 +31,7 @@ const {
   cognitoForgotPassword,
   forgotPasswordVerification,
 } = require('../../lib/cognito')
+const { default: axios } = require('axios')
 
 class UserManagement {
   constructor(_customer_, _virtualAccount_) {
@@ -40,6 +41,8 @@ class UserManagement {
 
   /* Register user */
   register = async (params, res) => {
+    const r = await axios.get('http://localhost:3006/Api/v1/get-cards')
+    console.log({ dt: r.data })
     if (!!user_reg.validate(params)) {
       response(
         user_reg.validate(params),
