@@ -2,28 +2,27 @@ const cards = require('../../model/cards')
 const cardTrx = require('../../model/cardTransactions')
 const { trxCore } = require('../../utils/transactionsUtil')
 const { response } = require('../responseHandler')
-const { updateCard, queries } = require('../../queries/queries')
+const { updateCard } = require('../../queries/queries')
+const { queries } = require('../../queries')
 const virtualAccount = require('../../model/virtualAccounts')
 const { StatusCodes } = require('http-status-codes')
 const { useCrypto, verifyCard } = require('../../utils/userUtil')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
-const {
-  generateCard,
-  generateTrxInfo,
-  createAccountNumber,
-} = require('../../utils')
+const { generateTrxInfo } = require('../../utils')
 const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
-const { v4: uuidv4 } = require('uuid')
 const { user } = require('../userManagement')
+const { VirtualAccount } = require('../virtualAccount')
 const { default: axios } = require('axios')
+const { externalAPIrequest } = require('../request/index')
 
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
 //2. @gettingUserCards ~~~ only authenticated user can view his/her cards
 //3. @sendMoney ~~~ only authenticared users can send money from cards
 
-class Cards {
+class Cards extends VirtualAccount {
   constructor(_cards_, _virtualAccount_, _cardTrx_) {
+    super()
     this.cards = _cards_
     this.virtualAccount = _virtualAccount_
     this.cardTrx = _cardTrx_
@@ -38,20 +37,6 @@ class Cards {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
 
-      await axios.post(
-        'http://localhost:3006/Api/v1/create-card',
-        {
-          ...req.body,
-          wallet_id: '0128949662',
-          card_holder: 'mmavgcof@sharklasers.com',
-        },
-        {
-          headers: {
-            'x-api-key': 'h2#k^3@36yj@5zi',
-          },
-        }
-      )
-
       const cards = (await fetchAllCards(userData.message.user_id)).length
       if (cards >= 3) {
         response(
@@ -61,69 +46,36 @@ class Cards {
           res
         )
       } else {
-        // Generates a new card for users
-        const [card, accountNumber] = await Promise.all([
-          generateCard(userData),
-          createAccountNumber({
-            type: 'accountNumber',
-          }),
-        ])
+        const { account_id } = await this.getUserVirtualAccount(
+          userData.message
+        )
 
-        /* 
-          
-          For every new card created a new account number is generated
-          Makes it easier to transact with the new cards as well as track 
-          the transaction volume of the newly created cards.
+        if (!account_id) {
+          response(
+            'You do not have a valid virtual account please create one',
+            false,
+            StatusCodes.UNPROCESSABLE_ENTITY,
+            res
+          )
+          return
+        }
 
-          1. Generate Card && AccountNumber ("Method checks if either card exists before creating another to avoid duplicate cards")
-          2. Newly generated Card is hashed before being saved to DB
-          3. New account is saved to DB
-          
-          */
+        const prepareCardCreationParams = {
+          ...req.body,
+          wallet_id: account_id,
+          card_holder: 'afrobank',
+        }
 
-        const info = [
-          {
-            collection: this.virtualAccount,
-            data: [
-              {
-                user_id: userData.message.user_id,
-                active: true,
-                account_id: uuidv4(),
-                pin: process.env.PIN,
-                accountNumber: accountNumber,
-                accountBalance: process.env.DEFAULT_BALANCE,
-                main: false,
-              },
-            ],
-          },
-          {
-            collection: this.cards,
-            data: [
-              {
-                cardToken: useCrypto({
-                  payLoad: { ...card, accountNumber },
-                }),
-              },
-            ],
-          },
-        ]
-
-        const [newAccount, newCard] = await Promise.all([
-          ...info.map(({ collection, data }) =>
-            dbActionGenerator(ACTIONS.CREATE, {
-              collection: collection,
-              data: data,
-            })
-          ),
-        ])
-
-        await Promise.all([newCard.save(), newAccount.save()])
+        await externalAPIrequest.makeExternalAPIPostrequest({
+          url: 'http://localhost:3006/Api/v1/create-card',
+          data: prepareCardCreationParams,
+        })
 
         response('Card creation successful', true, StatusCodes.OK, res)
       }
     } catch (error) {
       response(
-        !!error.response ? error.response.data.message : error.message,
+        !!error.message ? error.message : error,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
         res

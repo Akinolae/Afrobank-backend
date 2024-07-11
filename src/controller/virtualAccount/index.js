@@ -54,6 +54,24 @@ class VirtualAccount extends UserManagement {
     }
   }
 
+  getUserVirtualAccount = async (args) => {
+    const { user_id } = args
+
+    if (!user_id) {
+      throw new Error('User_id not provided')
+    }
+
+    const dataFromDb = await queries.getFromDb(
+      [],
+      ACTIONS.FIND,
+      this.virtualAccount
+    )
+
+    if (Array.isArray(dataFromDb)) {
+      return dataFromDb.find((data) => data.user_id === user_id) ?? {}
+    }
+  }
+
   getFriendVirtualAccount = async (req, res) => {
     try {
       const { id } = req.query
