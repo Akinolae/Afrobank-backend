@@ -15,6 +15,7 @@ const {
 const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
 const { v4: uuidv4 } = require('uuid')
 const { user } = require('../userManagement')
+const { default: axios } = require('axios')
 
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
@@ -36,6 +37,21 @@ class Cards {
       if (!userData.status) {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
+
+      await axios.post(
+        'http://localhost:3006/Api/v1/create-card',
+        {
+          ...req.body,
+          wallet_id: '0128949662',
+          card_holder: 'mmavgcof@sharklasers.com',
+        },
+        {
+          headers: {
+            'x-api-key': 'h2#k^3@36yj@5zi',
+          },
+        }
+      )
+
       const cards = (await fetchAllCards(userData.message.user_id)).length
       if (cards >= 3) {
         response(
@@ -106,7 +122,12 @@ class Cards {
         response('Card creation successful', true, StatusCodes.OK, res)
       }
     } catch (error) {
-      response(error.message, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      response(
+        !!error.response ? error.response.data.message : error.message,
+        false,
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        res
+      )
     }
   }
 
