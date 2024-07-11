@@ -55,20 +55,24 @@ class VirtualAccount extends UserManagement {
   }
 
   getUserVirtualAccount = async (args) => {
-    const { user_id } = args
-
-    if (!user_id) {
-      throw new Error('User_id not provided')
+    if (!Object.keys(args).length) {
+      throw new Error('args cannot be empty')
     }
 
     const dataFromDb = await queries.getFromDb(
-      [],
+      [{ ...args }],
       ACTIONS.FIND,
       this.virtualAccount
     )
 
     if (Array.isArray(dataFromDb)) {
-      return dataFromDb.find((data) => data.user_id === user_id) ?? {}
+      if (!dataFromDb.length) {
+        throw new Error(
+          'You do not have a valid virtual account please create one'
+        )
+      }
+
+      return dataFromDb[0]
     }
   }
 

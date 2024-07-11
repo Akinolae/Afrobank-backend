@@ -4,15 +4,12 @@ const { trxCore } = require('../../utils/transactionsUtil')
 const { response } = require('../responseHandler')
 const { updateCard } = require('../../queries/queries')
 const { queries } = require('../../queries')
-const virtualAccount = require('../../model/virtualAccounts')
 const { StatusCodes } = require('http-status-codes')
 const { useCrypto, verifyCard } = require('../../utils/userUtil')
 const { fetchAllCards, cardConditionsCheck } = require('../../utils/cardsUtil')
 const { generateTrxInfo } = require('../../utils')
-const { dbActionGenerator, ACTIONS } = require('../../lib/mongoose')
 const { user } = require('../userManagement')
 const { VirtualAccount } = require('../virtualAccount')
-const { default: axios } = require('axios')
 const { externalAPIrequest } = require('../request/index')
 
 //class @Cards contains all the actions pertaining to card
@@ -21,10 +18,9 @@ const { externalAPIrequest } = require('../request/index')
 //3. @sendMoney ~~~ only authenticared users can send money from cards
 
 class Cards extends VirtualAccount {
-  constructor(_cards_, _virtualAccount_, _cardTrx_) {
+  constructor(_cards_, _cardTrx_) {
     super()
     this.cards = _cards_
-    this.virtualAccount = _virtualAccount_
     this.cardTrx = _cardTrx_
     this.user = user
   }
@@ -38,41 +34,30 @@ class Cards extends VirtualAccount {
       }
 
       const cards = (await fetchAllCards(userData.message.user_id)).length
-      if (cards >= 3) {
+      cards >= 3 &&
         response(
           'You can only create three cards at a time',
           false,
           StatusCodes.UNPROCESSABLE_ENTITY,
           res
         )
-      } else {
-        const { account_id } = await this.getUserVirtualAccount(
-          userData.message
-        )
 
-        if (!account_id) {
-          response(
-            'You do not have a valid virtual account please create one',
-            false,
-            StatusCodes.UNPROCESSABLE_ENTITY,
-            res
-          )
-          return
-        }
+      const { account_id } = await this.getUserVirtualAccount({
+        user_id: userData.message.user_id,
+      })
 
-        const prepareCardCreationParams = {
-          ...req.body,
-          wallet_id: account_id,
-          card_holder: 'afrobank',
-        }
-
-        await externalAPIrequest.makeExternalAPIPostrequest({
-          url: 'http://localhost:3006/Api/v1/create-card',
-          data: prepareCardCreationParams,
-        })
-
-        response('Card creation successful', true, StatusCodes.OK, res)
+      const prepareCardCreationParams = {
+        ...req.body,
+        wallet_id: account_id,
+        card_holder: 'afrobank',
       }
+
+      await externalAPIrequest.makeExternalAPIPostrequest({
+        url: 'http://localhost:3006/Api/v1/create-card',
+        data: prepareCardCreationParams,
+      })
+
+      response('Card creation successful', true, StatusCodes.OK, res)
     } catch (error) {
       response(
         !!error.message ? error.message : error,
@@ -143,9 +128,8 @@ class Cards extends VirtualAccount {
             isSenderValid.message.accountNumber,
             isRecipientValid.message.accountNumber,
           ].map((data) =>
-            dbActionGenerator(ACTIONS.FIND, {
-              collection: this.virtualAccount,
-              data: [{ accountNumber: data }],
+            this.generateVirtualAccount({
+              accountNumber: data,
             })
           ),
         ])
@@ -336,7 +320,7 @@ class Cards extends VirtualAccount {
   }
 }
 
-const userCards = new Cards(cards, virtualAccount, cardTrx)
+const userCards = new Cards(cards, cardTrx)
 Object.freeze(userCards)
 
 module.exports = userCards
