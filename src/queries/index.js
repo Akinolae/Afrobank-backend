@@ -14,7 +14,7 @@ const queries = {
   getFromDb: async (data, action, collection = customer) => {
     return await dbActionGenerator(!action ? ACTIONS.FIND : action, {
       collection,
-      data: [...data],
+      data,
     })
   },
 }

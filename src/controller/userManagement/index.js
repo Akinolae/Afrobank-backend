@@ -31,9 +31,11 @@ const {
   cognitoForgotPassword,
   forgotPasswordVerification,
 } = require('../../lib/cognito')
+const { VirtualAccount } = require('../virtualAccount/index.js')
 
-class UserManagement {
+class UserManagement extends VirtualAccount {
   constructor(_customer_, _virtualAccount_) {
+    super()
     this.customer = _customer_
     this.virtualAccount = _virtualAccount_
   }
@@ -212,38 +214,38 @@ class UserManagement {
     }
   }
 
-  setPin = async (req, res) => {
-    const { pin, accountNumber } = req.body
+  // setPin = async (req, res) => {
+  //   const { pin, accountNumber } = req.body
 
-    try {
-      const { userData } = await this.userVerification(res.user.email)
-      const accounts = (await queries.getFromDb([], null, this.virtualAccount))
-        .filter((account) => account.user_id === res.user.user_id)
-        .some((acc) => acc.accountNumber === +accountNumber)
+  //   try {
+  //     const { userData } = await this.userVerification(res.user.email)
+  //     const accounts = (await queries.getFromDb([], null, this.virtualAccount))
+  //       .filter((account) => account.user_id === res.user.user_id)
+  //       .some((acc) => acc.accountNumber === +accountNumber)
 
-      const invalidPin = !pin || pin.length !== 4
+  //     const invalidPin = !pin || pin.length !== 4
 
-      if (!userData.status || invalidPin || !accounts) {
-        response(
-          invalidPin
-            ? 'Please provide a valid pin code'
-            : !accounts
-            ? 'Please check account number and try again'
-            : userData.message,
-          false,
-          !userData.status
-            ? StatusCodes.NOT_FOUND
-            : StatusCodes.UNPROCESSABLE_ENTITY,
-          res
-        )
-      } else {
-        await setNewPin(accountNumber, pin)
-        response(pinReset.message, true, StatusCodes.OK, res)
-      }
-    } catch (e) {
-      response(e.message, false, StatusCodes.BAD_REQUEST, res)
-    }
-  }
+  //     if (!userData.status || invalidPin || !accounts) {
+  //       response(
+  //         invalidPin
+  //           ? 'Please provide a valid pin code'
+  //           : !accounts
+  //           ? 'Please check account number and try again'
+  //           : userData.message,
+  //         false,
+  //         !userData.status
+  //           ? StatusCodes.NOT_FOUND
+  //           : StatusCodes.UNPROCESSABLE_ENTITY,
+  //         res
+  //       )
+  //     } else {
+  //       await setNewPin(accountNumber, pin)
+  //       response(pinReset.message, true, StatusCodes.OK, res)
+  //     }
+  //   } catch (e) {
+  //     response(e.message, false, StatusCodes.BAD_REQUEST, res)
+  //   }
+  // }
 
   activateUser = async (req, res) => {
     const reqEvent =

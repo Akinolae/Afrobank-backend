@@ -3,13 +3,14 @@ const { ACTIONS } = require('../../lib/mongoose')
 const { response } = require('../responseHandler')
 const { StatusCodes } = require('http-status-codes')
 const { generateAccountNumber } = require('../../queries/user')
-const { UserManagement } = require('../userManagement/index')
-const virtualAccounts = require('../../model/virtualAccounts')
-const model = require('../../model/customer')
+const model = require('../../model/virtualAccounts')
 const { getAllAccounts } = require('../../queries/queries')
 const { v4: uuidv4 } = require('uuid')
 
-class VirtualAccount extends UserManagement {
+class VirtualAccount {
+  constructor() {
+    this.virtualAccount = model
+  }
   generateVirtualAccount = async (req, res) => {
     try {
       const { userData } = await this.userVerification(res.user.email)
@@ -61,19 +62,16 @@ class VirtualAccount extends UserManagement {
 
     const dataFromDb = await queries.getFromDb(
       [{ ...args }],
-      ACTIONS.FIND,
+      ACTIONS.FINDONE,
       this.virtualAccount
     )
-
-    if (Array.isArray(dataFromDb)) {
-      if (!dataFromDb.length) {
-        throw new Error(
-          'You do not have a valid virtual account please create one'
-        )
-      }
-
-      return dataFromDb[0]
+    if (!dataFromDb.account_id) {
+      throw new Error(
+        'You do not have a valid virtual account please create one'
+      )
     }
+
+    return dataFromDb
   }
 
   getFriendVirtualAccount = async (req, res) => {
@@ -120,6 +118,6 @@ class VirtualAccount extends UserManagement {
   }
 }
 
-const virtualAccount = new VirtualAccount(model, virtualAccounts)
+const virtualAccount = new VirtualAccount()
 Object.freeze(virtualAccount)
 module.exports = { virtualAccount, VirtualAccount }
