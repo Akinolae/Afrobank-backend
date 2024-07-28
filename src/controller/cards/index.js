@@ -59,6 +59,7 @@ class Cards extends VirtualAccount {
 
       response('Card creation successful', true, StatusCodes.OK, res)
     } catch (error) {
+      console.log({ error })
       response(
         !!error.message ? error.message : error,
         false,

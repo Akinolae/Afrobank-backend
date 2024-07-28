@@ -8,11 +8,10 @@ class ExternalAPIrequest {
   APIrequestErrorParser = (error) => {
     error = typeof error === 'object' ? error : JSON.stringify(error)
 
-    console.log(error, 'err')
-    return !!error.message
+    return !!error.response.data
+      ? error.response.data.message
+      : !!error.message
       ? error.message
-      : !!error.response
-      ? error.response.message
       : error
   }
 
