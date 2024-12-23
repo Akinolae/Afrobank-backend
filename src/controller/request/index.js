@@ -34,6 +34,22 @@ class ExternalAPIrequest {
       throw this.APIrequestErrorParser(error)
     }
   }
+
+  makeExternalAPIGetrequest = async (args) => {
+    const { url } = args
+
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          'x-api-key': this.apiKey,
+        },
+      })
+
+      return this.APIrequestDataParser(res)
+    } catch (error) {
+      throw this.APIrequestErrorParser(error)
+    }
+  }
 }
 
 const externalAPIrequest = new ExternalAPIrequest()

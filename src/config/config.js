@@ -23,6 +23,7 @@ const config = {
     : currentProvider(providerInstance.payStack)
     ? process.env.PAYSTACK_TEST
     : '',
+  cards: process.env.NODE_ENV === 'development' ? process.env.CARD_URL_DEV : '',
 }
 
 const extractConfig = (param = '') => {

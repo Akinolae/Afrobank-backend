@@ -3,9 +3,6 @@
   "version": "0.0.4",
   "description": "Afro bank Api",
   "main": "/src/afrobankserver.js",
-  "engines": {
-    "node": "14.15.5"
-  },
   "scripts": {
     "dev": "npm run pre-launch && nodemon ./src/afrobankserver.js ",
     "start": "npm install && npm run pre-launch && node ./src/afrobankserver.js",

@@ -6,6 +6,7 @@ const { generateAccountNumber } = require('../../queries/user')
 const model = require('../../model/virtualAccounts')
 const { getAllAccounts } = require('../../queries/queries')
 const { v4: uuidv4 } = require('uuid')
+const { fetch_single_user } = require('../../utils/userUtil')
 
 class VirtualAccount {
   constructor() {
@@ -13,7 +14,8 @@ class VirtualAccount {
   }
   generateVirtualAccount = async (req, res) => {
     try {
-      const { userData } = await this.userVerification(res.user.email)
+      const userData = await fetch_single_user(res.user.email)
+
       if (!userData.status) {
         response('Unable to fetch user', false, StatusCodes.UNAUTHORIZED, res)
         return
@@ -46,8 +48,9 @@ class VirtualAccount {
         res
       )
     } catch (error) {
+      console.log(error, 'err')
       response(
-        error || error.message,
+        error ?? error.message,
         false,
         StatusCodes.UNPROCESSABLE_ENTITY,
         res
@@ -65,6 +68,9 @@ class VirtualAccount {
       ACTIONS.FINDONE,
       this.virtualAccount
     )
+
+    console.log(dataFromDb, 'dataFromDb')
+
     if (!dataFromDb.account_id) {
       throw new Error(
         'You do not have a valid virtual account please create one'

@@ -11,6 +11,7 @@ const { generateTrxInfo } = require('../../utils')
 const { user } = require('../userManagement')
 const { VirtualAccount } = require('../virtualAccount')
 const { externalAPIrequest } = require('../request/index')
+const { extractConfig } = require('../../config/config')
 
 //class @Cards contains all the actions pertaining to card
 //1. @createCard ~~~ only authenticated users can create cards
@@ -42,24 +43,24 @@ class Cards extends VirtualAccount {
           res
         )
 
-      const { account_id } = await this.getUserVirtualAccount({
+      const userVirtualAcount = await this.getUserVirtualAccount({
         user_id: userData.message.user_id,
       })
 
       const prepareCardCreationParams = {
         ...req.body,
-        wallet_id: account_id,
+        wallet_id: userVirtualAcount?.account_id,
         card_holder: 'afrobank',
       }
 
       await externalAPIrequest.makeExternalAPIPostrequest({
-        url: 'http://localhost:3006/Api/v1/create-card',
+        url: `${extractConfig('cards')}/create-card`,
+        type: 'post',
         data: prepareCardCreationParams,
       })
 
       response('Card creation successful', true, StatusCodes.OK, res)
     } catch (error) {
-      console.log({ error })
       response(
         !!error.message ? error.message : error,
         false,
@@ -75,12 +76,18 @@ class Cards extends VirtualAccount {
       if (!userData.status) {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
-      const cards = await fetchAllCards(userData.message.user_id)
+      try {
+        const cards = await externalAPIrequest.makeExternalAPIGetrequest({
+          url: `${extractConfig('cards')}/get-cards`,
+        })
 
-      response(cards, true, StatusCodes.OK, res)
+        response(cards, true, StatusCodes.OK, res)
+      } catch (error) {
+        throw response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
+      }
     } catch (error) {
       throw response(
-        error.message,
+        !!error ? error : error.message,
         false,
         StatusCodes.INTERNAL_SERVER_ERROR,
         res
