@@ -48,7 +48,6 @@ class VirtualAccount {
         res
       )
     } catch (error) {
-      console.log(error, 'err')
       response(
         error ?? error.message,
         false,
@@ -68,8 +67,6 @@ class VirtualAccount {
       ACTIONS.FINDONE,
       this.virtualAccount
     )
-
-    console.log(dataFromDb, 'dataFromDb')
 
     if (!dataFromDb.account_id) {
       throw new Error(

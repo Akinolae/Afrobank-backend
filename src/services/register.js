@@ -4,7 +4,6 @@ const { user } = require('../controller/userManagement')
 
 module.exports = {
   register: (req, res) => {
-    console.log({ req })
     user.register(req.body, res)
   },
   confirmSignUp: (req, res) => {
