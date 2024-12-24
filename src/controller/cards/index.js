@@ -76,15 +76,11 @@ class Cards extends VirtualAccount {
       if (!userData.status) {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
-      try {
-        const cards = await externalAPIrequest.makeExternalAPIGetrequest({
-          url: `${extractConfig('cards')}/get-cards`,
-        })
+      const cards = await externalAPIrequest.makeExternalAPIGetrequest({
+        url: `${extractConfig('cards')}/get-cards`,
+      })
 
-        response(cards, true, StatusCodes.OK, res)
-      } catch (error) {
-        throw response(error, false, StatusCodes.INTERNAL_SERVER_ERROR, res)
-      }
+      response(cards, true, StatusCodes.OK, res)
     } catch (error) {
       throw response(
         !!error ? error : error.message,

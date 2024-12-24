@@ -6,15 +6,16 @@ const { generateAccountNumber } = require('../../queries/user')
 const model = require('../../model/virtualAccounts')
 const { getAllAccounts } = require('../../queries/queries')
 const { v4: uuidv4 } = require('uuid')
-const { fetch_single_user } = require('../../utils/userUtil')
+const { user } = require('../userManagement')
 
 class VirtualAccount {
   constructor() {
     this.virtualAccount = model
+    this.user = user
   }
   generateVirtualAccount = async (req, res) => {
     try {
-      const userData = await fetch_single_user(res.user.email)
+      const userData = await this.user.userVerification(res.user.email)
 
       if (!userData.status) {
         response('Unable to fetch user', false, StatusCodes.UNAUTHORIZED, res)
