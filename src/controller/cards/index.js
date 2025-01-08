@@ -55,7 +55,6 @@ class Cards extends VirtualAccount {
 
       await externalAPIrequest.makeExternalAPIPostrequest({
         url: `${extractConfig('cards')}/create-card`,
-        type: 'post',
         data: prepareCardCreationParams,
       })
 
@@ -76,11 +75,14 @@ class Cards extends VirtualAccount {
       if (!userData.status) {
         throw response('User not found', false, StatusCodes.NOT_FOUND, res)
       }
-      const cards = await externalAPIrequest.makeExternalAPIGetrequest({
-        url: `${extractConfig('cards')}/get-cards`,
-      })
-
-      response(cards, true, StatusCodes.OK, res)
+      await externalAPIrequest
+        .makeExternalAPIGetrequest({
+          url: `${extractConfig('cards')}/get-cards`,
+        })
+        .then((data) => response(data, true, StatusCodes.OK, res))
+        .catch((e) => {
+          return response(e, false, StatusCodes.UNPROCESSABLE_ENTITY, res)
+        })
     } catch (error) {
       throw response(
         !!error ? error : error.message,

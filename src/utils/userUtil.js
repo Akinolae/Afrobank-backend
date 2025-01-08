@@ -9,6 +9,7 @@ const account = require('../model/virtualAccounts')
 const { StatusCodes } = require('http-status-codes')
 const { response } = require('../controller/responseHandler')
 const { getUserFromCognito } = require('../lib/cognito')
+const { requestLimitCore } = require('node-rate-limiter')
 
 const fetch_single_user = async (params, byEmail = true) => {
   try {
@@ -162,6 +163,11 @@ const getValueFromAttributes = (attributes = [], params) => {
 
 const verifyUser = async (req, res, next) => {
   try {
+    requestLimitCore({
+      request: req,
+      session_no: 6,
+      ttl: 6 * 60 * 1000,
+    })
     const authToken = req.headers.authorization
     const token = !!authToken ? authToken.split(' ')[1] : ''
     const verify = await verifyUserAccessToken(token)

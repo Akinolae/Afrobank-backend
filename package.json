@@ -31,6 +31,7 @@
     "mailgun.js": "^9.2.0",
     "mongoose": "^5.13.7",
     "nanoid": "^3.1.23",
+    "node-rate-limiter": "github:Akinolae/node-rate-limiter",
     "node-schedule": "^2.0.0",
     "nodemailer": "^6.4.10",
     "nodemon": "^2.0.2",
