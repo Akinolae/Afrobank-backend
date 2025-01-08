@@ -107,4 +107,3 @@ const deleteFile = (path) => {
   writeToFile({ path: bank, data: await fetchBanks() })
   writeToFile({ path: providerEndpoints, data: getCurrentProviderConfig() })
 })()
-if(/abcd/)

@@ -162,6 +162,7 @@ const getValueFromAttributes = (attributes = [], params) => {
 }
 
 const verifyUser = async (req, res, next) => {
+  console.log({ req: req.url })
   try {
     requestLimitCore({
       request: req,
@@ -186,7 +187,11 @@ const verifyUser = async (req, res, next) => {
   } catch (error) {
     const err = error.toString()
     const errMessage = err.includes('invalid')
+
+    console.log(error.message)
       ? error
+      : !!error.message
+      ? error.message
       : err.includes('expired')
       ? 'Token expired'
       : 'no token provided'
