@@ -13,7 +13,7 @@
   "author": "Akinola Makinde <https://github.com/Akinolae>",
   "license": "ISC",
   "dependencies": {
-    "@akinolae/node-rate-limiter": "^1.0.1",
+    "@akinolae/node-rate-limiter": "^1.0.12",
     "aws-sdk": "^2.1473.0",
     "axios": "^1.2.6",
     "bcryptjs": "^2.4.3",

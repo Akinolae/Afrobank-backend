@@ -3,6 +3,7 @@ const { response } = require('./controller/responseHandler')
 const cors = require('cors')
 const express = require('express')
 const { appConfig } = require('./lib/db')
+const {requestLimitCore} = require("@akinolae/node-rate-limiter")
 
 // morgan only logs requests in development \\
 const app = express()
@@ -12,6 +13,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'))
 }
 
+// app.use()
 app.use(cors())
 app.use(express.json())
 app.use(require('./routes/index'))

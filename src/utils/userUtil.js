@@ -10,6 +10,9 @@ const { StatusCodes } = require('http-status-codes')
 const { response } = require('../controller/responseHandler')
 const { getUserFromCognito } = require('../lib/cognito')
 const { requestLimitCore } = require('@akinolae/node-rate-limiter')
+const error = require('./errorUtil')
+
+const errorFormatter = error
 
 const fetch_single_user = async (params, byEmail = true) => {
   try {
@@ -165,7 +168,7 @@ const verifyUser = async (req, res, next) => {
   try {
     requestLimitCore({
       request: req,
-      session_no: 6,
+      session_no: 3,
       ttl: 6 * 60 * 1000,
     })
     const authToken = req.headers.authorization
@@ -185,15 +188,14 @@ const verifyUser = async (req, res, next) => {
     next()
   } catch (error) {
     const err = error.toString()
-    const errMessage = err.includes('invalid')
+    let errMessage = err.includes('invalid')
 
-    console.log(error.message)
-      ? error
-      : !!error.message
+    errMessage = !!error?.message
       ? error.message
       : err.includes('expired')
       ? 'Token expired'
-      : 'no token provided'
+      : error
+
     response(errMessage, false, StatusCodes.UNAUTHORIZED, res)
   }
 }
