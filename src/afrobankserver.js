@@ -3,8 +3,6 @@ const { response } = require('./controller/responseHandler')
 const cors = require('cors')
 const express = require('express')
 const { appConfig } = require('./lib/db')
-const { requestLimitCore } = require('@akinolae/node-rate-limiter')
-const { verifyUser } = require('./utils/userUtil')
 
 // morgan only logs requests in development \\
 const app = express()
