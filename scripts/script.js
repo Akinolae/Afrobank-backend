@@ -104,6 +104,8 @@ const deleteFile = (path) => {
     deleteFile(providerEndpoints)
   }
 
+  console.log(`creating\n`, `${bank}\n${providerEndpoints}`)
+
   writeToFile({ path: bank, data: await fetchBanks() })
   writeToFile({ path: providerEndpoints, data: getCurrentProviderConfig() })
 })()
